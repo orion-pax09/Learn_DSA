@@ -1,5 +1,4 @@
 # Learn_DSA
-# Learn DSA
 
 A repository documenting my journey of learning **Data Structures and Algorithms (DSA)** in C++ and python.
 
