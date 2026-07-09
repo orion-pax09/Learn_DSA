@@ -14,7 +14,7 @@ A repository documenting my journey of learning **Data Structures and Algorithms
 
 - ⬜ Arrays
 - ⬜ Strings
-- ⬜ Linked Lists
+- ✅ Linked Lists
 - ⬜ Stacks
 - ⬜ Queues
 - ⬜ Recursion
