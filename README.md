@@ -12,11 +12,11 @@ A repository documenting my journey of learning **Data Structures and Algorithms
 
 ## 📚 Topics
 
-- ⬜ Arrays
-- ⬜ Strings
+- ✅ Arrays
+- ✅ Strings
 - ✅ Linked Lists
-- ⬜ Stacks
-- ⬜ Queues
+- ✅ Stacks
+- ✅ Queues
 - ⬜ Recursion
 - ⬜ Trees
 - ⬜ Binary Search Trees
