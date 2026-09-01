@@ -17,6 +17,7 @@ A repository documenting my journey of learning **Data Structures and Algorithms
 - ✅ Linked Lists
 - ✅ Stacks
 - ✅ Queues
+- ✅ Sliding windows
 - ⬜ Recursion
 - ⬜ Trees
 - ⬜ Binary Search Trees
