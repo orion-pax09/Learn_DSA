@@ -22,7 +22,7 @@ A repository documenting my journey of learning **Data Structures and Algorithms
 - ⬜ Trees
 - ⬜ Binary Search Trees
 - ⬜ Heaps
-- ⬜ Graphs
+- ✅ Graphs
 - ✅ Hashing
 - ⬜ Dynamic Programming
 
