@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Longest Common Prefix — Visual Debugger</title>
+<style>
+  :root{
+    --bg:#0f1216;
+    --panel:#171b21;
+    --panel-2:#1d222a;
+    --border:#2a2f38;
+    --text:#e7ebf0;
+    --muted:#8a93a3;
+    --teal:#4fd1c5;
+    --amber:#f5a623;
+    --green:#6bcb77;
+    --red:#ff6b6b;
+    --violet:#b39ddb;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:1440px;margin:0 auto;padding:22px 22px 60px;}
+
+  /* header */
+  header.top{margin-bottom:18px;}
+  header.top h1{font-size:22px;margin:0 0 4px;letter-spacing:-0.01em;}
+  header.top p{margin:0;color:var(--muted);font-size:14px;max-width:760px;line-height:1.5;}
+
+  /* input bar */
+  .input-bar{
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;
+    padding:14px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  }
+  .input-bar input[type=text]{
+    flex:1 1 320px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    padding:9px 12px;border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;
+  }
+  .input-bar input[type=text]:focus{outline:2px solid var(--teal);outline-offset:1px;}
+  button{
+    font-family:inherit;font-size:13.5px;cursor:pointer;border-radius:8px;border:1px solid var(--border);
+    background:var(--panel-2);color:var(--text);padding:9px 14px;transition:background .15s,border-color .15s,transform .1s;
+  }
+  button:hover:not(:disabled){background:#242a33;border-color:#3a4150;}
+  button:active:not(:disabled){transform:scale(0.97);}
+  button:disabled{opacity:0.35;cursor:not-allowed;}
+  button.primary{background:var(--teal);border-color:var(--teal);color:#08201d;font-weight:600;}
+  button.primary:hover:not(:disabled){background:#63dcd1;}
+  .presets{display:flex;flex-wrap:wrap;gap:8px;width:100%;}
+  .presets button{font-size:12.5px;padding:6px 11px;background:var(--panel-2);}
+  #inputError{color:var(--red);font-size:12.5px;width:100%;min-height:16px;}
+
+  /* controls bar */
+  .controls-bar{
+    position:sticky;top:0;z-index:20;background:var(--bg);
+    display:flex;align-items:center;gap:12px;padding:10px 0 14px;
+    border-bottom:1px solid var(--border);margin-bottom:18px;
+  }
+  .step-counter{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--muted);
+    background:var(--panel);border:1px solid var(--border);padding:8px 12px;border-radius:8px;}
+  .step-counter b{color:var(--text);}
+  .controls-bar .spacer{flex:1;}
+  .hint{font-size:12px;color:var(--muted);}
+
+  /* main grid */
+  .main-grid{display:grid;grid-template-columns:minmax(340px,460px) 1fr;gap:20px;align-items:start;}
+  @media (max-width:920px){.main-grid{grid-template-columns:1fr;}}
+
+  .code-panel{
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 8px;
+    position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto;
+  }
+  .code-panel h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+    margin:2px 10px 10px;font-weight:600;}
+  .code-line{
+    display:flex;gap:12px;padding:3px 10px;border-radius:6px;white-space:pre;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.2px;line-height:1.65;
+  }
+  .code-line .ln{color:#4b5462;width:22px;text-align:right;user-select:none;flex-shrink:0;}
+  .code-line.active{background:rgba(79,209,197,0.14);box-shadow:inset 3px 0 0 var(--teal);animation:flashLine .5s ease;}
+  @keyframes flashLine{from{background:rgba(79,209,197,0.4);}to{background:rgba(79,209,197,0.14);}}
+  .tk-kw{color:#7fb3ff;}
+  .tk-str{color:#f5c264;}
+
+  .viz-col{display:flex;flex-direction:column;gap:16px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+  .card h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px;font-weight:600;}
+
+  /* explanation */
+  .explain-title{font-size:15px;font-weight:700;margin-bottom:6px;color:var(--teal);}
+  .explain-body{font-size:14px;line-height:1.6;color:#d3d9e2;}
+  .explain-body code{background:var(--panel-2);padding:1px 5px;border-radius:4px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.6px;}
+  .explain-body b{color:#fff;}
+
+  /* variables */
+  .vars-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .var-box{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;}
+  .var-box .vlabel{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace;}
+  .var-box .vval{font-size:17px;font-weight:700;font-family:ui-monospace,Menlo,Consolas,monospace;margin-top:3px;color:var(--amber);}
+  .var-box.changed{animation:flashVar .7s ease;}
+  @keyframes flashVar{0%{background:rgba(245,166,35,0.35);}100%{background:var(--panel-2);}}
+  @media (max-width:520px){.vars-grid{grid-template-columns:repeat(2,1fr);}}
+
+  /* input display */
+  .input-display{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;color:var(--violet);word-break:break-word;}
+
+  /* char grid */
+  .index-row,.str-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .row-label{width:78px;flex-shrink:0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--muted);text-align:right;}
+  .boxes{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;}
+  .box{
+    width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--border);border-radius:7px;font-family:ui-monospace,Menlo,Consolas,monospace;
+    font-weight:700;font-size:14px;transition:background .2s,border-color .2s,color .2s,transform .2s;background:var(--panel-2);
+  }
+  .box.idx{color:var(--muted);font-weight:500;font-size:12px;background:transparent;border-color:transparent;}
+  .box.idx.col-active{color:var(--teal);font-weight:700;}
+  .box.ghost{opacity:.3;border-style:dashed;}
+  .box.col-mark{background:rgba(79,209,197,0.10);border-color:rgba(79,209,197,0.4);}
+  .box.current{background:var(--amber);border-color:var(--amber);color:#241a03;transform:scale(1.08);}
+  .box.checking{background:rgba(79,209,197,0.28);border-color:var(--teal);animation:pulseBox 1s infinite;}
+  .box.match{background:rgba(107,203,119,0.28);border-color:var(--green);}
+  .box.mismatch{background:rgba(255,107,107,0.32);border-color:var(--red);transform:scale(1.08);}
+  .box.missing{background:rgba(255,107,107,0.14);border-color:var(--red);border-style:dashed;}
+  @keyframes pulseBox{0%,100%{opacity:1;}50%{opacity:.55;}}
+  .grid-scroll{overflow-x:auto;}
+  .empty-note{color:var(--muted);font-size:13px;font-style:italic;}
+
+  /* condition panel */
+  .cond-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px;}
+  .cond-row:last-child{border-bottom:none;}
+  .cond-label{color:var(--muted);}
+  .cond-expr{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;}
+  .chip{padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700;font-family:ui-monospace,Menlo,Consolas,monospace;}
+  .chip.true{background:rgba(255,107,107,0.2);color:var(--red);}
+  .chip.false{background:rgba(107,203,119,0.2);color:var(--green);}
+  .chip.skip{background:rgba(138,147,163,0.2);color:var(--muted);}
+  .cond-note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5;}
+  .placeholder{color:var(--muted);font-size:13px;font-style:italic;}
+
+  /* log */
+  .log-list{list-style:none;margin:0;padding:0;max-height:190px;overflow-y:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;}
+  .log-list li{padding:3px 0;color:#b7bfcb;white-space:pre;}
+  .log-list li.indent{color:var(--muted);}
+  .log-list li.latest{color:var(--teal);font-weight:700;}
+
+  /* result */
+  .result-display{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:22px;font-weight:700;color:var(--green);
+    transition:all .2s;}
+  .result-display.flash{animation:flashVar .7s ease;}
+
+  /* summary */
+  #summaryPanel{display:none;}
+  .summary-flow{display:flex;flex-direction:column;gap:2px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;}
+  .summary-row{padding:7px 12px;border-radius:8px;background:var(--panel-2);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .summary-row.mismatch{background:rgba(255,107,107,0.12);color:var(--red);}
+  .summary-row.match{color:var(--green);}
+  .summary-arrow{text-align:center;color:var(--muted);font-size:12px;}
+  .summary-answer{margin-top:10px;padding:12px;border-radius:8px;background:rgba(107,203,119,0.14);
+    color:var(--green);font-weight:700;font-size:16px;text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace;}
+
+  /* complexity */
+  .complexity-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:600px){.complexity-grid{grid-template-columns:1fr;}}
+  .complexity-box{background:var(--panel-2);border-radius:8px;padding:12px 14px;}
+  .complexity-box .big{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:20px;font-weight:700;color:var(--teal);}
+  .complexity-box p{font-size:13px;color:#c4cbd6;line-height:1.55;margin:6px 0 0;}
+
+  /* quiz */
+  .quiz-q{margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+  .quiz-q:last-child{border:none;margin-bottom:0;padding-bottom:0;}
+  .quiz-q p.qtext{font-size:14px;font-weight:600;margin:0 0 10px;}
+  .quiz-options{display:flex;flex-direction:column;gap:8px;}
+  .quiz-opt{
+    text-align:left;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    padding:9px 12px;border-radius:8px;font-size:13.5px;
+  }
+  .quiz-opt:hover:not(:disabled){border-color:var(--teal);}
+  .quiz-opt.correct{background:rgba(107,203,119,0.22);border-color:var(--green);}
+  .quiz-opt.incorrect{background:rgba(255,107,107,0.22);border-color:var(--red);}
+  .quiz-feedback{margin-top:8px;font-size:13px;line-height:1.5;color:var(--muted);}
+
+  footer.note{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <h1>Longest Common Prefix — Visual Debugger</h1>
+    <p>Step through the real C++ solution one line at a time. The code on the left and the visualization on the right always stay in sync, like a live debugger.</p>
+  </header>
+
+  <div class="input-bar">
+    <input type="text" id="customInput" placeholder='Try your own input, e.g. ["dog","racecar","car"]' />
+    <button class="primary" id="loadBtn">Run this input</button>
+    <div class="presets" id="presets"></div>
+    <div id="inputError"></div>
+  </div>
+
+  <div class="controls-bar">
+    <button id="btnReset">↺ Reset</button>
+    <button id="btnPrev">◀ Previous Step</button>
+    <button class="primary" id="btnNext">Next Step ▶</button>
+    <div class="step-counter">Step <b id="stepNow">0</b> / <span id="stepTotal">0</span></div>
+    <div class="spacer"></div>
+    <div class="hint">Tip: use ← and → arrow keys too</div>
+  </div>
+
+  <div class="main-grid">
+    <!-- LEFT: CODE -->
+    <div class="code-panel">
+      <h2>C++ Solution</h2>
+      <div id="codePanel"></div>
+    </div>
+
+    <!-- RIGHT: VISUALIZATION -->
+    <div class="viz-col">
+
+      <div class="card">
+        <h3>What's happening</h3>
+        <div class="explain-title" id="explainTitle">Click "Next Step" to begin</div>
+        <div class="explain-body" id="explainBody">We'll walk through the algorithm one meaningful action at a time. Nothing runs until you click.</div>
+      </div>
+
+      <div class="card">
+        <h3>Variables</h3>
+        <div class="vars-grid">
+          <div class="var-box" id="box-i"><div class="vlabel">i</div><div class="vval" id="var-i">—</div></div>
+          <div class="var-box" id="box-j"><div class="vlabel">j</div><div class="vval" id="var-j">—</div></div>
+          <div class="var-box" id="box-current"><div class="vlabel">current</div><div class="vval" id="var-current">—</div></div>
+          <div class="var-box" id="box-result"><div class="vlabel">result</div><div class="vval" id="var-result">""</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Input</h3>
+        <div class="input-display" id="inputDisplay"></div>
+      </div>
+
+      <div class="card">
+        <h3>Characters &amp; indexes</h3>
+        <div class="grid-scroll" id="gridContainer"></div>
+      </div>
+
+      <div class="card">
+        <h3>Condition breakdown</h3>
+        <div id="conditionPanel"><div class="placeholder">No condition is being evaluated right now.</div></div>
+      </div>
+
+      <div class="card">
+        <h3>i / j execution log</h3>
+        <ul class="log-list" id="logList"></ul>
+      </div>
+
+      <div class="card">
+        <h3>Result so far</h3>
+        <div class="result-display" id="resultDisplay">""</div>
+      </div>
+
+      <div class="card" id="summaryPanel">
+        <h3>Full trace summary</h3>
+        <div class="summary-flow" id="summaryContent"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <h3>Complexity</h3>
+    <div class="complexity-grid" id="complexityContent"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h3>Mini quiz</h3>
+    <div id="quizContainer"></div>
+  </div>
+
+  <footer class="note">Everything on this page runs locally in your browser. No data leaves your machine.</footer>
+</div>
+
+<script>
+/* ============================= CODE LINES ============================= */
+const codeLines = [
+  "class Solution {",
+  "public:",
+  "    string longestCommonPrefix(vector<string>& strs) {",
+  "        if (strs.empty()) {",
+  "            return \"\";",
+  "        }",
+  "",
+  "        string result = \"\";",
+  "",
+  "        for (int i = 0; i < strs[0].size(); i++) {",
+  "            char current = strs[0][i];",
+  "",
+  "            for (int j = 1; j < strs.size(); j++) {",
+  "                if (i >= strs[j].size() || strs[j][i] != current) {",
+  "                    return result;",
+  "                }",
+  "            }",
+  "",
+  "            result += current;",
+  "        }",
+  "",
+  "        return result;",
+  "    }",
+  "};"
+];
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+const KEYWORDS = ['class','public','string','vector','char','int','if','for','return'];
+function tokenize(line){
+  const tokens=[];
+  const re = /("(?:[^"\\]|\\.)*")|([A-Za-z_][A-Za-z0-9_]*)|(\s+)|(\S)/g;
+  let m;
+  while((m = re.exec(line)) !== null){
+    if(m[1]) tokens.push({type:'str', text:m[1]});
+    else if(m[2]) tokens.push({type: KEYWORDS.includes(m[2]) ? 'kw' : 'id', text:m[2]});
+    else if(m[3]) tokens.push({type:'ws', text:m[3]});
+    else tokens.push({type:'punc', text:m[4]});
+  }
+  return tokens;
+}
+function renderCodeLine(line){
+  return tokenize(line).map(t=>{
+    const esc = escapeHtml(t.text);
+    if(t.type==='str') return '<span class="tk-str">'+esc+'</span>';
+    if(t.type==='kw') return '<span class="tk-kw">'+esc+'</span>';
+    return esc;
+  }).join('');
+}
+
+/* ============================= TRACE GENERATOR ============================= */
+// Produces one "step" object per meaningful action, mirroring the C++ code exactly.
+function generateTrace(strs){
+  const steps = [];
+  const summary = [];
+  let vars = { i:null, j:null, current:null, result:'' };
+
+  steps.push({
+    line:4, title:'Check if the array is empty',
+    body:'We check whether <b>strs</b> has zero elements: <code>strs.empty()</code>. If there are no strings at all, there is no prefix to find, so we can stop right away.',
+    vars:{...vars}, highlightCol:null, log:null
+  });
+
+  if(strs.length === 0){
+    steps.push({
+      line:5, title:'Array is empty — return ""',
+      body:'<code>strs.empty()</code> is true, so we return an empty string immediately. There is nothing to compare.',
+      vars:{...vars}, highlightCol:null, log:null, finalResult:''
+    });
+    return { steps, summary, result:'' };
+  }
+
+  steps.push({
+    line:4, title:'strs.empty() is false',
+    body:'We have '+strs.length+' string'+(strs.length>1?'s':'')+' in the array, so <code>strs.empty()</code> is false and we move past the <code>if</code>.',
+    vars:{...vars}, highlightCol:null, log:null
+  });
+
+  vars = {...vars, result:''};
+  steps.push({
+    line:8, title:'Initialize result',
+    body:'We create an empty string called <b>result</b>. It will grow one character at a time, every time we confirm that character is shared by every string.',
+    vars:{...vars}, highlightCol:null, log:null
+  });
+
+  const refLen = strs[0].length;
+
+  for(let i=0; ; i++){
+    const outerCond = i < refLen;
+    steps.push({
+      line:10, title:'Outer loop condition: i < strs[0].size()',
+      body:'i is <b>'+i+'</b>, and <code>strs[0].size()</code> is <b>'+refLen+'</b>. So '+i+' &lt; '+refLen+' is <b>'+outerCond+'</b>. '+
+           (outerCond ? 'We enter the loop body.' : "The loop ends here — we've now looked at every character of the reference string strs[0]."),
+      vars:{...vars, i: outerCond ? i : vars.i}, highlightCol: outerCond ? i : null, log:null
+    });
+    if(!outerCond) break;
+
+    vars = {...vars, i};
+    const current = strs[0][i];
+    vars = {...vars, current};
+    steps.push({
+      line:11, title:'Read the reference character',
+      body:'<code>current = strs[0]['+i+']</code> = <b>\''+current+'\'</b>. We will now check whether every other string also has \''+current+'\' at position '+i+'.',
+      vars:{...vars}, highlightCol:i, log:'i = '+i+" → checking character '"+current+"'"
+    });
+
+    const matchedThisRound = [];
+    let mismatch = false;
+
+    for(let j=1; ; j++){
+      const innerCond = j < strs.length;
+      steps.push({
+        line:13, title:'Inner loop condition: j < strs.size()',
+        body:'j is <b>'+j+'</b>, and <code>strs.size()</code> is <b>'+strs.length+'</b>. So '+j+' &lt; '+strs.length+' is <b>'+innerCond+'</b>. '+
+             (innerCond ? 'We compare this string next.' : "We've now checked '"+current+"' against every other string, with no mismatch."),
+        vars:{...vars, j: innerCond ? j : vars.j}, highlightCol:i, matchedJs:[...matchedThisRound], log:null
+      });
+      if(!innerCond) break;
+
+      vars = {...vars, j};
+      const jLen = strs[j].length;
+      const cond1 = i >= jLen;
+      steps.push({
+        line:14, title:'Condition 1 — does this string reach index '+i+'?',
+        body:'<code>i >= strs[j].size()</code>: is '+i+' &gt;= '+jLen+' (the length of "'+strs[j]+'")? <b>'+cond1+'</b>. '+
+             (cond1 ? 'This string is too short to even have a character here.' : 'This string does have a character here, so next we compare it.'),
+        vars:{...vars}, highlightCol:i, matchedJs:[...matchedThisRound],
+        compare:{ j, cond1, cond2:null, combined:null }, log:null
+      });
+
+      let cond2=false, jChar=null;
+      if(!cond1){
+        jChar = strs[j][i];
+        cond2 = jChar !== current;
+        steps.push({
+          line:14, title:'Condition 2 — do the characters match?',
+          body:'<code>strs[j][i] != current</code>: is \''+jChar+'\' != \''+current+'\'? <b>'+cond2+'</b>.',
+          vars:{...vars}, highlightCol:i, matchedJs:[...matchedThisRound],
+          compare:{ j, cond1, cond2, jChar, combined:null }, log:null
+        });
+      }
+
+      const combined = cond1 || cond2;
+      const shortCircuitNote = cond1 ? " Because Condition 1 was already true, C++'s <code>||</code> short-circuits — Condition 2 is never even evaluated." : "";
+      steps.push({
+        line:14, title:'Combine with OR',
+        body:'<code>Condition 1 OR Condition 2</code> = '+cond1+' OR '+(cond1? '(skipped)': cond2)+' = <b>'+combined+'</b>.'+shortCircuitNote+' '+
+             (combined ? 'The <code>if</code> is true, so we return early.' : 'The <code>if</code> is false, so we keep comparing.'),
+        vars:{...vars}, highlightCol:i, matchedJs:[...matchedThisRound],
+        compare:{ j, cond1, cond2, jChar, combined },
+        log:'    j = '+j+' → compare with "'+strs[j]+'": '+
+            (cond1 ? ('no character at index '+i) : ("'"+current+"' "+(cond2?'≠':'==')+" '"+jChar+"'"))+' '+(combined?'✗':'✓')
+      });
+
+      if(combined){
+        mismatch = true;
+        steps.push({
+          line:15, title:'Mismatch — return result now',
+          body:'The condition was true, so the function returns <b>result</b> = "'+vars.result+'" immediately. We stop checking anything else — no more strings, no more characters.',
+          vars:{...vars}, highlightCol:i, matchedJs:[...matchedThisRound],
+          compare:{ j, cond1, cond2, jChar, combined },
+          finalResult: vars.result, log:null
+        });
+        summary.push({ col:i, status:'mismatch', ref:current, other:{ j, char:jChar, tooShort:cond1 } });
+        return { steps, summary, result: vars.result };
+      } else {
+        matchedThisRound.push(j);
+      }
+    }
+
+    vars = {...vars, result: vars.result + current};
+    summary.push({ col:i, status:'match', char:current });
+    steps.push({
+      line:19, title:'Character matched in every string — grow result',
+      body:"'"+current+"' matched at position "+i+" in every string, so we append it: <code>result += current</code>. result is now \""+vars.result+"\".",
+      vars:{...vars}, highlightCol:i, matchedJs:[...matchedThisRound], log:null
+    });
+  }
+
+  steps.push({
+    line:22, title:'Return the final result',
+    body:"We've gone through every character of strs[0] without ever hitting a mismatch, so we return result = \""+vars.result+"\".",
+    vars:{...vars}, highlightCol:null, finalResult: vars.result, log:null
+  });
+
+  return { steps, summary, result: vars.result };
+}
+
+/* ============================= STATE ============================= */
+let strs = ["flower","flow","flight"];
+let trace = generateTrace(strs);
+let stepIndex = 0; // 0 = not started; 1..steps.length = steps[stepIndex-1]
+
+const HIGHLIGHTABLE = new Set([4,5,8,10,11,13,14,15,19,22]);
+
+/* ============================= RENDER: CODE ============================= */
+function renderCode(activeLine){
+  let html = '';
+  codeLines.forEach((line, idx)=>{
+    const num = idx+1;
+    const isActive = activeLine === num;
+    html += '<div class="code-line'+(isActive?' active':'')+'" data-line="'+num+'">'+
+            '<span class="ln">'+num+'</span><span>'+renderCodeLine(line)+'</span></div>';
+  });
+  document.getElementById('codePanel').innerHTML = html;
+  if(activeLine){
+    const activeEl = document.querySelector('.code-line.active');
+    if(activeEl) activeEl.scrollIntoView({block:'nearest', behavior:'smooth'});
+  }
+}
+
+/* ============================= RENDER: VARIABLES ============================= */
+function fmtVar(v){ return (v===null || v===undefined) ? '—' : (typeof v==='string' ? "'"+v+"'" : v); }
+function renderVars(curr, prev){
+  const map = { i: curr.i, j: curr.j, current: curr.current };
+  document.getElementById('var-i').textContent = fmtVar(curr.i);
+  document.getElementById('var-j').textContent = fmtVar(curr.j);
+  document.getElementById('var-current').textContent = curr.current===null||curr.current===undefined ? '—' : "'"+curr.current+"'";
+  document.getElementById('var-result').textContent = '"'+curr.result+'"';
+
+  ['i','j','current','result'].forEach(key=>{
+    const box = document.getElementById('box-'+key);
+    box.classList.remove('changed');
+    if(!prev || prev[key] !== curr[key]){
+      void box.offsetWidth; // reflow to restart animation
+      box.classList.add('changed');
+    }
+  });
+}
+
+/* ============================= RENDER: INPUT DISPLAY ============================= */
+function renderInputDisplay(){
+  document.getElementById('inputDisplay').textContent = JSON.stringify(strs);
+}
+
+/* ============================= RENDER: CHAR GRID ============================= */
+function renderGrid(step){
+  const container = document.getElementById('gridContainer');
+  if(strs.length===0){
+    container.innerHTML = '<div class="empty-note">The array is empty — there are no strings to display.</div>';
+    return;
+  }
+  const maxLen = Math.max(...strs.map(s=>s.length), 1);
+  const activeCol = step ? step.highlightCol : null;
+  const compare = step ? step.compare : null;
+  const matchedJs = step && step.matchedJs ? step.matchedJs : [];
+
+  let html = '<div class="index-row"><div class="row-label">index</div><div class="boxes">';
+  for(let c=0;c<maxLen;c++){
+    html += '<div class="box idx'+(c===activeCol?' col-active':'')+'">'+c+'</div>';
+  }
+  html += '</div></div>';
+
+  strs.forEach((s, rowIdx)=>{
+    html += '<div class="str-row"><div class="row-label">strs['+rowIdx+']</div><div class="boxes">';
+    for(let c=0;c<maxLen;c++){
+      let cls = 'box';
+      let content = '';
+      if(c < s.length){
+        content = escapeHtml(s[c]);
+        if(rowIdx===0 && c===activeCol){
+          cls += ' current';
+        } else if(compare && compare.j===rowIdx && c===activeCol){
+          if(compare.cond1) cls += ' missing';
+          else if(compare.combined===null || compare.combined===undefined) cls += ' checking';
+          else if(compare.combined) cls += ' mismatch';
+          else cls += ' match';
+        } else if(matchedJs.includes(rowIdx) && c===activeCol){
+          cls += ' match';
+        } else if(c===activeCol){
+          cls += ' col-mark';
+        }
+      } else {
+        cls += ' ghost';
+        if(compare && compare.j===rowIdx && compare.cond1 && c===activeCol){
+          cls = 'box missing';
+        }
+      }
+      html += '<div class="'+cls+'">'+content+'</div>';
+    }
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+/* ============================= RENDER: CONDITION PANEL ============================= */
+function renderCondition(step){
+  const panel = document.getElementById('conditionPanel');
+  if(!step || !step.compare){
+    panel.innerHTML = '<div class="placeholder">No condition is being evaluated right now.</div>';
+    return;
+  }
+  const c = step.compare;
+  let html = '';
+  html += '<div class="cond-row"><div><div class="cond-label">Condition 1</div><div class="cond-expr">i >= strs['+c.j+'].size()</div></div>'+
+           '<span class="chip '+(c.cond1?'true':'false')+'">'+(c.cond1?'TRUE':'FALSE')+'</span></div>';
+
+  if(c.cond2===null || c.cond2===undefined){
+    html += '<div class="cond-row"><div><div class="cond-label">Condition 2</div><div class="cond-expr">strs['+c.j+'][i] != current</div></div>'+
+            '<span class="chip skip">SKIPPED</span></div>';
+  } else {
+    html += '<div class="cond-row"><div><div class="cond-label">Condition 2</div><div class="cond-expr">\''+c.jChar+'\' != \''+step.vars.current+'\'</div></div>'+
+            '<span class="chip '+(c.cond2?'true':'false')+'">'+(c.cond2?'TRUE':'FALSE')+'</span></div>';
+  }
+
+  if(c.combined===null || c.combined===undefined){
+    html += '<div class="cond-row"><div class="cond-label">Combined (OR)</div><span class="chip skip">not yet</span></div>';
+  } else {
+    html += '<div class="cond-row"><div class="cond-label">Condition 1 OR Condition 2</div><span class="chip '+(c.combined?'true':'false')+'">'+(c.combined?'TRUE → stop':'FALSE → continue')+'</span></div>';
+  }
+  if(c.cond1){
+    html += '<div class="cond-note">Because Condition 1 is already true, C++ short-circuits: it never bothers to check Condition 2.</div>';
+  }
+  panel.innerHTML = html;
+}
+
+/* ============================= RENDER: LOG ============================= */
+function renderLog(upToIndex){
+  const list = document.getElementById('logList');
+  const entries = [];
+  for(let k=0;k<upToIndex;k++){
+    const s = trace.steps[k];
+    if(s.log) entries.push(s.log);
+  }
+  if(entries.length===0){
+    list.innerHTML = '<li style="color:var(--muted);font-style:italic;">Nothing logged yet.</li>';
+    return;
+  }
+  list.innerHTML = entries.map((e,idx)=>{
+    const isIndent = e.startsWith('    ');
+    const isLast = idx===entries.length-1;
+    return '<li class="'+(isIndent?'indent':'')+' '+(isLast?'latest':'')+'">'+escapeHtml(e)+'</li>';
+  }).join('');
+  list.scrollTop = list.scrollHeight;
+}
+
+/* ============================= RENDER: RESULT ============================= */
+function renderResult(curr, prev){
+  const el = document.getElementById('resultDisplay');
+  el.textContent = '"'+curr.result+'"';
+  el.classList.remove('flash');
+  if(!prev || prev.result !== curr.result){
+    void el.offsetWidth;
+    el.classList.add('flash');
+  }
+}
+
+/* ============================= RENDER: SUMMARY ============================= */
+function renderSummary(){
+  const panel = document.getElementById('summaryPanel');
+  const finished = stepIndex >= trace.steps.length;
+  if(!finished){ panel.style.display='none'; return; }
+  panel.style.display='block';
+  const content = document.getElementById('summaryContent');
+  let html = '<div class="summary-row">INPUT&nbsp; '+JSON.stringify(strs)+'</div><div class="summary-arrow">↓</div>';
+  if(trace.summary.length===0 && strs.length===0){
+    html += '<div class="summary-row mismatch">strs.empty() is true</div><div class="summary-arrow">↓</div>';
+  } else {
+    trace.summary.forEach(entry=>{
+      if(entry.status==='match'){
+        html += '<div class="summary-row match">Compare column '+entry.col+' &nbsp; all strings = \''+entry.char+'\' ✓</div><div class="summary-arrow">↓</div>';
+      } else {
+        const detail = entry.other.tooShort ? ('strs['+entry.other.j+'] has no character here') : ("'"+entry.ref+"' ≠ '"+entry.other.char+"'");
+        html += '<div class="summary-row mismatch">Compare column '+entry.col+' &nbsp; '+detail+' ✗</div><div class="summary-arrow">↓</div>';
+      }
+    });
+    if(trace.summary.length && trace.summary[trace.summary.length-1].status==='mismatch'){
+      html += '<div class="summary-row mismatch" style="justify-content:center;">STOP</div><div class="summary-arrow">↓</div>';
+    }
+  }
+  html += '<div class="summary-answer">ANSWER: "'+trace.result+'"</div>';
+  content.innerHTML = html;
+}
+
+/* ============================= RENDER: EXPLANATION ============================= */
+function renderExplain(step){
+  const t = document.getElementById('explainTitle');
+  const b = document.getElementById('explainBody');
+  if(!step){
+    t.textContent = 'Click "Next Step" to begin';
+    b.innerHTML = "We'll walk through the algorithm one meaningful action at a time. Nothing runs until you click.";
+    return;
+  }
+  t.textContent = step.title;
+  b.innerHTML = step.body;
+}
+
+/* ============================= RENDER: COMPLEXITY ============================= */
+function renderComplexity(){
+  const totalChars = strs.reduce((a,s)=>a+s.length,0);
+  const el = document.getElementById('complexityContent');
+  el.innerHTML =
+    '<div class="complexity-box"><div class="big">Time: O(S)</div><p>'+
+    'S is the total number of characters across every string. Right now S = '+totalChars+' ('+strs.length+' string'+(strs.length===1?'':'s')+' with a combined '+totalChars+' characters). '+
+    'In the worst case — when every string shares a long common prefix — the algorithm has to inspect almost every character of every string once before it can be sure, so the work grows in proportion to S.</p></div>'+
+    '<div class="complexity-box"><div class="big">Space: O(1)</div><p>'+
+    'Not counting the output string, the algorithm only ever keeps a handful of variables around — i, j, and current — no matter how many strings we\'re given or how long they are. That\'s constant extra space.</p></div>';
+}
+
+/* ============================= MASTER RENDER ============================= */
+function renderAll(){
+  const total = trace.steps.length;
+  document.getElementById('stepNow').textContent = stepIndex;
+  document.getElementById('stepTotal').textContent = total;
+  document.getElementById('btnPrev').disabled = stepIndex===0;
+  document.getElementById('btnNext').disabled = stepIndex>=total;
+
+  const step = stepIndex>0 ? trace.steps[stepIndex-1] : null;
+  const prevStep = stepIndex>1 ? trace.steps[stepIndex-2] : null;
+  const initialVars = { i:null, j:null, current:null, result:'' };
+  const currVars = step ? step.vars : initialVars;
+  const prevVars = prevStep ? prevStep.vars : (step ? initialVars : null);
+
+  renderCode(step ? step.line : null);
+  renderExplain(step);
+  renderVars(currVars, prevVars);
+  renderInputDisplay();
+  renderGrid(step);
+  renderCondition(step);
+  renderLog(stepIndex);
+  renderResult(currVars, prevVars);
+  renderSummary();
+  renderComplexity();
+}
+
+/* ============================= CONTROLS ============================= */
+document.getElementById('btnNext').addEventListener('click', ()=>{
+  if(stepIndex < trace.steps.length){ stepIndex++; renderAll(); }
+});
+document.getElementById('btnPrev').addEventListener('click', ()=>{
+  if(stepIndex > 0){ stepIndex--; renderAll(); }
+});
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  stepIndex = 0; renderAll();
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='ArrowRight') document.getElementById('btnNext').click();
+  if(e.key==='ArrowLeft') document.getElementById('btnPrev').click();
+});
+
+function loadInput(newStrs){
+  strs = newStrs;
+  trace = generateTrace(strs);
+  stepIndex = 0;
+  document.getElementById('inputError').textContent = '';
+  renderAll();
+}
+
+document.getElementById('loadBtn').addEventListener('click', ()=>{
+  const raw = document.getElementById('customInput').value.trim();
+  if(!raw){ document.getElementById('inputError').textContent = 'Type an array first, e.g. ["dog","racecar","car"]'; return; }
+  try{
+    const parsed = JSON.parse(raw);
+    if(!Array.isArray(parsed) || !parsed.every(x=>typeof x==='string')){
+      throw new Error('not an array of strings');
+    }
+    loadInput(parsed);
+  }catch(err){
+    document.getElementById('inputError').textContent = 'Could not parse that. Use JSON format, e.g. ["dog","racecar","car"]';
+  }
+});
+document.getElementById('customInput').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter') document.getElementById('loadBtn').click();
+});
+
+/* Preset buttons */
+const presets = [
+  { label:'flower / flow / flight', value:["flower","flow","flight"] },
+  { label:'dog / racecar / car (no match)', value:["dog","racecar","car"] },
+  { label:'interview / internet / internal', value:["interview","internet","internal"] },
+  { label:'empty array', value:[] },
+  { label:'single string', value:["single"] },
+  { label:'identical strings', value:["test","test","test"] },
+  { label:'different lengths', value:["flight","fl"] },
+];
+const presetsEl = document.getElementById('presets');
+presets.forEach(p=>{
+  const btn = document.createElement('button');
+  btn.textContent = p.label;
+  btn.addEventListener('click', ()=>{
+    document.getElementById('customInput').value = JSON.stringify(p.value);
+    loadInput(p.value);
+  });
+  presetsEl.appendChild(btn);
+});
+
+/* ============================= QUIZ ============================= */
+const quizData = [
+  {
+    q:'What does the variable i represent in the algorithm?',
+    options:[
+      'The string we are currently checking',
+      'The character position we are checking',
+      'The length of the result string',
+      'The number of mismatches found so far'
+    ],
+    correct:1,
+    explain:'i is the character position (column) we\'re currently inspecting across all the strings.'
+  },
+  {
+    q:'What does the variable j represent?',
+    options:[
+      'The character position being checked',
+      'Which string (other than the first) we are currently comparing',
+      'The total number of strings in the array',
+      'The current length of result'
+    ],
+    correct:1,
+    explain:'j indexes into strs to tell us which of the "other" strings we\'re comparing against strs[0].'
+  },
+  {
+    q:'Why does the inner loop start j at 1 instead of 0?',
+    options:[
+      'Because C++ arrays are 1-indexed',
+      'Because strs[0] is the reference string, so we compare every other string against it',
+      'Because index 0 is always an empty string',
+      'It is an off-by-one mistake in the code'
+    ],
+    correct:1,
+    explain:'strs[0] is treated as the reference. We only need to check strs[1], strs[2], ... against it.'
+  },
+  {
+    q:"What happens the moment a character doesn't match (or a string is too short)?",
+    options:[
+      'That string is skipped and the loop continues with the next one',
+      'The function immediately returns the result built so far',
+      'The mismatched character gets replaced with a wildcard',
+      'The program throws a runtime error'
+    ],
+    correct:1,
+    explain:'As soon as the if-condition is true, the function returns result right away — there\'s no point checking further.'
+  },
+  {
+    q:'Why does the algorithm stop and return "fl" for ["flower","flow","flight"]?',
+    options:[
+      'Because "fl" happens to be the shortest string',
+      "Because at index 2, the characters ('o' vs 'i') no longer match across all strings",
+      'Because the loop is hard-coded to run exactly twice',
+      'Because result can only ever hold 2 characters'
+    ],
+    correct:1,
+    explain:"At column 2, flower and flow have 'o' but flight has 'i' — the mismatch stops the loop, leaving result as \"fl\"."
+  },
+  {
+    q:'What does the line result += current do?',
+    options:[
+      'It resets result to just the value of current',
+      "It appends the matched character onto the end of result",
+      'It compares result with current',
+      'It removes current from result'
+    ],
+    correct:1,
+    explain:'+= appends current onto the end of result, growing the confirmed common prefix by one character.'
+  }
+];
+
+function renderQuiz(){
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = quizData.map((item, qi)=>{
+    const opts = item.options.map((opt, oi)=>
+      '<button class="quiz-opt" data-q="'+qi+'" data-o="'+oi+'">'+escapeHtml(opt)+'</button>'
+    ).join('');
+    return '<div class="quiz-q" id="quiz-q-'+qi+'">'+
+           '<p class="qtext">'+(qi+1)+'. '+escapeHtml(item.q)+'</p>'+
+           '<div class="quiz-options">'+opts+'</div>'+
+           '<div class="quiz-feedback" id="quiz-fb-'+qi+'"></div>'+
+           '</div>';
+  }).join('');
+
+  container.querySelectorAll('.quiz-opt').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const qi = parseInt(btn.dataset.q, 10);
+      const oi = parseInt(btn.dataset.o, 10);
+      const qEl = document.getElementById('quiz-q-'+qi);
+      if(qEl.dataset.answered) return; // already answered
+      qEl.dataset.answered = '1';
+      const item = quizData[qi];
+      qEl.querySelectorAll('.quiz-opt').forEach((b,bi)=>{
+        b.disabled = true;
+        if(bi===item.correct) b.classList.add('correct');
+        else if(bi===oi) b.classList.add('incorrect');
+      });
+      const fb = document.getElementById('quiz-fb-'+qi);
+      fb.textContent = (oi===item.correct ? 'Correct! ' : 'Not quite. ') + item.explain;
+    });
+  });
+}
+
+/* ============================= INIT ============================= */
+renderQuiz();
+renderAll();
+</script>
+</body>
+</html>
