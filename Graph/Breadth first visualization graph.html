@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeetCode 1971 · BFS Debugger — Find if Path Exists in Graph</title>
+<style>
+:root{
+  --bg:#070b13; --panel:#111a2b; --panel2:#0d1524; --line:#22304a; --line2:#30435f;
+  --text:#e7eefb; --muted:#8a9bb8; --dim:#56678a;
+  --cyan:#38bdf8; --amber:#fbbf24; --purple:#a78bfa; --green:#34d399; --red:#fb7185; --pink:#f472b6;
+  --mono: ui-monospace,"JetBrains Mono","Cascadia Code","Fira Code",Menlo,Consolas,monospace;
+  --ui: Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--ui);font-size:14px}
+body{background:radial-gradient(1100px 520px at 15% -10%,#13213b 0%,transparent 60%),var(--bg)}
+button{font-family:inherit}
+b{font-weight:700}
+.mono{font-family:var(--mono)}
+
+.app{display:flex;flex-direction:column;height:100vh;min-height:0}
+
+/* ---------- top bar ---------- */
+.top{display:flex;align-items:center;gap:14px;padding:8px 14px;border-bottom:1px solid var(--line);background:rgba(9,14,25,.92);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--purple));display:grid;place-items:center;font:800 12px var(--mono);color:#06101c}
+.brand h1{font-size:14px;margin:0;line-height:1.2}
+.brand h1 small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+.tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.tab{background:transparent;border:1px solid transparent;color:var(--muted);padding:6px 11px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
+.tab:hover{color:var(--text);background:#111c30}
+.tab.on{color:#06101c;background:var(--cyan);border-color:var(--cyan)}
+.tab:focus-visible,.btn:focus-visible,.seg button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+/* ---------- controls ---------- */
+.controls{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line);background:#0a111e;flex-wrap:wrap}
+.btn{background:#16233a;border:1px solid var(--line2);color:var(--text);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:background .15s,transform .05s,border-color .15s;white-space:nowrap}
+.btn:hover:not(:disabled){background:#1d3050;border-color:#41608c}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn.primary{background:linear-gradient(180deg,#1b7db3,#14608c);border-color:#2a97d1}
+.btn.primary:hover:not(:disabled){background:linear-gradient(180deg,#2189c4,#186fa1)}
+.btn.good{background:#0f4a37;border-color:#1f9d74}
+.btn.ghost{background:transparent}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg button{background:#0e1727;color:var(--muted);border:0;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer}
+.seg button.on{background:#1f3a5f;color:#fff}
+.seg-label{font-size:12px;color:var(--muted);margin:0 4px 0 8px}
+.toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none;margin-left:6px}
+.toggle input{accent-color:var(--pink)}
+.progress{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:220px}
+.progress .txt{font:700 13px var(--mono);color:var(--cyan);white-space:nowrap}
+.bar{flex:1;height:6px;background:#132038;border-radius:6px;overflow:hidden;min-width:80px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .3s}
+.toast{font-size:12px;color:var(--amber);min-height:16px;padding:0 14px;background:#0a111e}
+
+/* ---------- stage ---------- */
+.stage{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:12px;padding:12px 14px}
+.left{overflow:auto;display:flex;flex-direction:column;gap:10px;padding-right:2px;min-height:0}
+.right{min-height:0;display:flex;flex-direction:column;gap:8px}
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:12px;padding:10px 12px;position:relative}
+.card h3{margin:0 0 8px;font-size:12px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h3 .r{margin-left:auto;font-weight:500;font-family:var(--mono);color:var(--dim)}
+.topgrid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:10px}
+.botgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+.pill{font:600 11px var(--mono);padding:2px 8px;border-radius:20px;background:#0d1626;border:1px solid var(--line2);color:#c7d5ee}
+.pill.src{border-color:#1f9d74;color:var(--green)}
+.pill.dst{border-color:#c0508a;color:var(--pink)}
+
+/* ---------- graph ---------- */
+#graph{width:100%;height:auto;max-height:215px;display:block}
+.edge{fill:none;stroke:#3d4f74;stroke-width:3.5;transition:stroke .3s,stroke-width .3s,opacity .3s}
+.edge.ghost{stroke:#2a3855;stroke-width:2.5;stroke-dasharray:3 8;opacity:.8}
+.edge.active{stroke:var(--amber);stroke-width:5}
+.edge.lit{stroke:#c04b86;stroke-width:4}
+.edge.path{stroke:var(--green);stroke-width:6}
+.probe{fill:none;stroke:var(--pink);stroke-width:4;stroke-dasharray:9 7;opacity:0;transition:opacity .2s;animation:dash .6s linear infinite}
+.probe.on{opacity:1}
+@keyframes dash{to{stroke-dashoffset:-16}}
+.node circle.body{fill:#18233b;stroke:#4a5e88;stroke-width:3;transition:fill .35s,stroke .35s}
+.node text.lbl{font:800 20px var(--mono);fill:#dbe6fb;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.node.queued circle.body{fill:#43320a;stroke:var(--amber)}
+.node.done circle.body{fill:#2a2153;stroke:var(--purple)}
+.node.current circle.body{fill:#0b3a5c;stroke:var(--cyan);stroke-width:4;filter:drop-shadow(0 0 9px rgba(56,189,248,.85))}
+.node.found circle.body{fill:#0d4530;stroke:var(--green);stroke-width:4;filter:drop-shadow(0 0 14px rgba(52,211,153,.95))}
+.node.unreached circle.body{fill:#2a1220;stroke:var(--red);stroke-dasharray:6 4}
+.node .ring{fill:none;stroke:var(--pink);stroke-width:3;stroke-dasharray:5 5;opacity:0;transition:opacity .25s;transform-box:fill-box;transform-origin:center}
+.node.probe .ring{opacity:1;animation:spin 5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tagbox{fill:#0d2a26;stroke:var(--green);stroke-width:1.5}
+.tagtxt{font:700 11px var(--mono);fill:var(--green);text-anchor:middle;dominant-baseline:central}
+.tag.dst .tagbox{fill:#331226;stroke:var(--pink)}
+.tag.dst .tagtxt{fill:var(--pink)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:4px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:11px;height:11px;border-radius:50%;border:2px solid;display:inline-block}
+.banner{margin-top:8px;min-height:34px;border-radius:9px;padding:6px 10px;font-weight:700;display:flex;align-items:center;font-size:13px;border:1px dashed transparent;transition:all .25s;opacity:.0}
+.banner.show{opacity:1}
+.banner.ok{background:rgba(52,211,153,.12);border-color:var(--green);color:#a7f3d0}
+.banner.bad{background:rgba(251,113,133,.12);border-color:var(--red);color:#fecdd3}
+.banner.warn{background:rgba(251,191,36,.12);border-color:var(--amber);color:#fde68a}
+.banner.big{font-size:17px;letter-spacing:.02em;justify-content:center;animation:pop .5s}
+@keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+
+/* ---------- edge list / adjacency ---------- */
+.lists{display:flex;gap:8px;align-items:flex-start}
+.edgelist,.adjlist{font:12px/1.35 var(--mono);flex:1;min-width:0}
+.lists .mid{align-self:center;color:var(--cyan);font-size:18px}
+.lh{color:var(--dim);font-size:11px;margin-bottom:3px}
+.erow{display:flex;gap:6px;align-items:center;padding:2px 6px;border-radius:6px;border:1px solid transparent;color:#a6b6d4}
+.erow.act{background:rgba(251,191,36,.14);border-color:var(--amber);color:#fff2c4}
+.erow.done{color:#7de3bd}
+.erow .ck{width:12px;color:var(--green)}
+.arow{display:flex;gap:5px;align-items:center;padding:2px 5px;border-radius:6px;border:1px solid transparent;margin-bottom:1px;min-height:24px}
+.arow.cur{background:rgba(56,189,248,.12);border-color:rgba(56,189,248,.6)}
+.arow .k{color:#bcd0f0;min-width:34px}
+.chip{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:6px;background:#1a2a47;border:1px solid #33507f;color:#dbe8ff}
+.chip.new{animation:chipin .6s}
+.chip.it{background:#5b1b41;border-color:var(--pink);color:#ffd6ea}
+@keyframes chipin{0%{transform:scale(.2);background:var(--amber)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+.empty-note{color:var(--dim);font-style:italic}
+
+/* ---------- queue ---------- */
+.qrow{display:flex;align-items:center;gap:10px}
+.qlabel{font:800 12px var(--mono);color:var(--amber);white-space:nowrap;text-align:center;line-height:1.3}
+.qlane{position:relative;flex:1;min-height:98px;display:flex;align-items:center;gap:12px;padding:8px 14px 26px;border-top:3px solid #5a4514;border-bottom:3px solid #5a4514;border-radius:6px;background:repeating-linear-gradient(90deg,rgba(251,191,36,.05) 0 14px,transparent 14px 28px)}
+.qph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font:700 13px var(--mono);letter-spacing:.1em;padding-bottom:16px;text-align:center}
+.qitem{position:relative;width:64px;height:64px;flex:none;border-radius:13px;display:flex;align-items:center;justify-content:center;font:800 28px var(--mono);color:#fff4d1;background:linear-gradient(180deg,#65490f,#3f2d08);border:2px solid var(--amber);transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .45s,box-shadow .3s,border-color .3s}
+.qitem.entering{opacity:0;transform:translateX(60px) scale(.55)}
+.qitem.leaving{position:absolute;opacity:0;transform:translate(-46px,-52px) scale(.5);pointer-events:none;z-index:3}
+.qitem.hl{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(56,189,248,.85),0 0 24px rgba(56,189,248,.65)}
+.qitem.itm{border-color:var(--pink);box-shadow:0 0 0 3px rgba(244,114,182,.85),0 0 18px rgba(244,114,182,.5)}
+.qtag{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font:700 10px var(--mono);color:var(--muted);white-space:nowrap}
+.qitem.hl .qtag{color:var(--cyan)}
+.qitem.itm .qtag{color:var(--pink)}
+.qmeta{display:flex;gap:14px;font:12px var(--mono);color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.qmeta b{color:var(--text)}
+
+/* ---------- visited ---------- */
+.vt{border-collapse:separate;border-spacing:5px 4px;font-family:var(--mono);margin:-4px}
+.vt th{font-size:11px;color:var(--dim);text-align:right;font-weight:600;padding-right:4px;white-space:nowrap}
+.vh{width:44px;text-align:center;color:#9db0d2;font-weight:700;font-size:13px}
+.vc{width:44px;height:40px;text-align:center;border-radius:8px;border:1px solid var(--line2);background:#0c1424;color:#5d6e8e;font-weight:800;font-size:19px}
+.vc.on{background:#2a2153;border-color:var(--purple);color:#e6ddff}
+.vc.chk{outline:3px solid var(--pink);outline-offset:1px}
+.vc.flash{animation:flash .9s}
+@keyframes flash{0%{background:var(--amber);transform:scale(1.25);color:#000}100%{transform:scale(1)}}
+.vp{font-size:10px;text-align:center;line-height:1.15;color:var(--muted);vertical-align:top;height:26px}
+.vp span{display:block}
+.vp .s{color:var(--green)}.vp .d{color:var(--pink)}.vp .n{color:var(--cyan)}.vp .i{color:var(--pink)}
+.vnote{font-size:11px;color:var(--dim);margin-top:2px}
+
+/* ---------- variables ---------- */
+.vars{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.vbox{background:#0c1424;border:1px solid var(--line2);border-radius:8px;padding:4px 10px;min-width:74px}
+.vbox small{display:block;font:600 10px var(--mono);color:var(--dim)}
+.vbox b{font:800 19px var(--mono)}
+.cmp{border:1px dashed var(--line2);border-radius:10px;padding:6px 10px;margin-bottom:8px;transition:all .25s;background:#0b1322}
+.cmp .t{font:700 11px var(--mono);color:var(--dim);margin-bottom:4px}
+.cmp .row{display:flex;align-items:center;gap:8px}
+.cmp .cb{background:#0f1a2e;border-radius:8px;padding:2px 10px;text-align:center;min-width:88px}
+.cmp .cb small{display:block;font-size:10px;color:var(--muted)}
+.cmp .cb b{font:800 20px var(--mono)}
+.cmp .op{font:800 20px var(--mono);color:var(--muted)}
+.cmp .res{margin-left:auto;font:800 14px var(--mono);text-align:center;line-height:1.25}
+.cmp.ask{border-color:var(--amber);background:rgba(251,191,36,.07)}
+.cmp.ask .res{color:var(--amber)}
+.cmp.no{border-color:#4b5e84}
+.cmp.no .res{color:var(--muted)}
+.cmp.yes{border-color:var(--green);background:rgba(52,211,153,.12);box-shadow:0 0 18px rgba(52,211,153,.35)}
+.cmp.yes .res{color:var(--green);font-size:16px}
+.cmp.yes .cb b{color:var(--green)}
+.nbrs .t{font:700 11px var(--mono);color:var(--dim);margin-bottom:5px}
+.nchips{display:flex;gap:8px;flex-wrap:wrap;min-height:46px}
+.nc{min-width:54px;text-align:center;border-radius:9px;padding:3px 8px;border:2px solid #33507f;background:#132340;font:800 17px var(--mono);transition:all .25s}
+.nc small{display:block;font:600 9px var(--mono);color:var(--muted);height:11px}
+.nc.active{border-color:var(--pink);background:#4a1739;box-shadow:0 0 12px rgba(244,114,182,.5)}
+.nc.active small{color:#ffc2e0}
+.nc.queued{border-color:var(--amber);background:#3e2e09}
+.nc.queued small{color:var(--amber)}
+.nc.ignored{border-color:#b04a5c;background:#2a1520;color:#f3b1bc;text-decoration:line-through}
+.nc.ignored small{color:#f0a0ae;text-decoration:none}
+.nc.pending{opacity:.6}
+.order{margin-top:8px;font:12px var(--mono);color:var(--muted);display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.order b{color:#cfe0ff;background:#152340;border-radius:5px;padding:0 6px}
+.order b.rep{background:#5b1b2a;color:#ffc2cc;animation:pop .4s}
+
+/* ---------- IDE ---------- */
+.ide{display:flex;flex-direction:column;min-height:0;border:1px solid #223049;border-radius:12px;background:#0a1019;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.right .ide{flex:1}
+.idebar{display:flex;align-items:center;gap:10px;padding:7px 12px;background:#0d1524;border-bottom:1px solid #1b2840;font:12px var(--mono);color:var(--muted);flex-wrap:wrap}
+.dots i{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px}
+.filetab{padding:3px 10px;border-radius:6px;background:#0a1019;border:1px solid #223049;color:#cfe1ff}
+.dbg{margin-left:auto;color:var(--cyan)}
+.codebody{flex:1;min-height:0;overflow:auto;position:relative;padding:8px 0 12px;scroll-behavior:smooth;font:13px/21px var(--mono)}
+.cl{display:flex;align-items:stretch;min-height:21px;border-left:3px solid transparent;transition:background .2s}
+.cl.act{background:linear-gradient(90deg,rgba(56,189,248,.24),rgba(56,189,248,.05));border-left-color:var(--cyan)}
+.gut{width:46px;flex:none;text-align:right;padding-right:8px;color:#3d4e6c;user-select:none;cursor:pointer;position:relative}
+.gut:hover{color:#8fa3c8}
+.gut.bp::before{content:'';position:absolute;left:8px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--red)}
+.arr{width:16px;color:var(--cyan);flex:none;font-size:11px}
+.cl code{white-space:pre;flex:1;color:#d6e2f7;font:inherit}
+.inl{margin-left:18px;color:#8fdcff;background:rgba(56,189,248,.14);border-radius:5px;padding:0 7px;font-size:12px;font-style:italic}
+.tk{color:#c792ea}.tt{color:#4fc3f7}.tf{color:#82aaff}.tn{color:#f78c6c}.tc{color:#5c7089;font-style:italic}
+.cl.off code{opacity:.8}
+.codefoot{padding:5px 12px;border-top:1px solid #1b2840;background:#0d1524;font-size:11px;color:var(--dim)}
+
+/* ---------- flowchart ---------- */
+.flowhost{flex:1;min-height:0;overflow:auto;padding:10px}
+.flowhost svg{width:100%;max-width:700px;display:block;margin:0 auto}
+.fnode rect,.fnode polygon{fill:#111c31;stroke:#3a4d75;stroke-width:2;transition:all .3s}
+.fnode text{fill:#c9d8f3;font:700 13px var(--ui);text-anchor:middle;pointer-events:none}
+.fnode text.sub{font:500 11px var(--mono);fill:#7f92b5}
+.fnode.on rect,.fnode.on polygon{fill:#0b3a5c;stroke:var(--cyan);stroke-width:3.5;filter:drop-shadow(0 0 10px rgba(56,189,248,.8))}
+.fnode.true rect{stroke:#1f9d74}.fnode.true.on rect{fill:#0d4530;stroke:var(--green);filter:drop-shadow(0 0 12px rgba(52,211,153,.9))}
+.fnode.false rect{stroke:#b04a5c}.fnode.false.on rect{fill:#4a1522;stroke:var(--red);filter:drop-shadow(0 0 12px rgba(251,113,133,.9))}
+.fnode.ign rect{stroke:#7d6a2a}.fnode.ign.on rect{fill:#43320a;stroke:var(--amber);filter:drop-shadow(0 0 10px rgba(251,191,36,.8))}
+.flabel{font:800 12px var(--mono);fill:#5f7196;transition:fill .3s}
+.flabel.on{fill:var(--amber);font-size:14px}
+.fnote{font:600 11px var(--mono);fill:#5f7196}
+.chips{display:flex;gap:6px;align-items:center;padding:8px 12px 0;font-size:12px;color:var(--muted)}
+
+/* ---------- dock (explanation) ---------- */
+.dock{flex:none;border-top:1px solid var(--line);background:linear-gradient(180deg,#0c1423,#09101c);padding:8px 14px 10px;max-height:40vh;overflow:auto}
+.dhead{display:flex;gap:8px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+.badge{font:800 12px var(--mono);background:#123553;color:#a9defc;border-radius:6px;padding:2px 9px}
+.phase{font-size:12px;font-weight:700;color:var(--muted)}
+.lineno{font:600 11px var(--mono);color:var(--dim)}
+.score{margin-left:auto;font:700 12px var(--mono);color:var(--pink)}
+.chain{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr) 20px minmax(0,1.15fr) 20px minmax(0,1.3fr);gap:0;align-items:stretch}
+.cc{background:#0d1728;border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.cc .cl2{font:800 11px var(--mono);margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.cc .cl2 i{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10px;color:#06101c}
+.c1 .cl2{color:var(--cyan)}.c1 .cl2 i{background:var(--cyan)}
+.c2 .cl2{color:var(--amber)}.c2 .cl2 i{background:var(--amber)}
+.c3 .cl2{color:var(--purple)}.c3 .cl2 i{background:var(--purple)}
+.c4 .cl2{color:var(--green)}.c4 .cl2 i{background:var(--green)}
+.cc p{margin:0;line-height:1.45;font-size:13px;color:#d3def2}
+.cc pre{margin:0;font:12.5px/1.45 var(--mono);white-space:pre-wrap;color:#d6e2f7;background:#0a111d;border-radius:6px;padding:6px 8px;border-left:3px solid var(--cyan)}
+.cc .ln{font:600 10px var(--mono);color:var(--dim);margin-top:5px}
+.ca{display:grid;place-items:center;color:#3f5d8c;font-size:16px}
+.insight{margin-top:7px;padding:6px 8px;border-radius:8px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.45);font-size:12.5px;line-height:1.4;color:#fde9ae}
+.cta{margin-top:8px}
+.fb{margin-bottom:8px;padding:7px 10px;border-radius:9px;font-size:13px;line-height:1.4}
+.fb.ok{background:rgba(52,211,153,.12);border:1px solid var(--green);color:#b5f3d8}
+.fb.no{background:rgba(251,113,133,.11);border:1px solid var(--red);color:#fdd0d7}
+.fb.skip{background:#111c30;border:1px solid var(--line2);color:var(--muted)}
+.predict{border:2px solid var(--pink);border-radius:12px;padding:10px 14px;background:linear-gradient(180deg,rgba(244,114,182,.12),rgba(244,114,182,.04))}
+.predict .ph{font:800 12px var(--mono);color:var(--pink);margin-bottom:3px}
+.predict .pq{font-size:18px;font-weight:800;margin-bottom:3px}
+.predict .pc{color:#d3def2;margin-bottom:9px;font-size:13px}
+.pbtns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pbtn{background:#1a2740;border:1px solid #3a5182;color:var(--text);padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;text-align:left}
+.pbtn:hover{background:#243a63;border-color:var(--pink)}
+.pbtn b{color:var(--pink);margin-right:6px;font-family:var(--mono)}
+.linkbtn{background:none;border:0;color:var(--dim);cursor:pointer;font-size:12px;text-decoration:underline;margin-left:6px}
+.welcome{color:#c7d6ef;line-height:1.55;font-size:13.5px}
+.welcome .flowline{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font:700 12px var(--mono)}
+.welcome .flowline span{padding:3px 9px;border-radius:6px;border:1px solid}
+
+/* ---------- practice ---------- */
+.practice{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:12px;padding:12px 14px}
+.pcol{display:flex;flex-direction:column;gap:10px;min-width:0}
+.practice .card p{margin:0 0 8px;line-height:1.5;color:#cbd8ef}
+.practice code.i{font-family:var(--mono);background:#0c1424;padding:1px 6px;border-radius:5px;color:#9ad7ff}
+.hint{border:1px solid var(--line2);border-left:4px solid var(--amber);border-radius:9px;padding:8px 10px;margin-bottom:8px;background:#0d1728;animation:pop .35s}
+.hint .hq{font-weight:700;margin-bottom:3px}
+.hint details{font-size:12.5px;color:#cbd8ef}
+.hint summary{cursor:pointer;color:var(--cyan);font-size:12px}
+.editor{width:100%;flex:1;min-height:320px;resize:vertical;background:#0a1019;color:#d6e2f7;border:0;padding:12px 14px;font:13px/1.6 var(--mono);tab-size:4;outline:none}
+.prow{display:flex;gap:8px;flex-wrap:wrap}
+.check{list-style:none;margin:0;padding:0;font-size:13px}
+.check li{padding:3px 0;color:#cbd8ef}
+.check .y{color:var(--green)}.check .n{color:var(--dim)}
+.solcode{margin:0;padding:12px 14px;font:13px/1.55 var(--mono);white-space:pre;overflow:auto;color:#d6e2f7}
+
+/* ---------- responsive ---------- */
+@media (max-width:1050px){
+  .app{height:auto;min-height:100vh}
+  .stage,.practice{grid-template-columns:1fr}
+  .left{overflow:visible}
+  .right .ide{min-height:0}
+  .codebody{max-height:430px}
+  .flowhost{max-height:560px}
+  .topgrid{grid-template-columns:1fr}
+  .dock{position:sticky;bottom:0;z-index:30;max-height:46vh}
+  .chain{grid-template-columns:1fr}
+  .ca{transform:rotate(90deg);height:20px}
+  .progress{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo">BFS</div>
+      <h1>LeetCode 1971 · Find if Path Exists in Graph<small>Interactive BFS debugger — C++</small></h1>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab on" data-mode="ex1">1 · Path exists</button>
+      <button class="tab" data-mode="ex2">2 · No path</button>
+      <button class="tab" data-mode="cycle">3 · Without visited</button>
+      <button class="tab" data-mode="summary">4 · Summary flow</button>
+      <button class="tab" data-mode="practice">5 · Now you write it</button>
+    </nav>
+  </header>
+
+  <div class="controls" id="controls">
+    <button class="btn primary" id="bStart">▶ Start</button>
+    <button class="btn" id="bPrev">⏪ Previous Step</button>
+    <button class="btn primary" id="bNext">⏭ Next Step</button>
+    <button class="btn good" id="bPlay">▶ Auto Play</button>
+    <button class="btn" id="bPause">⏸ Pause</button>
+    <button class="btn" id="bReset">🔄 Reset</button>
+    <span class="seg-label">Speed</span>
+    <div class="seg" id="speed">
+      <button data-d="2700">Slow</button><button data-d="1600" class="on">Normal</button><button data-d="650">Fast</button>
+    </div>
+    <label class="toggle" title="Pause before key decisions and ask you what happens next"><input type="checkbox" id="predictToggle" checked> 🎯 Predict mode</label>
+    <button class="btn ghost" id="bSkip" title="Jump past the graph-construction steps">⏩ Skip graph building</button>
+    <span id="cycToggle" hidden>
+      <span class="seg-label">Visited tracking</span>
+      <span class="seg" id="cycSeg"><button data-v="0" class="on">OFF</button><button data-v="1">ON</button></span>
+    </span>
+    <span id="sumToggle" hidden>
+      <span class="seg-label">Replay</span>
+      <span class="seg" id="sumSeg"><button data-s="ex1" class="on">Example 1</button><button data-s="ex2">Example 2</button></span>
+    </span>
+    <div class="progress"><span class="txt" id="stepTxt">Step 0 / 0</span><div class="bar"><i id="barFill"></i></div></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <main class="stage" id="lesson">
+    <section class="left" id="leftCol">
+      <div class="topgrid">
+        <div class="card" id="graphCard">
+          <h3>Graph
+            <span class="pill">n = <b id="pN"></b></span>
+            <span class="pill src">source = <b id="pS"></b></span>
+            <span class="pill dst">destination = <b id="pD"></b></span>
+            <span class="r" id="gKind"></span>
+          </h3>
+          <svg id="graph" role="img" aria-label="Graph visualization"></svg>
+          <div class="legend">
+            <span><i style="border-color:#4a5e88;background:#18233b"></i>unvisited</span>
+            <span><i style="border-color:var(--amber);background:#43320a"></i>queued</span>
+            <span><i style="border-color:var(--cyan);background:#0b3a5c"></i>current</span>
+            <span><i style="border-color:var(--purple);background:#2a2153"></i>visited / processed</span>
+            <span><i style="border-color:var(--pink);border-style:dashed"></i>neighbor being checked</span>
+            <span><i style="border-color:var(--green);background:#0d4530"></i>found</span>
+          </div>
+          <div class="banner" id="banner"></div>
+        </div>
+        <div class="card" id="listCard">
+          <h3>Edge list → Adjacency list</h3>
+          <div class="lists">
+            <div class="edgelist"><div class="lh">edges</div><div id="edgeList"></div></div>
+            <div class="mid">➜</div>
+            <div class="adjlist"><div class="lh">adj</div><div id="adjList"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="queueCard">
+        <h3>Queue <span class="r">queue&lt;int&gt; q</span></h3>
+        <div class="qrow">
+          <div class="qlabel">FRONT<br>→</div>
+          <div class="qlane" id="qlane"><div class="qph" id="qph"></div></div>
+          <div class="qlabel">←<br>BACK</div>
+        </div>
+        <div class="qmeta"><span>q.empty() = <b id="qEmpty">—</b></span><span>size = <b id="qSize">—</b></span><span id="qNote"></span></div>
+      </div>
+
+      <div class="botgrid">
+        <div class="card">
+          <h3>Visited array <span class="r">vector&lt;int&gt; vis</span></h3>
+          <table class="vt" id="vtable"></table>
+          <div class="vnote" id="vnote"></div>
+        </div>
+        <div class="card">
+          <h3>What the code is looking at</h3>
+          <div class="vars">
+            <div class="vbox"><small>node</small><b id="vNode">—</b></div>
+            <div class="vbox"><small>it</small><b id="vIt">—</b></div>
+            <div class="vbox"><small>vis[it]</small><b id="vVisIt">—</b></div>
+          </div>
+          <div class="cmp" id="cmp">
+            <div class="t">if (node == destination)</div>
+            <div class="row">
+              <div class="cb"><small>Current Node</small><b id="cmpA">—</b></div>
+              <div class="op" id="cmpOp">==</div>
+              <div class="cb"><small>Destination</small><b id="cmpB">—</b></div>
+              <div class="res" id="cmpRes"></div>
+            </div>
+          </div>
+          <div class="nbrs">
+            <div class="t" id="nbrTitle">neighbors</div>
+            <div class="nchips" id="nbrChips"></div>
+          </div>
+          <div class="order" id="order"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="right">
+      <div class="ide" id="codePane">
+        <div class="idebar">
+          <span class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></span>
+          <span class="filetab">solution.cpp</span>
+          <span id="codeChip" class="dbg">● debugger</span>
+        </div>
+        <div class="codebody" id="codeBody"></div>
+        <div class="codefoot">Tip: click a line number to set a red breakpoint — Auto Play pauses there.</div>
+      </div>
+      <div class="ide" id="flowPane" hidden>
+        <div class="idebar"><span class="filetab">algorithm flow</span><span class="dbg">the box for the current step lights up</span></div>
+        <div class="flowhost" id="flowHost"></div>
+      </div>
+    </section>
+  </main>
+
+  <main class="practice" id="practice" hidden>
+    <div class="pcol">
+      <div class="card">
+        <h3>Your turn</h3>
+        <p>Write <code class="i">validPath</code> yourself. Return <code class="i">true</code> if some path connects <code class="i">source</code> to <code class="i">destination</code>, otherwise <code class="i">false</code>. Edges are undirected.</p>
+        <p style="color:var(--muted);font-size:12.5px">The solution is hidden. Ask for hints one at a time — each one is a question to answer in your own head first.</p>
+      </div>
+      <div class="card">
+        <h3>Hints <span class="r" id="hintCount">0 / 5</span></h3>
+        <div id="hintList"></div>
+        <button class="btn primary" id="hintBtn">💡 Give me Hint 1</button>
+      </div>
+    </div>
+    <div class="pcol">
+      <div class="ide" style="flex:1">
+        <div class="idebar"><span class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></span><span class="filetab">your_solution.cpp</span><span class="dbg" style="color:var(--muted)">Tab inserts 4 spaces</span></div>
+        <textarea class="editor" id="editor" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+      </div>
+      <div class="prow">
+        <button class="btn primary" id="bCheck">✔ Self-check (ingredients)</button>
+        <button class="btn" id="bClearEd">↺ Reset template</button>
+        <button class="btn ghost" id="bSol">👁 Show Solution</button>
+      </div>
+      <div class="card" id="checkCard" hidden>
+        <h3>Self-check <span class="r">heuristic — it cannot compile C++</span></h3>
+        <ul class="check" id="checkList"></ul>
+        <div class="vnote">Paste your code into LeetCode to really run it.</div>
+      </div>
+      <div class="ide" id="solBox" hidden>
+        <div class="idebar"><span class="filetab">solution.cpp</span><span class="dbg" style="color:var(--green)">reference solution</span><button class="btn" id="bCopy" style="margin-left:8px;padding:3px 9px">Copy</button></div>
+        <pre class="solcode" id="solCode"></pre>
+        <div class="codefoot">Time O(V + E) · Space O(V + E). Tip: <span class="mono">for (auto&amp; edge : edges)</span> avoids copying each edge vector.</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="dock" id="dock"></footer>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const NS='http://www.w3.org/2000/svg';
+function svgEl(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+
+/* =====================================================================
+   The C++ code (1-indexed line numbers are used everywhere below)
+   ===================================================================== */
+const CODE=[
+/* 1*/'bool validPath(int n, vector<vector<int>>& edges,',
+/* 2*/'               int source, int destination) {',
+/* 3*/'',
+/* 4*/'    vector<vector<int>> adj(n);',
+/* 5*/'',
+/* 6*/'    for (auto edge : edges) {',
+/* 7*/'        adj[edge[0]].push_back(edge[1]);',
+/* 8*/'        adj[edge[1]].push_back(edge[0]);',
+/* 9*/'    }',
+/*10*/'',
+/*11*/'    vector<int> vis(n, 0);',
+/*12*/'',
+/*13*/'    queue<int> q;',
+/*14*/'',
+/*15*/'    vis[source] = 1;',
+/*16*/'    q.push(source);',
+/*17*/'',
+/*18*/'    while (!q.empty()) {',
+/*19*/'',
+/*20*/'        int node = q.front();',
+/*21*/'        q.pop();',
+/*22*/'',
+/*23*/'        if (node == destination) {',
+/*24*/'            return true;',
+/*25*/'        }',
+/*26*/'',
+/*27*/'        for (auto it : adj[node]) {',
+/*28*/'',
+/*29*/'            if (!vis[it]) {',
+/*30*/'                vis[it] = 1;',
+/*31*/'                q.push(it);',
+/*32*/'            }',
+/*33*/'        }',
+/*34*/'    }',
+/*35*/'',
+/*36*/'    return false;',
+/*37*/'}'
+];
+/* variant used in the "without visited" experiment: the visited logic is commented out */
+const NOVIS_ALT={
+  15:'    // vis[source] = 1;              <- REMOVED',
+  29:'            // if (!vis[it]) {         <- visited check REMOVED',
+  30:'                // vis[it] = 1;',
+  32:'            // }'
+};
+function hl(src){
+  return esc(src).replace(/(\/\/.*$)|\b(bool|int|auto|for|while|if|return|class|public|void|true|false)\b|\b(vector|queue)\b|\b(push_back|push|front|pop|empty|validPath)\b|\b(\d+)\b/g,
+    (m,c,k,t,f,nm)=> c?`<span class="tc">${c}</span>`: k?`<span class="tk">${k}</span>`: t?`<span class="tt">${t}</span>`: f?`<span class="tf">${f}</span>`: `<span class="tn">${nm}</span>`);
+}
+
+/* =====================================================================
+   Scenarios
+   ===================================================================== */
+const SCN={
+  ex1:{id:'ex1',n:5,edges:[[0,1],[1,2],[0,3],[3,4],[1,4]],src:0,dst:2,directed:false,w:480,h:240,
+    pos:[[80,62],[240,62],[400,62],[80,180],[240,180]],
+    pk:['0>1','1>0','1>2','3>4'],pkDest:true,
+    insMark:{4:'Remember: node 4 is marked visited <b>now</b>, while node 3 is still waiting in the queue. Watch what node 3 does when it meets 4 later.'},
+    insSeen:{'3>4':'Node 4 is still <b>waiting in the queue</b> — nobody has processed it yet. But vis[4] = 1 was written the moment node 1 discovered it, so node 3 already knows 4 is handled. Had we waited to mark 4 until it is popped, node 3 would have pushed a second copy of 4.'}},
+  ex2:{id:'ex2',n:6,edges:[[0,1],[1,2],[3,4],[4,5]],src:0,dst:5,directed:false,w:480,h:240,
+    pos:[[80,62],[240,62],[400,62],[80,180],[240,180],[400,180]],
+    pk:['0>1','1>0','2>1'],pkDest:false,insMark:{},insSeen:{}},
+  cyc:{id:'cyc',n:4,edges:[[0,1],[1,2],[2,0]],src:0,dst:3,directed:true,prebuilt:true,w:480,h:250,
+    pos:[[80,62],[240,62],[400,62],[240,207]],curve:{2:[240,178]},
+    pk:['2>0'],pkOff:['2>0'],pkDest:false,maxPops:7,insMark:{},insSeen:{}}
+};
+
+/* =====================================================================
+   Step generator: runs the real algorithm and records a snapshot
+   (graph / queue / visited / variables) + explanation for every step.
+   ===================================================================== */
+const fmtQ=q=>q.length?q.map(x=>`[${x.v}]`).join(' '):'EMPTY';
+const fmtV=(v,hi)=>v.map((x,i)=>i===hi?`[<b>${x}</b>]`:`[${x}]`).join(' ');
+const fmtAdj=(adj,i)=>`adj[${i}] = [${adj[i].join(', ')}]`;
+
+function gen(scn,useVis){
+  const n=scn.n,src=scn.src,dst=scn.dst,E=scn.edges,dir=!!scn.directed,prebuilt=!!scn.prebuilt;
+  const PK=new Set(useVis?scn.pk:(scn.pkOff||[]));
+  const asked=new Set();
+  const S={adjOn:false,adj:Array.from({length:n},()=>[]),edgesShown:prebuilt?E.length:0,edgeActive:-1,lastChip:null,
+    vis:null,qOn:false,queue:[],node:null,front:false,nbrs:null,nbrStatus:null,it:null,cmp:null,lit:null,
+    order:[],parent:{},result:null,banner:null,stopped:false,pops:0,pushes:0};
+  let uid=0,stickyWarn=false,markShown=false;
+  const WARN={type:'warn',text:'⚠ Without visited tracking, BFS can repeatedly explore the same cycle.'};
+  const steps=[];
+  const snap=()=>JSON.parse(JSON.stringify(S));
+  const snapPre=()=>{const p=snap();p.banner=stickyWarn?WARN:null;return p;};
+  const add=(line,o)=>{
+    o=o||{};
+    S.banner=(o.banner!==undefined)?o.banner:(stickyWarn?WARN:null);
+    const lines=Array.isArray(line)?line:[line];
+    steps.push(Object.assign({line:lines[0],lines,flow:null,inline:''},o,{state:snap()}));
+  };
+  steps.init=snap();
+
+  /* ---- entry ---- */
+  add([1,2],{flow:['src'],inline:`source=${src}, destination=${dst}`,
+    action:`validPath is called with n = ${n}, the edge list, source = ${src} and destination = ${dst}. The question: can we walk from ${src} to ${dst} along the edges?`,
+    visual:`The graph appears. Node ${src} gets the <b>SRC</b> tag and node ${dst} gets the <b>DST</b> tag.${prebuilt?' For this demo the edges are one-way arrows forming a loop 0 → 1 → 2 → 0, and node 3 (the destination) is cut off from it.':' The edges are drawn faintly (dotted): the program has not read them yet.'}`,
+    reason:prebuilt?`We want the simplest possible cycle so you can see exactly what the <b>vis</b> array protects us from. (In the real problem every undirected edge is already a tiny cycle: 0→1→0→1…)`
+      :`The input is only a list of pairs. BFS constantly needs to ask "who are the neighbors of this node?", so we first reshape the data into something that can answer that instantly.`});
+
+  /* ---- adjacency list ---- */
+  if(prebuilt){
+    E.forEach(([a,b])=>S.adj[a].push(b));
+    S.adjOn=true;
+    add(4,{inline:'adj prefilled for the demo',
+      action:`adj is already filled for this demo: adj[0] = [1], adj[1] = [2], adj[2] = [0], adj[3] = [ ]. (Lines 6–9 are skipped — the graph is one-way here.)`,
+      visual:`The <b>adjacency list</b> shows every node's outgoing neighbors. Node 3 has none: nothing leads to it.`,
+      reason:`Everything BFS needs is now in adj. From here on the code is exactly the BFS you already know.`});
+  } else {
+    S.adjOn=true;
+    add(4,{inline:`adj = ${n} empty lists`,
+      action:`Create ${n} empty lists — one list of neighbors for every node.`,
+      visual:`The <b>adjacency list</b> appears: every node starts with an empty list (0 → [ ], 1 → [ ], …).`,
+      reason:`adj[u] will hold every neighbor of u. Later, adj[node] gives BFS all neighbors in one step instead of scanning the entire edge list again and again.`});
+    E.forEach(([a,b],i)=>{
+      S.edgeActive=i;S.edgesShown=i+1;S.lastChip=null;
+      add(6,{inline:`edge = [${a},${b}]`,
+        action:`Take the next edge from the edge list: [${a},${b}] — nodes ${a} and ${b} are directly connected.`,
+        visual:`Row ${i+1} of <b>edges</b> lights up, and the dotted line ${a} — ${b} becomes a real line in the graph.`,
+        reason:i===0?`An undirected edge works in <b>both</b> directions, so we must record it twice: once for ${a} and once for ${b}.`:`Same idea again: record the edge for both endpoints.`});
+      S.adj[a].push(b);S.lastChip={row:a,val:b};
+      add(7,{inline:`adj[${a}] += ${b}`,
+        action:`Node ${a} learns that ${b} is its neighbor.`,
+        visual:`Row ${a} of the adjacency list gets a new chip: <span class="mono">${fmtAdj(S.adj,a)}</span>`,
+        reason:`Now, standing on ${a}, BFS knows it can step to ${b}.`});
+      S.adj[b].push(a);S.lastChip={row:b,val:a};
+      add(8,{inline:`adj[${b}] += ${a}`,
+        action:`Node ${b} learns that ${a} is its neighbor.`,
+        visual:`Row ${b} gets a chip too: <span class="mono">${fmtAdj(S.adj,b)}</span>`,
+        reason:`The edge is undirected, so we can also walk back from ${b} to ${a}. Forgetting this second line is a classic bug.`});
+    });
+    S.edgeActive=-1;S.lastChip=null;
+    add(9,{inline:'adj is complete',
+      action:`All ${E.length} edges are processed — the adjacency list is finished.`,
+      visual:`Compare with the picture: every edge appears <b>twice</b> in adj (once from each end).<br><span class="mono">${S.adj.map((l,i)=>`${i}→[${l.join(',')}]`).join('  ')}</span>`,
+      reason:`We no longer need the edge list. adj answers "who are my neighbors?" instantly.`});
+  }
+
+  /* ---- vis / queue / source ---- */
+  S.vis=Array(n).fill(0);
+  add(11,{inline:`vis = [${S.vis.join(',')}]`,
+    action:`Create ${n} integers, all 0 (0 means "not discovered yet").`,
+    visual:`The <b>Visited array</b> appears: <span class="mono">${fmtV(S.vis)}</span> — every node is still unvisited (grey).`,
+    reason:useVis?`vis[i] = 1 will mean "node i has already been discovered". It is BFS's memory, so the same node is never added twice.`
+      :`In this experiment the array exists, but the code has had its visited lines removed — it will never be read or written. Watch what goes wrong.`});
+  S.qOn=true;
+  add(13,{inline:'q = { }',
+    action:`Create an empty queue of ints.`,
+    visual:`The <b>Queue</b> appears (empty). Nodes will enter at the BACK and leave from the FRONT.`,
+    reason:`A queue is first-in-first-out: the first node discovered is the first one processed. That is what makes BFS explore in layers — the source, then everything 1 edge away, then 2 edges away…`});
+  if(useVis){
+    S.vis[src]=1;
+    add(15,{flow:['putq'],inline:`vis[${src}] = 1`,
+      action:`Mark the source as visited: vis[${src}] = 1.`,
+      visual:`Visited array: <span class="mono">${fmtV(S.vis,src)}</span> — cell ${src} flips 0 → 1 (<b>↑ source visited</b>), and node ${src} turns purple.`,
+      reason:`Because we are starting from source ${src}, we mark it visited <b>before</b> putting it into the queue. Nobody should ever add the source again.`});
+  }
+  S.queue.push({id:++uid,v:src});S.pushes++;
+  add(16,{flow:['putq'],inline:`q = { ${src} }`,
+    action:`Put the source into the queue: q.push(${src}).`,
+    visual:`Queue: <span class="mono">${fmtQ(S.queue)}</span> — node ${src} slides in at the BACK, and on the graph it turns amber (queued).`,
+    reason:useVis?`BFS needs a starting point. The queue now holds exactly one job: "explore from ${src}".`
+      :`The queue holds one job: "explore from ${src}". (Notice we did not mark ${src} as visited — the first sign of trouble.)`});
+
+  /* ---- main loop ---- */
+  let first=true;
+  while(true){
+    S.node=null;S.front=false;S.it=null;S.nbrs=null;S.nbrStatus=null;S.cmp=null;S.lit=null;
+    if(!useVis && S.pops>=scn.maxPops){
+      S.stopped=true;
+      add(18,{inline:'q.empty() is still false…',
+        banner:{type:'bad',text:'♾ INFINITE LOOP — the queue never empties, so return false is never reached.'},
+        action:`We have popped ${S.pops} nodes, but the graph only has 3 reachable nodes. The queue is still not empty — and it never will be. We stop the animation here.`,
+        visual:`The processed trail keeps repeating <b>0 → 1 → 2 → 0 → 1 → 2 → …</b> forever. The destination 3 can never be reached, and the program never ends.`,
+        reason:`Every time BFS meets a node it has already seen, it queues it again. On a graph with a cycle the queue never runs dry. The visited array is what breaks the cycle.`,
+        cta:{label:'Turn visited tracking ON →',act:'visOn'}});
+      break;
+    }
+    if(S.queue.length===0){
+      add(18,{flow:['empty','empty-yes'],inline:'q.empty() = true',
+        action:`q.empty() is true, so !q.empty() is false → BFS leaves the while-loop.`,
+        visual:`<b>QUEUE = EMPTY</b>. Every node BFS could reach has been processed: ${S.order.join(' → ')}.`,
+        reason:`Nothing is waiting to be explored any more. If the destination were reachable, BFS would have met it by now.`});
+      S.result=false;
+      add(36,{flow:['false'],inline:'return false',
+        banner:{type:'bad',text:'DESTINATION NOT FOUND → FALSE'},
+        action:`return false — the function ends with the answer FALSE.`,
+        visual:`Banner: <b>DESTINATION NOT FOUND → FALSE</b>. Nodes that BFS never reached (red, dashed) include the destination ${dst}.`,
+        reason:`The queue ran dry, so we explored everything reachable from ${src} and never met ${dst}. It must live in a different, disconnected part of the graph. <b>This line is only reachable when the queue is empty</b>, which is exactly why it comes after the loop.`});
+      break;
+    }
+    add(18,{flow:first?null:['empty','empty-no'],inline:`q.empty() = false (size ${S.queue.length})`,
+      action:first?`q.empty() is false — the queue holds ${S.queue.length} node — so !q.empty() is true → enter the loop.`
+        :`Back at the loop condition. The queue still holds ${S.queue.length} node${S.queue.length>1?'s':''}: q.empty() is false → keep going.`,
+      visual:`Queue: <span class="mono">${fmtQ(S.queue)}</span>. The <b>q.empty()</b> indicator reads <b>false</b>.`,
+      reason:first?`As long as something is waiting in the queue, there is still somewhere left to explore.`:`Finished with the previous node's neighbors. There is still work in the queue.`});
+    first=false;
+
+    const node=S.queue[0].v;
+    S.node=node;S.front=true;
+    add(20,{flow:['front'],inline:`node = ${node}`,
+      action:`q.front() <i>peeks</i> at the first element of the queue: node = ${node}.`,
+      visual:`The front cell of the queue lights up (<b>front()</b>) and the variable <b>node</b> becomes ${node}. On the graph, ${node} turns cyan (current).`,
+      reason:`BFS always works on the node that has been waiting the longest — that is what keeps the exploration in layers.`});
+    S.queue.shift();S.front=false;S.pops++;S.order.push(node);
+    add(21,{flow:['front'],inline:`popped ${node}`,
+      action:`q.pop() removes ${node} from the queue. We now "hold" it in the variable node.`,
+      visual:`Node ${node} slides out of the queue. Queue: <span class="mono">${fmtQ(S.queue)}</span>.`,
+      reason:`front() only looks. Without pop() the same node would stay at the front forever and BFS would never move on.`});
+
+    /* destination check */
+    const isDst=node===dst;
+    S.cmp={a:node,b:dst,match:null};
+    let pred=null,pre=null;
+    if(isDst&&scn.pkDest&&useVis&&!asked.has('dest')){
+      asked.add('dest');pre=snapPre();
+      pred={correct:'C',ctx:`BFS has just popped node ${node}, and the destination is ${dst}. Look at the "Current Node / Destination" box. What happens next?`,
+        reveal:`<b>C — destination found.</b> ${node} == ${dst} is true, so the if-body runs and BFS returns true.`};
+    }
+    S.cmp.match=isDst;
+    if(isDst){
+      add(23,{flow:['dest','dest-yes'],inline:`${node} == ${dst} → true`,predict:pred,pre,
+        action:`Is node == destination? ${node} == ${dst} → <b>MATCH!</b> The condition is true, so we enter the if-body.`,
+        visual:`<span class="mono">Current Node: ${node} · Destination: ${dst}<br>MATCH! ↓ TRUE</span><br>The check card turns green and node ${dst} lights up.`,
+        reason:`BFS only ever moves along real edges, starting at ${src}. Having pulled ${dst} out of the queue proves that a path from ${src} to ${dst} exists.`});
+      S.result=true;S.cmp={a:node,b:dst,match:true};
+      add(24,{flow:['true'],inline:'return true',
+        banner:{type:'ok',text:'DESTINATION FOUND → TRUE',big:true},
+        action:`return true — the function ends immediately with the answer TRUE.`,
+        visual:`<b>DESTINATION FOUND → TRUE.</b> Node ${dst} glows green and the route BFS used is drawn: ${(()=>{const p=[dst];let v=dst,g=0;while(v!==src&&S.parent[v]!==undefined&&g++<20){v=S.parent[v];p.push(v);}return p.reverse().join(' → ');})()}.`,
+        reason:`We do not need the full route or the other nodes still in the queue — the question is only "does a path exist?". (The route is drawn for your benefit; the C++ code doesn't store it.)`});
+      break;
+    }
+    add(23,{flow:['dest','dest-no'],inline:`${node} == ${dst} → false`,
+      action:`Is node == destination? ${node} == ${dst} → false. This is not the destination, so we keep exploring from here.`,
+      visual:`Check card: Current Node <b>${node}</b> vs Destination <b>${dst}</b> → no match.`,
+      reason:`We test a node when we <i>process</i> it (just after pop). Only a match can end the search early; otherwise we look at its neighbors.`});
+    S.cmp=null;
+
+    /* neighbors */
+    const nb=S.adj[node].slice();
+    S.nbrs=nb.slice();S.nbrStatus=nb.map(()=> 'pending');
+    nb.forEach((it,k)=>{
+      S.it=it;S.lit={a:node,b:it};S.nbrStatus[k]='active';
+      const key=node+'>'+it;
+      const wantsPred=PK.has(key)&&!asked.has(key);
+      add(27,{flow:['nbr'],inline:`it = ${it}`,
+        action:k===0?`adj[${node}] = [${nb.join(', ')}]. The for-loop visits these neighbors one at a time. First: it = ${it}.`:`Next neighbor of ${node}: it = ${it}.`,
+        visual:`The <b>neighbors</b> strip shows adj[${node}] with the pointer on ${it}; on the graph a dashed arrow probes ${node} → ${it}.`,
+        reason:`To find everything reachable from ${node}, BFS has to look at every node directly connected to it.`,
+        predict:(!useVis&&wantsPred)?(asked.add(key),{correct:'A',
+          ctx:`Node ${node} is looking at neighbor ${it}. BFS already processed ${it} a moment ago, and in this version of the code there is <b>no visited check</b>. What happens next?`,
+          reveal:`<b>A — put node into queue.</b> With no visited check nothing stops it: ${it} goes straight back into the queue even though we already processed it.`}):null});
+      if(useVis){
+        const seen=!!S.vis[it];
+        let p2=null,pre2=null;
+        if(wantsPred){
+          asked.add(key);pre2=snapPre();
+          p2=seen?{correct:'B',ctx:`Node ${node} is now checking neighbor ${it}. Look at the Visited array and the Queue. What happens next?`,
+                   reveal:`<b>B — ignore, it is visited.</b> vis[${it}] is already 1, so the if-condition fails and ${it} is NOT added to the queue.`}
+                  :{correct:'A',ctx:`Node ${node} is now checking neighbor ${it}. Look at the Visited array and the Queue. What happens next?`,
+                   reveal:`<b>A — put node into queue.</b> vis[${it}] is 0, so ${it} is marked visited and pushed into the queue.`};
+        }
+        if(seen){
+          S.nbrStatus[k]='ignored';
+          add(29,{flow:['vis','vis-yes','ignore'],inline:`vis[${it}] = 1 → skip`,predict:p2,pre:pre2,
+            banner:{type:'ok',text:`vis[${it}] = 1 → ${it} is already visited → DON'T ADD TO QUEUE`},
+            action:`Check vis[${it}]: it is 1, so !vis[${it}] is false → the if-body is <b>skipped</b>. Neighbor ${it} is ignored.`,
+            visual:`Cell ${it} of the Visited array is highlighted: <span class="mono">${fmtV(S.vis,it)}</span> — already 1.${S.queue.some(x=>x.v===it)?` Node ${it} is <b>still waiting in the queue</b> (pink ring), so no second copy is added.`:''} The neighbor chip turns red ✗.`,
+            reason:`${it} was already discovered earlier — it is either waiting in the queue or already processed. Adding it again would only create duplicates (and endless loops when the graph has cycles).`,
+            insight:scn.insSeen[key]||''});
+        } else {
+          add(29,{flow:['vis','vis-no'],inline:`vis[${it}] = 0 → enter`,predict:p2,pre:pre2,
+            action:`Check vis[${it}]: it is 0, so !vis[${it}] is true → we enter the if-body. Neighbor ${it} is brand new.`,
+            visual:`Cell ${it} of the Visited array is highlighted: <span class="mono">${fmtV(S.vis,it)}</span> — still 0 (never discovered).`,
+            reason:`Nobody has reached ${it} before, so it must be scheduled for exploration. Next: mark it, then enqueue it.`});
+          S.vis[it]=1;S.parent[it]=node;
+          let ins=scn.insMark[it]||'';
+          if(!markShown){markShown=true;ins=`<b>Why mark visited when DISCOVERING, not when popping?</b> Because ${it} is marked now — while it is still waiting in the queue. If any other node reaches ${it} before we pop it, it will read vis[${it}] = 1 and won't add it again. Marking only on pop would let two nodes queue ${it} twice.`+(ins?'<br><br>'+ins:'');}
+          add(30,{flow:['mark'],inline:`vis[${it}] = 1`,
+            action:`vis[${it}] = 1: mark ${it} as discovered — right now, <b>before</b> it enters the queue.`,
+            visual:`Visited array: <span class="mono">${fmtV(S.vis,it)}</span> — cell ${it} flips 0 → 1 and node ${it} turns purple.`,
+            reason:`From this moment on, every other node that sees ${it} will find vis[${it}] = 1 and leave it alone.`,
+            insight:ins});
+          S.queue.push({id:++uid,v:it});S.pushes++;S.nbrStatus[k]='queued';
+          add(31,{flow:['push'],inline:`q.push(${it})`,
+            action:`Neighbor ${it} has been discovered.`,
+            visual:`Queue changes: <span class="mono">${fmtQ(S.queue)}</span> — ${it} enters at the BACK and turns amber on the graph.`,
+            reason:`We don't process ${it} immediately. We put it in the queue so BFS can process it in the correct order — everything closer to the source goes first.`});
+        }
+      } else {
+        const again=S.order.includes(it);
+        if(!(it in S.parent))S.parent[it]=node;
+        S.queue.push({id:++uid,v:it});S.pushes++;S.nbrStatus[k]='queued';
+        if(again)stickyWarn=true;
+        add(31,{flow:['push'],inline:`q.push(${it})`,
+          action:`q.push(${it}) — no visited check exists, so ${it} is queued ${again?`<b>again</b>, even though it was already processed`:'as usual'}.`,
+          visual:`Queue: <span class="mono">${fmtQ(S.queue)}</span>. Processed trail: <span class="mono">${S.order.join(' → ')}</span>${again?' — a repeat!':''}`,
+          reason:again?`Nothing remembers that ${it} has been explored, so the cycle 0 → 1 → 2 → 0 feeds BFS the same nodes forever.`:`Fine so far — but nothing remembers which nodes we have seen.`});
+      }
+    });
+  }
+  return steps;
+}
+
+/* =====================================================================
+   App state
+   ===================================================================== */
+const APP={mode:'ex1',cycleVis:false,sumSrc:'ex1',idx:{},answers:{},playing:false,timer:null,delay:1600,predictOn:true,bps:new Set()};
+const CACHE={};
+let GRAPH=null,GRAPH_FOR=null,CODE_FOR=null,CODE_EL=[];
+const LAST={vis:null,chip:null};
+
+function curKey(){const m=APP.mode;return m==='ex1'?'ex1':m==='ex2'?'ex2':m==='cycle'?(APP.cycleVis?'cyc-on':'cyc-off'):'sum-'+APP.sumSrc;}
+function baseId(){const m=APP.mode;return m==='ex1'?'ex1':m==='ex2'?'ex2':m==='cycle'?'cyc':APP.sumSrc;}
+function getSteps(key){
+  if(CACHE[key])return CACHE[key];
+  let s;
+  if(key==='ex1')s=gen(SCN.ex1,true);
+  else if(key==='ex2')s=gen(SCN.ex2,true);
+  else if(key==='cyc-off')s=gen(SCN.cyc,false);
+  else if(key==='cyc-on')s=gen(SCN.cyc,true);
+  else{const base=getSteps(key.slice(4));s=base.filter(x=>x.flow);s.init=base.init;}
+  return CACHE[key]=s;
+}
+function cur(){
+  const key=curKey(),steps=getSteps(key);
+  if(APP.idx[key]===undefined)APP.idx[key]=-1;
+  const idx=APP.idx[key];
+  return {key,steps,idx,step:idx>=0?steps[idx]:null,scn:SCN[baseId()]};
+}
+function needsAnswer(c){
+  return APP.predictOn && APP.mode!=='summary' && c.step && c.step.predict && !APP.answers[c.key+':'+c.idx];
+}
+function score(){let r=0,t=0;for(const k in APP.answers){const a=APP.answers[k];if(a.skipped)continue;t++;if(a.ok)r++;}return {r,t};}
+
+/* =====================================================================
+   Graph drawing
+   ===================================================================== */
+function buildGraph(id){
+  const sc=SCN[id];const svg=$('#graph');svg.innerHTML='';
+  svg.setAttribute('viewBox',`0 0 ${sc.w} ${sc.h}`);
+  const defs=svgEl('defs',{},svg);
+  [['ah','#4d5f86'],['ahA','#fbbf24'],['ahL','#f472b6'],['ahP','#34d399']].forEach(([mid,col])=>{
+    const m=svgEl('marker',{id:mid,viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'6',markerHeight:'6',orient:'auto'},defs);
+    svgEl('path',{d:'M0 0L10 5L0 10z',fill:col},m);
+  });
+  const R=27;
+  const unit=(x,y)=>{const l=Math.hypot(x,y)||1;return [x/l,y/l];};
+  const mk=(P,Q,C,gs,ge)=>{
+    let u1,u2;
+    if(C){u1=unit(C[0]-P[0],C[1]-P[1]);u2=unit(Q[0]-C[0],Q[1]-C[1]);}else{u1=u2=unit(Q[0]-P[0],Q[1]-P[1]);}
+    const s=[P[0]+u1[0]*gs,P[1]+u1[1]*gs],e=[Q[0]-u2[0]*ge,Q[1]-u2[1]*ge];
+    return C?`M${s[0].toFixed(1)} ${s[1].toFixed(1)} Q${C[0]} ${C[1]} ${e[0].toFixed(1)} ${e[1].toFixed(1)}`:`M${s[0].toFixed(1)} ${s[1].toFixed(1)} L${e[0].toFixed(1)} ${e[1].toFixed(1)}`;
+  };
+  const G={scn:sc,edges:[],nodes:[],map:{},dEdge:{},dProbe:{},probe:null};
+  const gE=svgEl('g',{},svg);
+  sc.edges.forEach(([a,b],i)=>{
+    const A=sc.pos[a],B=sc.pos[b],C=sc.curve&&sc.curve[i];
+    G.dEdge[a+'>'+b]=mk(A,B,C,R-1,sc.directed?R+6:R-1);
+    G.dProbe[a+'>'+b]=mk(A,B,C,R+2,R+8);
+    G.map[a+'>'+b]=i;
+    if(!sc.directed){
+      G.dEdge[b+'>'+a]=mk(B,A,C,R-1,R-1);
+      G.dProbe[b+'>'+a]=mk(B,A,C,R+2,R+8);
+      G.map[b+'>'+a]=i;
+    }
+    const el=svgEl('path',{d:G.dEdge[a+'>'+b],class:'edge ghost'},gE);
+    G.edges.push({el,a,b});
+  });
+  G.probe=svgEl('path',{class:'probe','marker-end':'url(#ahL)',d:'M0 0'},svg);
+  const gN=svgEl('g',{},svg);
+  sc.pos.forEach(([x,y],v)=>{
+    const g=svgEl('g',{class:'node idle',transform:`translate(${x} ${y})`},gN);
+    svgEl('circle',{class:'ring',r:R+7},g);
+    svgEl('circle',{class:'body',r:R},g);
+    const t=svgEl('text',{class:'lbl'},g);t.textContent=v;
+    let tagTxt=null;
+    if(v===sc.src||v===sc.dst){
+      const tg=svgEl('g',{class:'tag '+(v===sc.dst?'dst':'src')},g);
+      svgEl('rect',{class:'tagbox',x:-27,y:-R-24,width:54,height:17,rx:5},tg);
+      tagTxt=svgEl('text',{class:'tagtxt',x:0,y:-R-15},tg);
+      tagTxt.textContent=v===sc.dst?'DST':'SRC';
+    }
+    G.nodes.push({g,tagTxt});
+  });
+  GRAPH=G;GRAPH_FOR=id;
+  $('#pN').textContent=sc.n;$('#pS').textContent=sc.src;$('#pD').textContent=sc.dst;
+  $('#gKind').textContent=sc.directed?'directed demo':'undirected';
+  $$('#qlane .qitem').forEach(e=>e.remove());
+  LAST.vis=null;LAST.chip=null;
+}
+function pathEdges(st){
+  const set=new Set();
+  if(st.result!==true)return set;
+  const sc=GRAPH.scn;let v=sc.dst,g=0;
+  while(v!==sc.src&&st.parent[v]!==undefined&&g++<20){const p=st.parent[v];const i=GRAPH.map[p+'>'+v];if(i!==undefined)set.add(i);v=p;}
+  return set;
+}
+function renderGraph(st){
+  const G=GRAPH,sc=G.scn;
+  const inQ=new Set(st.queue.map(x=>x.v));
+  const path=pathEdges(st);
+  const litIdx=st.lit?G.map[st.lit.a+'>'+st.lit.b]:undefined;
+  G.edges.forEach((e,i)=>{
+    const c=['edge'];
+    if(i>=st.edgesShown)c.push('ghost');
+    if(i===st.edgeActive)c.push('active');
+    if(i===litIdx&&st.result===null)c.push('lit');
+    if(path.has(i))c.push('path');
+    e.el.setAttribute('class',c.join(' '));
+    if(sc.directed){
+      const m=path.has(i)?'ahP':(i===litIdx&&st.result===null)?'ahL':i===st.edgeActive?'ahA':'ah';
+      e.el.setAttribute('marker-end',`url(#${m})`);
+    }
+  });
+  if(st.lit&&st.result===null&&G.dProbe[st.lit.a+'>'+st.lit.b]){
+    G.probe.setAttribute('d',G.dProbe[st.lit.a+'>'+st.lit.b]);G.probe.setAttribute('class','probe on');
+  } else G.probe.setAttribute('class','probe');
+  G.nodes.forEach((nd,v)=>{
+    let cls='idle';
+    const visd=st.vis&&st.vis[v];
+    const found=(st.result===true&&v===sc.dst)||(st.cmp&&st.cmp.match===true&&st.node===v&&v===sc.dst);
+    if(found)cls='found';
+    else if(st.node===v)cls='current';
+    else if(inQ.has(v))cls='queued';
+    else if(visd||st.order.includes(v))cls='done';
+    else if(st.result===false)cls='unreached';
+    nd.g.setAttribute('class','node '+cls+(st.it===v&&st.result===null?' probe':''));
+    if(nd.tagTxt&&v===sc.dst)nd.tagTxt.textContent=st.result===true?'DST ✓':st.result===false?'DST ✗':'DST';
+  });
+  const b=$('#banner');
+  if(st.banner){b.className='banner show '+st.banner.type+(st.banner.big?' big':'');b.textContent=st.banner.text;}
+  else{b.className='banner';b.textContent='';}
+}
+
+/* =====================================================================
+   Queue (keyed DOM + FLIP animation)
+   ===================================================================== */
+function renderQueue(st){
+  const lane=$('#qlane');
+  const items=st.qOn?st.queue:[];
+  const oldEls=$$('.qitem:not(.leaving)',lane);
+  const oldMap=new Map();
+  oldEls.forEach(el=>oldMap.set(el.dataset.id,{el,rect:el.getBoundingClientRect()}));
+  const newIds=new Set(items.map(i=>String(i.id)));
+  const laneRect=lane.getBoundingClientRect();
+  oldMap.forEach((o,id)=>{
+    if(!newIds.has(id)){
+      const el=o.el;
+      el.style.left=(o.rect.left-laneRect.left)+'px';el.style.top=(o.rect.top-laneRect.top)+'px';
+      el.classList.add('leaving');
+      setTimeout(()=>el.remove(),520);
+    }
+  });
+  items.forEach((it,i)=>{
+    const id=String(it.id);
+    let el=oldMap.has(id)?oldMap.get(id).el:null;
+    if(!el){
+      el=document.createElement('div');el.className='qitem entering';el.dataset.id=id;
+      el.innerHTML='<span class="qv"></span><span class="qtag"></span>';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('entering')));
+    }
+    el.querySelector('.qv').textContent=it.v;
+    el.classList.toggle('hl',!!st.front&&i===0);
+    el.classList.toggle('itm',st.it!==null&&st.it===it.v&&st.result===null);
+    let tag='';
+    if(st.front&&i===0)tag='q.front()';
+    else if(st.it!==null&&st.it===it.v&&st.result===null)tag='already here!';
+    else if(items.length===1)tag='front = back';
+    else if(i===0)tag='front';
+    else if(i===items.length-1)tag='back';
+    el.querySelector('.qtag').textContent=tag;
+    lane.appendChild(el);
+  });
+  // FLIP for survivors
+  items.forEach(it=>{
+    const id=String(it.id);const o=oldMap.get(id);if(!o)return;
+    const nr=o.el.getBoundingClientRect();const dx=o.rect.left-nr.left,dy=o.rect.top-nr.top;
+    if(Math.abs(dx)>1||Math.abs(dy)>1){
+      const el=o.el;el.style.transition='none';el.style.transform=`translate(${dx}px,${dy}px)`;
+      void el.offsetWidth;
+      el.style.transition='';el.style.transform='';
+    }
+  });
+  const ph=$('#qph');
+  ph.style.display=items.length?'none':'flex';
+  ph.textContent=!st.qOn?'queue<int> q;  — not created yet':'EMPTY';
+  $('#qEmpty').textContent=st.qOn?String(items.length===0):'—';
+  $('#qSize').textContent=st.qOn?items.length:'—';
+  $('#qNote').textContent=st.qOn&&st.pushes?`total pushes so far: ${st.pushes}`:'';
+}
+
+/* =====================================================================
+   Visited / adjacency / variables
+   ===================================================================== */
+function renderVisited(st,sc){
+  const visActive=!(APP.mode==='cycle'&&!APP.cycleVis);
+  const n=sc.n;let h1='<tr><th>Node</th>',h2='<tr><th>Visited</th>',h3='<tr><th></th>';
+  for(let i=0;i<n;i++){
+    const v=st.vis?st.vis[i]:null;
+    const changed=st.vis&&(!LAST.vis||LAST.vis[i]!==st.vis[i]);
+    h1+=`<td class="vh">${i}</td>`;
+    h2+=`<td class="vc${v?' on':''}${changed?' flash':''}${visActive&&st.it===i&&st.vis&&st.result===null?' chk':''}">${v===null?'·':v}</td>`;
+    const tags=[];
+    if(i===sc.src)tags.push('<span class="s">↑ source</span>');
+    if(i===sc.dst)tags.push('<span class="d">↑ dest</span>');
+    if(st.node===i)tags.push('<span class="n">↑ node</span>');
+    if(st.it===i)tags.push('<span class="i">↑ it</span>');
+    h3+=`<td class="vp">${tags.join('')}</td>`;
+  }
+  $('#vtable').innerHTML=h1+'</tr>'+h2+'</tr>'+h3+'</tr>';
+  $('#vnote').textContent=st.vis?(APP.mode==='cycle'&&!APP.cycleVis?'The array exists, but this version of the code never reads or writes it.':'vis[i] = 1 means "node i was already discovered" (even if it is still waiting in the queue).'):'vector<int> vis(n, 0);  — not created yet';
+  LAST.vis=st.vis?st.vis.slice():null;
+}
+function renderLists(st,sc){
+  let e='';
+  sc.edges.forEach(([a,b],i)=>{
+    const act=i===st.edgeActive,done=i<st.edgesShown&&!act;
+    e+=`<div class="erow${act?' act':''}${done?' done':''}"><span class="ck">${done?'✓':act?'▸':''}</span>[${a},${b}]</div>`;
+  });
+  $('#edgeList').innerHTML=e;
+  let h='';const sig=st.lastChip?st.lastChip.row+':'+st.lastChip.val+':'+st.adj[st.lastChip.row].length:null;
+  for(let i=0;i<sc.n;i++){
+    let chips='';
+    if(!st.adjOn)chips='<span class="empty-note">not created yet</span>';
+    else if(!st.adj[i].length)chips='<span class="empty-note">[ ]</span>';
+    else st.adj[i].forEach((v,k)=>{
+      const isNew=st.lastChip&&st.lastChip.row===i&&st.lastChip.val===v&&k===st.adj[i].length-1&&sig!==LAST.chip;
+      const isIt=st.node===i&&st.it===v&&st.result===null;
+      chips+=`<span class="chip${isNew?' new':''}${isIt?' it':''}">${v}</span>`;
+    });
+    h+=`<div class="arow${st.node===i?' cur':''}"><span class="k">${i} →</span>${chips}</div>`;
+  }
+  $('#adjList').innerHTML=h;
+  LAST.chip=sig;
+}
+function renderVars(st,sc){
+  $('#vNode').textContent=st.node===null?'—':st.node;
+  $('#vIt').textContent=st.it===null?'—':st.it;
+  $('#vVisIt').textContent=(st.it!==null&&st.vis&&!(APP.mode==='cycle'&&!APP.cycleVis))?st.vis[st.it]:'—';
+  const c=$('#cmp');
+  if(st.cmp){
+    $('#cmpA').textContent=st.cmp.a;$('#cmpB').textContent=st.cmp.b;
+    if(st.cmp.match===null){c.className='cmp ask';$('#cmpRes').innerHTML='?';$('#cmpOp').textContent='==';}
+    else if(st.cmp.match){c.className='cmp yes';$('#cmpRes').innerHTML='MATCH!<br>↓<br>TRUE';$('#cmpOp').textContent='==';}
+    else{c.className='cmp no';$('#cmpRes').innerHTML='no match ✗<br>keep going';$('#cmpOp').textContent='≠';}
+  } else {
+    c.className='cmp';$('#cmpA').textContent=st.node===null?'—':st.node;$('#cmpB').textContent=sc.dst;$('#cmpRes').innerHTML='';$('#cmpOp').textContent='==';
+  }
+  const nt=$('#nbrTitle'),nc=$('#nbrChips');
+  if(st.nbrs){
+    nt.textContent=`for (auto it : adj[${st.node}])   →   adj[${st.node}] = [${st.nbrs.join(', ')}]`;
+    nc.innerHTML=st.nbrs.map((v,k)=>{
+      const s=st.nbrStatus[k];
+      const lab=s==='active'?'▲ it':s==='queued'?'✓ queued':s==='ignored'?'✗ visited':'waiting';
+      return `<div class="nc ${s}"><small>${lab}</small>${v}</div>`;
+    }).join('');
+  } else {
+    nt.textContent=st.node===null?'neighbors — (no current node)':`adj[${st.node}] is read when the for-loop starts`;
+    nc.innerHTML='';
+  }
+  const o=$('#order');
+  if(!st.order.length)o.innerHTML='<span>Processed order:</span> <span class="empty-note">—</span>';
+  else{
+    o.innerHTML='<span>Processed order:</span> '+st.order.map((v,i)=>`<b class="${st.order.indexOf(v)<i?'rep':''}">${v}</b>`).join('<span>→</span>')+(st.stopped?' <span>→</span> <b class="rep">…∞</b>':'');
+  }
+}
+
+/* =====================================================================
+   Code pane
+   ===================================================================== */
+function buildCode(){
+  const alt=(APP.mode==='cycle'&&!APP.cycleVis)?NOVIS_ALT:{};
+  const body=$('#codeBody');body.innerHTML='';CODE_EL=[];
+  for(let i=1;i<=CODE.length;i++){
+    const raw=alt[i]!==undefined?alt[i]:CODE[i-1];
+    const d=document.createElement('div');
+    d.className='cl'+(alt[i]!==undefined?' off':'');d.dataset.l=i;
+    d.innerHTML=`<span class="gut${APP.bps.has(i)?' bp':''}" data-bp="${i}">${i}</span><span class="arr"></span><code>${hl(raw)||' '}</code>`;
+    body.appendChild(d);CODE_EL[i]=d;
+  }
+  CODE_FOR=APP.mode==='cycle'?(APP.cycleVis?'on':'off'):'std';
+  $('#codeChip').textContent=(CODE_FOR==='off')?'● visited check removed':'● debugger';
+  $('#codeChip').style.color=(CODE_FOR==='off')?'var(--amber)':'var(--cyan)';
+}
+function updateCode(step){
+  const codeBody=$('#codeBody');
+  for(let i=1;i<=CODE.length;i++){
+    const d=CODE_EL[i];const act=!!(step&&step.lines.includes(i));
+    d.classList.toggle('act',act);
+    d.querySelector('.arr').textContent=act?'▶':'';
+    const code=d.querySelector('code');
+    const old=code.querySelector('.inl');if(old)old.remove();
+    if(act&&step.inline){const s=document.createElement('span');s.className='inl';s.textContent='// '+step.inline;code.appendChild(s);}
+  }
+  if(step){
+    const el=CODE_EL[step.lines[0]];
+    const top=el.offsetTop,h=el.offsetHeight;
+    if(top<codeBody.scrollTop+40||top+h>codeBody.scrollTop+codeBody.clientHeight-40){
+      codeBody.scrollTop=Math.max(0,top-codeBody.clientHeight/2+h/2);
+    }
+  }
+}
+
+/* =====================================================================
+   Flowchart (summary tab)
+   ===================================================================== */
+function buildFlow(){
+  const box=(id,x,y,w,h,t,s,cls)=>`<g class="fnode ${cls||''}" data-f="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9"/><text x="${x+w/2}" y="${y+19}">${t}</text><text class="sub" x="${x+w/2}" y="${y+35}">${s}</text></g>`;
+  const dia=(id,cx,cy,t,s)=>`<g class="fnode" data-f="${id}"><polygon points="${cx},${cy-40} ${cx+115},${cy} ${cx},${cy+40} ${cx-115},${cy}"/><text x="${cx}" y="${cy-3}">${t}</text><text class="sub" x="${cx}" y="${cy+14}">${s}</text></g>`;
+  const lab=(id,x,y,t,extra)=>`<text class="flabel" data-f="${id}" x="${x}" y="${y}" ${extra||''}>${t}</text>`;
+  $('#flowHost').innerHTML=`<svg viewBox="0 0 700 770" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BFS flowchart">
+  <defs><marker id="fa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5b6d92"/></marker></defs>
+  <g stroke="#4b5d84" stroke-width="2.5" fill="none" marker-end="url(#fa)">
+    <path d="M250 54V84"/><path d="M250 128V158"/><path d="M250 202V222"/><path d="M250 302V334"/>
+    <path d="M250 378V400"/><path d="M250 480V512"/><path d="M250 556V584"/><path d="M250 628V666"/>
+    <path d="M365 262H440"/><path d="M365 440H440"/><path d="M540 418V356H365"/>
+    <path d="M135 706H50V180H135"/><path d="M365 706H440"/>
+  </g>
+  ${box('src',135,10,230,44,'SOURCE','start here')}
+  ${box('putq',135,84,230,44,'PUT SOURCE IN QUEUE','vis[source] = 1;  q.push(source)')}
+  ${box('front',135,158,230,44,'TAKE FRONT NODE','node = q.front();  q.pop()')}
+  ${dia('dest',250,262,'IS IT DESTINATION?','node == destination')}
+  ${box('nbr',135,334,230,44,'CHECK NEXT NEIGHBOR','for (auto it : adj[node])')}
+  ${dia('vis',250,440,'ALREADY VISITED?','vis[it] == 1 ?')}
+  ${box('mark',135,512,230,44,'MARK VISITED','vis[it] = 1')}
+  ${box('push',135,584,230,44,'PUT INTO QUEUE','q.push(it)')}
+  ${dia('empty',250,706,'QUEUE EMPTY?','q.empty() ?')}
+  ${box('true',440,240,200,44,'return true','DESTINATION FOUND','true')}
+  ${box('ignore',440,418,200,44,'IGNORE','skip it, next neighbor','ign')}
+  ${box('false',440,684,200,44,'return false','DESTINATION NOT FOUND','false')}
+  ${lab('dest-yes',378,254,'YES')}${lab('dest-no',262,322,'NO')}
+  ${lab('vis-yes',378,432,'YES')}${lab('vis-no',262,502,'NO')}
+  ${lab('empty-yes',378,698,'YES')}${lab('empty-no',22,470,'NO → CONTINUE LOOP','transform="rotate(-90 22 470)"')}
+  <text class="fnote" x="125" y="360" text-anchor="end">repeat for each neighbor</text>
+  </svg>`;
+}
+function updateFlow(step){
+  const on=new Set(step&&step.flow?step.flow:[]);
+  $$('#flowHost [data-f]').forEach(el=>el.classList.toggle('on',on.has(el.dataset.f)));
+}
+
+/* =====================================================================
+   Dock: CODE → ACTION → VISUAL → REASON
+   ===================================================================== */
+function phaseOf(l){
+  if(l<=2)return 'Function entry';
+  if(l<=9)return 'Build the adjacency list';
+  if(l<=16)return 'Set up BFS';
+  if(l===24)return 'Result: return true';
+  if(l===36)return 'Result: return false';
+  return 'BFS loop';
+}
+function codeText(step){
+  const alt=(APP.mode==='cycle'&&!APP.cycleVis)?NOVIS_ALT:{};
+  const raws=step.lines.map(l=>alt[l]!==undefined?alt[l]:CODE[l-1]);
+  const ind=Math.min(...raws.filter(r=>r.trim()).map(r=>r.match(/^ */)[0].length));
+  return raws.map(r=>r.slice(ind)).join('\n');
+}
+function renderDock(c,waiting){
+  const dock=$('#dock');
+  if(!c.step){
+    dock.innerHTML=`<div class="welcome"><b>Ready.</b> Press <b>▶ Start</b> (or <b>⏭ Next Step</b>) to run the C++ one line at a time. Every step is explained as
+      <div class="flowline"><span style="color:var(--cyan);border-color:var(--cyan)">CODE</span>➜<span style="color:var(--amber);border-color:var(--amber)">ACTION</span>➜<span style="color:var(--purple);border-color:var(--purple)">VISUAL CHANGE</span>➜<span style="color:var(--green);border-color:var(--green)">REASON</span></div>
+      <div style="margin-top:8px;color:var(--muted);font-size:12.5px">The highlighted line on the right and the graph, queue and visited array on the left always change together. Keyboard: ← → step, Space play/pause.${APP.mode==='summary'?'':' With 🎯 Predict mode on, I will pause at key decisions and ask what happens next.'}</div></div>`;
+    return;
+  }
+  const s=c.step,N=c.steps.length,sc=score();
+  const last=c.idx===N-1;
+  let html=`<div class="dhead"><span class="badge">Step ${c.idx+1} / ${N}</span><span class="phase">${phaseOf(s.line)}</span><span class="lineno">line ${s.lines.length>1?s.lines[0]+'–'+s.lines[s.lines.length-1]:s.line}</span>${sc.t?`<span class="score">🎯 predictions ${sc.r} / ${sc.t}</span>`:''}${last?'<span class="phase" style="color:var(--green)">✔ end of this run</span>':''}</div>`;
+  const ans=APP.answers[c.key+':'+c.idx];
+  if(waiting){
+    html+=`<div class="predict"><div class="ph">🎯 PREDICT THE NEXT STEP — line ${s.line} is highlighted</div>
+      <div class="pq">What do you think happens next?</div><div class="pc">${s.predict.ctx}</div>
+      <div class="pbtns">
+        <button class="pbtn" data-ans="A"><b>A</b>Put node into queue</button>
+        <button class="pbtn" data-ans="B"><b>B</b>Ignore node because it is visited</button>
+        <button class="pbtn" data-ans="C"><b>C</b>Destination found</button>
+        <button class="linkbtn" data-skip="1">skip this one</button>
+      </div></div>`;
+  } else {
+    if(s.predict&&ans){
+      if(ans.skipped)html+=`<div class="fb skip">Prediction skipped. ${s.predict.reveal}</div>`;
+      else if(ans.ok)html+=`<div class="fb ok">✅ Correct! ${s.predict.reveal}</div>`;
+      else html+=`<div class="fb no">❌ Not quite — you chose ${ans.choice}. ${s.predict.reveal}</div>`;
+    }
+    html+=`<div class="chain">
+      <div class="cc c1"><div class="cl2"><i>1</i>CODE</div><pre>${hl(codeText(s))}</pre><div class="ln">executing line ${s.lines.join(', ')}</div></div><div class="ca">➜</div>
+      <div class="cc c2"><div class="cl2"><i>2</i>ACTION</div><p>${s.action}</p></div><div class="ca">➜</div>
+      <div class="cc c3"><div class="cl2"><i>3</i>VISUAL CHANGE</div><p>${s.visual}</p></div><div class="ca">➜</div>
+      <div class="cc c4"><div class="cl2"><i>4</i>REASON</div><p>${s.reason}</p>${s.insight?`<div class="insight">💡 ${s.insight}</div>`:''}${s.cta?`<div class="cta"><button class="btn primary" data-cta="${s.cta.act}">${s.cta.label}</button></div>`:''}</div>
+    </div>`;
+  }
+  dock.innerHTML=html;
+}
+
+/* =====================================================================
+   Render
+   ===================================================================== */
+function render(){
+  const c=cur();
+  if(GRAPH_FOR!==baseId())buildGraph(baseId());
+  const wantCode=APP.mode==='cycle'?(APP.cycleVis?'on':'off'):'std';
+  if(CODE_FOR!==wantCode)buildCode();
+  const waiting=needsAnswer(c);
+  let st;
+  if(!c.step)st=c.steps.init;
+  else st=(waiting&&c.step.pre)?c.step.pre:c.step.state;
+  renderGraph(st);renderQueue(st);renderVisited(st,c.scn);renderLists(st,c.scn);renderVars(st,c.scn);
+  updateCode(c.step);
+  if(APP.mode==='summary')updateFlow(c.step);
+  renderDock(c,waiting);
+  // controls
+  const N=c.steps.length,i=c.idx;
+  $('#bStart').disabled=i>=0||APP.playing;
+  $('#bPrev').disabled=i<=0;
+  $('#bNext').disabled=i>=N-1||waiting;
+  $('#bPlay').disabled=APP.playing||i>=N-1||waiting;
+  $('#bPause').disabled=!APP.playing;
+  const jump=c.steps.findIndex(s=>s.line===11);
+  $('#bSkip').hidden=!(APP.mode==='ex1'||APP.mode==='ex2');
+  $('#bSkip').disabled=(jump>=0&&i>=jump)||waiting;
+  $('#stepTxt').textContent=`Step ${i+1} / ${N}`;
+  $('#barFill').style.width=(N?((i+1)/N*100):0)+'%';
+}
+
+/* =====================================================================
+   Navigation
+   ===================================================================== */
+let toastT=null;
+function say(m){const t=$('#toast');t.textContent=m;clearTimeout(toastT);toastT=setTimeout(()=>{t.textContent='';},3500);}
+function setIdx(i){const c=cur();APP.idx[c.key]=Math.max(-1,Math.min(c.steps.length-1,i));render();}
+function next(){
+  const c=cur();
+  if(needsAnswer(c)){say('Pick A, B or C first (or press "skip this one").');return false;}
+  if(c.idx>=c.steps.length-1)return false;
+  setIdx(c.idx+1);return true;
+}
+function prev(){const c=cur();if(c.idx>0){pause();setIdx(c.idx-1);}}
+function start(){const c=cur();if(c.idx<0)setIdx(0);}
+function reset(){
+  pause();const key=curKey();APP.idx[key]=-1;
+  for(const k in APP.answers)if(k.startsWith(key+':'))delete APP.answers[k];
+  render();
+}
+function pause(){APP.playing=false;clearTimeout(APP.timer);render();}
+function play(){
+  const c=cur();
+  if(APP.playing||c.idx>=c.steps.length-1)return;
+  if(needsAnswer(c)){say('Answer the prediction first — then press Auto Play.');return;}
+  APP.playing=true;
+  if(c.idx<0)setIdx(0);else render();
+  afterMove();
+}
+function afterMove(){
+  const c=cur();
+  if(!APP.playing)return;
+  if(needsAnswer(c)){APP.playing=false;say('Auto Play paused: your turn to predict!');render();return;}
+  if(c.step&&APP.bps.has(c.step.line)&&c.idx>0){APP.playing=false;say(`Breakpoint hit at line ${c.step.line}.`);render();return;}
+  if(c.idx>=c.steps.length-1){APP.playing=false;render();return;}
+  clearTimeout(APP.timer);
+  APP.timer=setTimeout(()=>{
+    if(!APP.playing)return;
+    const cc=cur();setIdx(cc.idx+1);afterMove();
+  },APP.delay);
+}
+function answer(choice){
+  const c=cur();if(!needsAnswer(c))return;
+  APP.answers[c.key+':'+c.idx]={choice,ok:choice===c.step.predict.correct};
+  render();
+}
+function skipPredict(){const c=cur();if(!needsAnswer(c))return;APP.answers[c.key+':'+c.idx]={skipped:true};render();}
+
+function setMode(m){
+  pause();APP.mode=m;
+  $$('#tabs .tab').forEach(t=>t.classList.toggle('on',t.dataset.mode===m));
+  const prac=m==='practice';
+  $('#lesson').hidden=prac;$('#practice').hidden=!prac;
+  $('#controls').hidden=prac;$('#toast').hidden=prac;$('#dock').hidden=prac;
+  $('#cycToggle').hidden=m!=='cycle';$('#sumToggle').hidden=m!=='summary';
+  $('#codePane').hidden=m==='summary';$('#flowPane').hidden=m!=='summary';
+  if(m==='summary'&&!$('#flowHost').firstChild)buildFlow();
+  if(!prac){CODE_FOR=null;render();}
+  else initPractice();
+}
+
+/* =====================================================================
+   Practice tab
+   ===================================================================== */
+const TEMPLATE=`class Solution {
+public:
+    bool validPath(int n, vector<vector<int>>& edges,
+                   int source, int destination) {
+
+        // Your code here
+
+    }
+};
+`;
+const SOLUTION=`class Solution {
+public:
+    bool validPath(int n, vector<vector<int>>& edges,
+                   int source, int destination) {
+
+        // 1. Graph -> adjacency list (undirected: add BOTH directions)
+        vector<vector<int>> adj(n);
+        for (auto edge : edges) {
+            adj[edge[0]].push_back(edge[1]);
+            adj[edge[1]].push_back(edge[0]);
+        }
+
+        // 2. BFS state: visited array + queue
+        vector<int> vis(n, 0);
+        queue<int> q;
+
+        vis[source] = 1;          // mark BEFORE pushing
+        q.push(source);
+
+        // 3. Explore
+        while (!q.empty()) {
+            int node = q.front();
+            q.pop();
+
+            if (node == destination) {
+                return true;
+            }
+
+            for (auto it : adj[node]) {
+                if (!vis[it]) {
+                    vis[it] = 1;  // mark when DISCOVERED
+                    q.push(it);
+                }
+            }
+        }
+
+        // 4. Queue ran dry: everything reachable was explored
+        return false;
+    }
+};
+`;
+const HINTS=[
+  {q:'What data structure will store the graph\'s neighbors?',a:'An adjacency list: <code class="i">vector&lt;vector&lt;int&gt;&gt; adj(n);</code> — adj[u] holds every neighbor of u. Because edges are undirected, push both <code class="i">adj[a].push_back(b)</code> and <code class="i">adj[b].push_back(a)</code>.'},
+  {q:'What data structure will manage BFS?',a:'A <code class="i">queue&lt;int&gt;</code>. Push the source, then repeat: take <code class="i">front()</code>, <code class="i">pop()</code>, and push the newly discovered neighbors.'},
+  {q:'What do you need to prevent revisiting nodes?',a:'A visited array: <code class="i">vector&lt;int&gt; vis(n, 0);</code> Mark a node as visited the moment you <b>discover</b> it (before pushing) — and mark the source too.'},
+  {q:'When should you return true?',a:'When the node you pop from the queue equals <code class="i">destination</code>: <code class="i">if (node == destination) return true;</code>'},
+  {q:'When should you return false?',a:'After the while-loop ends. The queue is empty, so everything reachable from source was explored and destination was never met.'}
+];
+let hintsShown=0,practiceReady=false;
+function initPractice(){
+  if(practiceReady)return;practiceReady=true;
+  $('#editor').value=TEMPLATE;
+  $('#solCode').innerHTML=hl(SOLUTION);
+}
+function showHint(){
+  if(hintsShown>=HINTS.length)return;
+  const h=HINTS[hintsShown];hintsShown++;
+  const d=document.createElement('div');d.className='hint';
+  d.innerHTML=`<div class="hq">Hint ${hintsShown}: “${h.q}”</div><details><summary>I want the answer to this hint</summary><div style="margin-top:5px">${h.a}</div></details>`;
+  $('#hintList').appendChild(d);
+  $('#hintCount').textContent=`${hintsShown} / ${HINTS.length}`;
+  const b=$('#hintBtn');
+  if(hintsShown>=HINTS.length){b.disabled=true;b.textContent='No more hints — you can do it!';}
+  else b.textContent=`💡 Give me Hint ${hintsShown+1}`;
+}
+function selfCheck(){
+  const src=$('#editor').value.replace(/\/\/.*$/gm,'').replace(/\/\*[\s\S]*?\*\//g,'');
+  const has=(re)=>re.test(src);
+  const cnt=(re)=>(src.match(re)||[]).length;
+  const items=[
+    ['Builds an adjacency list (a vector of vectors sized n)',cnt(/vector\s*<\s*vector\s*<\s*int\s*>\s*>/g)>=2],
+    ['Adds each edge in BOTH directions (two push_back calls)',cnt(/push_back\s*\(/g)>=2],
+    ['Creates a queue<int>',has(/queue\s*<\s*int\s*>/)],
+    ['Creates a visited array of size n',has(/vector\s*<\s*(int|bool)\s*>\s*\w+\s*\(\s*n/)],
+    ['Marks the source as visited and pushes it',has(/\[\s*source\s*\]\s*=\s*(1|true)/)&&has(/\.push\s*\(\s*source\s*\)/)],
+    ['Loops while the queue is not empty',has(/while\s*\(\s*!\s*\w+\.empty\s*\(\s*\)\s*\)/)],
+    ['Uses front() and pop()',has(/\.front\s*\(\s*\)/)&&has(/\.pop\s*\(\s*\)/)],
+    ['Compares the current node with destination',has(/==\s*destination|destination\s*==/)],
+    ['Skips visited neighbors / marks new ones',has(/!\s*\w+\s*\[\s*\w+\s*\]/)||has(/==\s*0/)],
+    ['Has return true',has(/return\s+true/)],
+    ['Has return false after the loop',has(/return\s+false/)]
+  ];
+  $('#checkList').innerHTML=items.map(([t,ok])=>`<li><span class="${ok?'y':'n'}">${ok?'✔':'○'}</span> ${t}</li>`).join('');
+  $('#checkCard').hidden=false;
+}
+
+/* =====================================================================
+   Wiring
+   ===================================================================== */
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)setMode(b.dataset.mode);});
+$('#bStart').onclick=()=>{start();};
+$('#bNext').onclick=()=>{pause();next();};
+$('#bPrev').onclick=prev;
+$('#bReset').onclick=reset;
+$('#bPlay').onclick=play;
+$('#bPause').onclick=()=>{pause();};
+$('#bSkip').onclick=()=>{pause();const c=cur();const j=c.steps.findIndex(s=>s.line===11);if(j>=0&&c.idx<j)setIdx(j);};
+$('#speed').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;APP.delay=+b.dataset.d;$$('#speed button').forEach(x=>x.classList.toggle('on',x===b));});
+$('#predictToggle').addEventListener('change',e=>{APP.predictOn=e.target.checked;render();});
+$('#cycSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;setCycle(b.dataset.v==='1');});
+$('#sumSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;pause();APP.sumSrc=b.dataset.s;$$('#sumSeg button').forEach(x=>x.classList.toggle('on',x===b));render();});
+function setCycle(on){
+  pause();APP.cycleVis=on;
+  $$('#cycSeg button').forEach(x=>x.classList.toggle('on',(x.dataset.v==='1')===on));
+  const key=curKey();APP.idx[key]=-1;
+  for(const k in APP.answers)if(k.startsWith(key+':'))delete APP.answers[k];
+  CODE_FOR=null;render();
+}
+$('#dock').addEventListener('click',e=>{
+  const a=e.target.closest('[data-ans]');if(a){answer(a.dataset.ans);return;}
+  if(e.target.closest('[data-skip]')){skipPredict();return;}
+  const cta=e.target.closest('[data-cta]');if(cta&&cta.dataset.cta==='visOn')setCycle(true);
+});
+$('#codeBody').addEventListener('click',e=>{
+  const g=e.target.closest('[data-bp]');if(!g)return;
+  const l=+g.dataset.bp;
+  if(APP.bps.has(l))APP.bps.delete(l);else APP.bps.add(l);
+  g.classList.toggle('bp',APP.bps.has(l));
+});
+document.addEventListener('keydown',e=>{
+  if(APP.mode==='practice')return;
+  const tg=e.target;if(tg&&(tg.tagName==='TEXTAREA'||tg.tagName==='INPUT'))return;
+  if(e.key==='ArrowRight'){e.preventDefault();pause();next();}
+  else if(e.key==='ArrowLeft'){e.preventDefault();prev();}
+  else if(e.key===' '&&tg===document.body){e.preventDefault();APP.playing?pause():play();}
+});
+$('#hintBtn').onclick=showHint;
+$('#bCheck').onclick=selfCheck;
+$('#bClearEd').onclick=()=>{$('#editor').value=TEMPLATE;$('#checkCard').hidden=true;};
+$('#bSol').onclick=()=>{const b=$('#solBox');b.hidden=!b.hidden;$('#bSol').textContent=b.hidden?'👁 Show Solution':'🙈 Hide Solution';if(!b.hidden)b.scrollIntoView&&b.scrollIntoView({behavior:'smooth',block:'nearest'});};
+$('#bCopy').onclick=()=>{const done=()=>{$('#bCopy').textContent='Copied ✓';setTimeout(()=>$('#bCopy').textContent='Copy',1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(SOLUTION).then(done,()=>{});else done();};
+$('#editor').addEventListener('keydown',e=>{
+  if(e.key==='Tab'){e.preventDefault();const t=e.target,s=t.selectionStart;t.value=t.value.slice(0,s)+'    '+t.value.slice(t.selectionEnd);t.selectionStart=t.selectionEnd=s+4;}
+});
+
+/* init */
+buildCode();
+render();
+</script>
+</body>
+</html>
