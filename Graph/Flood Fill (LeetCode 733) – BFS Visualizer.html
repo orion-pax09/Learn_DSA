@@ -1,0 +1,212 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Flood Fill (LeetCode 733) – BFS Visualizer</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f6fb;--card:#fff;--bd:#d5dbe8;--tx:#1b2336;--mut:#5d6a85;--ac:#2563eb;--cur:#f5b800;--ok:#12a36b;--no:#dc3b3b;--v0:#dfe4ee;--v1:#bcd3fb;--v2:#a6ebcb;--hl:#fff1b8;--cs:76px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1420;--card:#171e2e;--bd:#2a3550;--tx:#e6ebf5;--mut:#8b97b3;--ac:#5aa2ff;--cur:#ffd24a;--ok:#3ddc97;--no:#ff6b6b;--v0:#2b3347;--v1:#2f5fb3;--v2:#1f9d6b;--hl:#34416b}}
+:root[data-theme="dark"]{--bg:#0f1420;--card:#171e2e;--bd:#2a3550;--tx:#e6ebf5;--mut:#8b97b3;--ac:#5aa2ff;--cur:#ffd24a;--ok:#3ddc97;--no:#ff6b6b;--v0:#2b3347;--v1:#2f5fb3;--v2:#1f9d6b;--hl:#34416b}
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--bd);padding:10px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+h1{font-size:17px;margin:0}h1 small{color:var(--mut);font-weight:400;margin-left:8px}
+nav{display:flex;gap:8px;align-items:center}nav b{min-width:110px;text-align:center}
+button{font:inherit;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff}button:disabled{opacity:.4;cursor:default}
+main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px;padding:14px;max-width:1300px;margin:auto}
+@media(max-width:900px){main{grid-template-columns:1fr}:root{--cs:56px}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;min-width:0}
+.card h3{margin:0 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.mut{color:var(--mut)}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:600px){.two{grid-template-columns:1fr}}
+#codebox{max-height:560px;overflow:auto;border-radius:8px;border:1px solid var(--bd)}
+pre{margin:0;font:13px/1.55 ui-monospace,Menlo,Consolas,monospace}
+.ln{display:block;padding:0 10px 0 0;white-space:pre;border-left:4px solid transparent}.ln i{display:inline-block;width:34px;text-align:right;margin-right:12px;color:var(--mut);font-style:normal;user-select:none}
+.ln.on{background:var(--hl);border-left-color:var(--cur);font-weight:600}.k{color:var(--ac)}
+#exp{border-left:4px solid var(--cur)}#exp p,#what p{margin:0}
+.g{display:grid;gap:5px;justify-content:center;align-items:center;width:max-content;margin:auto}
+.ax{font-style:normal;font-size:12px;color:var(--mut);text-align:center}
+.cell{width:var(--cs);height:var(--cs);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;border:3px solid transparent;transition:background .25s}
+.cell b{font-size:26px;line-height:1}.cell small{font-size:11px;color:var(--mut)}
+.v0{background:var(--v0)}.v1{background:var(--v1)}.v2{background:var(--v2)}
+.cell.gh{background:transparent;border:2px dashed var(--bd)}.cell.gh.on{border-color:var(--no);background:rgba(220,59,59,.12)}.cell.gh b{color:var(--no)}
+.cell.cur{border-color:var(--cur);box-shadow:0 0 0 3px rgba(245,184,0,.35)}
+.cell.nb{border-color:var(--ac);border-style:dashed}.cell.nb.ok{border-color:var(--ok)}.cell.nb.no{border-color:var(--no)}
+.cell .q{position:absolute;top:2px;right:4px;font-size:11px;font-weight:700;background:var(--ac);color:#fff;border-radius:8px;padding:0 5px}
+.cell .d{position:absolute;top:2px;left:4px;font-size:15px;font-weight:800;color:var(--ac)}.cell .ck{position:absolute;bottom:1px;right:4px;font-size:12px;color:var(--ok)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mut);justify-content:center;margin-top:10px}
+.legend span:before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:2px solid var(--bd)}
+.legend .a:before{border-color:var(--cur)}.legend .b:before{border:2px dashed var(--ac)}.legend .c:before{background:var(--v1)}.legend .d:before{background:var(--v2)}.legend .e:before{background:var(--v0)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;min-height:34px;align-items:center}
+.chip{padding:3px 10px;border-radius:8px;background:var(--v1);font:600 14px ui-monospace,Menlo,monospace;position:relative;animation:pop .3s}.chip em{position:absolute;top:-9px;left:4px;font:600 9px system-ui;color:var(--mut)}
+@keyframes pop{from{transform:scale(.6);opacity:.2}}@keyframes fl{from{background:var(--cur)}}
+.vr{display:flex;justify-content:space-between;font:14px ui-monospace,Menlo,monospace;padding:2px 6px;border-radius:5px}.vr.fl{animation:fl 1s}.vr b{color:var(--ac)}
+.cp{display:grid;grid-template-columns:1fr 26px 1fr 26px 1fr;grid-template-rows:auto 22px auto 22px auto;gap:2px;align-items:center;text-align:center}
+.cb{border:2px solid var(--bd);border-radius:8px;padding:3px;font-size:13px}.cb small{display:block;font-size:10px;color:var(--mut)}
+.cb.act{border-color:var(--ac);background:var(--hl)}.cb.ok{border-color:var(--ok)}.cb.no{border-color:var(--no)}.cb.out{border-color:var(--no);border-style:dashed}
+.cb.cu{border-color:var(--cur);background:var(--hl);font-weight:700}.ar{font-size:20px;color:var(--mut)}.ar.act{color:var(--ac);font-weight:800}
+.arr{font:14px ui-monospace,Menlo,monospace;margin-top:8px}.arr span{padding:0 3px;border-radius:4px}.arr .act{background:var(--cur);color:#000}
+.cr{display:flex;gap:8px;justify-content:space-between;font:13px ui-monospace,Menlo,monospace;padding:2px 0;flex-wrap:wrap}.T{color:var(--ok)}.F{color:var(--no)}
+.flow{text-align:center;margin-top:8px;font-weight:600;padding:8px;border-radius:8px}.flow.s{background:rgba(18,163,107,.15);color:var(--ok)}.flow.d{background:rgba(220,59,59,.12);color:var(--no)}
+.mini{display:inline-grid;gap:2px;margin:4px 6px 4px 0}.mini i{width:24px;height:24px;border-radius:4px;font:700 12px/24px system-ui;text-align:center;font-style:normal}
+ul{margin:6px 0 0;padding-left:20px}li{margin:2px 0}code{font:13px ui-monospace,Menlo,monospace;background:var(--v0);padding:0 4px;border-radius:4px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:700px){.cmp{grid-template-columns:1fr}}.cmp pre{background:var(--v0);padding:10px;border-radius:8px}
+.bot{max-width:1300px;margin:0 auto;padding:0 14px 24px;display:flex;flex-direction:column;gap:14px}
+</style></head><body>
+<header><h1>Flood Fill · LeetCode 733<small>BFS on a 2D grid</small></h1>
+<nav><button id="prev">← Previous Step</button><b id="stp"></b><button id="next" class="p">Next Step →</button><button id="rst">Reset</button></nav></header>
+<main>
+<div class="col">
+<div class="card"><h3>C++ code — the highlighted line is running</h3><div id="codebox"><pre id="code"></pre></div></div>
+<div class="card" id="exp"><h3>What this line does</h3><p id="expt"></p></div>
+<div class="card" id="what"><h3>What just happened?</h3><div id="whatt"></div></div>
+</div>
+<div class="col">
+<div class="card"><h3>The grid — image[row][col] &nbsp;=&nbsp; image[r][c]</h3><div id="grid"></div>
+<div class="legend"><span class="a">current cell (r,c)</span><span class="b">neighbor being examined</span><span class="c">color 1 (original)</span><span class="d">color 2 (new)</span><span class="e">color 0 (wall)</span></div></div>
+<div class="two"><div class="card"><h3>BFS queue (front → back)</h3><div id="queue"></div></div><div class="card"><h3>Current variables</h3><div id="vars"></div></div></div>
+<div class="two"><div class="card"><h3>Four directions</h3><div id="cmp"></div></div><div class="card"><h3>The if-condition</h3><div id="cond"></div></div></div>
+<div class="card" id="xc"><h3>Teacher's note</h3><div id="extra"></div></div>
+</div></main>
+<div class="bot">
+<div class="card cmp"><div><h3>Normal graph BFS</h3><pre>node
+ ↓
+neighbors from adjacency list
+ adj[node] = {a, b, c}</pre></div><div><h3>Grid BFS</h3><pre>(row, col)
+ ↓
+UP   (r-1, c)    DOWN  (r+1, c)
+LEFT (r, c-1)    RIGHT (r, c+1)</pre></div>
+<p style="grid-column:1/-1;margin:0"><b>A grid is just a graph:</b> every cell is a node, and its up/down/left/right neighbors are its edges. Instead of reading an adjacency list, we <i>compute</i> neighbors with <code>dr</code>/<code>dc</code>. Everything else (queue, visited marking, loop until empty) is identical to the BFS you already know.</p></div>
+<div class="card" id="rem" style="display:none"><h3>Remember this — BFS on a grid</h3><ol><li>Put the starting cell into the queue</li><li>Mark it immediately</li><li>Take the front cell</li><li>Check 4 directions</li><li>Check boundaries</li><li>Check original color</li><li>Change the valid neighbor</li><li>Push the neighbor</li><li>Repeat until the queue is empty</li></ol></div></div>
+<script>
+const CODE=`class Solution {
+public:
+    vector<vector<int>> floodFill(vector<vector<int>>& image, int sr, int sc, int color) {
+
+        int originalColor = image[sr][sc];
+
+        if (originalColor == color)
+            return image;
+
+        queue<pair<int,int>> q;
+        q.push({sr, sc});
+
+        image[sr][sc] = color;
+
+        int dr[] = {-1, 1, 0, 0};
+        int dc[] = {0, 0, -1, 1};
+
+        while (!q.empty()) {
+
+            auto [r, c] = q.front();
+            q.pop();
+
+            for (int i = 0; i < 4; i++) {
+
+                int nr = r + dr[i];
+                int nc = c + dc[i];
+
+                if (nr >= 0 && nr < image.size() &&
+                    nc >= 0 && nc < image[0].size() &&
+                    image[nr][nc] == originalColor) {
+
+                    image[nr][nc] = color;
+                    q.push({nr, nc});
+                }
+            }
+        }
+
+        return image;
+    }
+};`.split('\n');
+const IMG=[[1,1,1],[1,1,0],[1,0,1]],SR=1,SC=1,COL=2,R=3,C=3,DR=[-1,1,0,0],DC=[0,0,-1,1],DIR=['UP','DOWN','LEFT','RIGHT'],GL=['↑','↓','←','→'];
+const mini=(m)=>`<span class="mini" style="grid-template-columns:repeat(${m[0].length},24px)">${m.map(r=>r.map(v=>`<i class="v${v}">${v}</i>`).join('')).join('')}</span>`;
+// ---------- build the state machine ----------
+const S=[];let g=IMG.map(r=>r.slice()),q=[],dn=[],v={sr:SR,sc:SC,color:COL},cur=null,nb=null,ci=null,log=[],res=[null,null,null,null],oc;
+function P(line,exp,what,o={}){S.push(Object.assign({line,exp,what,grid:g.map(r=>r.slice()),queue:q.map(x=>[...x]),dn:dn.map(x=>[...x]),vars:{...v},cur:cur&&[...cur],nb:nb&&[...nb],i:ci,log:[...log],res:[...res],changed:[],cond:null,extra:''},o))}
+P([2,2],'The function receives the image, the start cell (sr, sc) and the new color. Nothing has run yet.',`<p>Goal: starting at <b>(1,1)</b>, recolor the connected region of 1s into <b>2</b>. Connected means touching UP, DOWN, LEFT or RIGHT (not diagonals). We use BFS, exactly like graph BFS where each cell is a node.</p>`,{extra:'Click <b>Next Step →</b> (or press →) to run one line at a time. ← goes back one step.'});
+oc=IMG[SR][SC];v.originalColor=oc;
+P([4,4],'We remember the color we are replacing. Later, a neighbor belongs to the region only if it still has this color.',`<p><code>originalColor = image[1][1] = ${oc}</code>. We must save it now, because we are about to overwrite the start cell.</p>`,{changed:['originalColor']});
+P([6,7],`Early exit: if the new color already equals the old color, nothing changes. Here ${oc} ≠ ${COL}, so we continue.`,`<p><code>${oc} == ${COL}</code> is <b class="F">false</b>, so we do not return. The algorithm continues.</p>`,{extra:`<b>Why this check exists:</b> if the image were ${mini([[2,2],[2,2]])} and color = 2, every cell is already 2. Without the early return, our "same as originalColor" test and our recolor would look identical, so BFS would re-add cells forever. With the check we simply return the image untouched.`});
+P([9,9],'We create an empty queue of (row, col) pairs. This is the same queue as in normal graph BFS, but each item is a coordinate instead of a node id.','<p>The queue is empty for now.</p>');
+q.push([SR,SC]);P([10,10],'Push the starting cell (1,1) into the queue. BFS always starts by putting the source in.','<p>Queue is now <b>[(1,1)]</b>. The start cell is shown with a badge in the grid.</p>');
+g[SR][SC]=COL;P([12,12],'Mark the start cell immediately by painting it with the new color. Painting doubles as our "visited" array.','<p>image[1][1] becomes 2. In normal BFS you would set <code>visited[start]=true</code>; here the color change is the visited mark.</p>');
+P([14,15],'dr and dc are the row-change and column-change for each direction. Index i picks one direction.','<p>Pair them up by index: i=0 → (-1,0) UP, i=1 → (+1,0) DOWN, i=2 → (0,-1) LEFT, i=3 → (0,+1) RIGHT.</p>',{extra:'This is the grid version of an adjacency list: instead of looking up neighbors, we compute <code>nr = r + dr[i]</code> and <code>nc = c + dc[i]</code>.'});
+let first={out:0,same:0,mark:0};
+for(;;){
+ P([17,17],q.length?`The queue has ${q.length} cell(s), so <code>!q.empty()</code> is true and we enter the loop.`:'The queue is empty, so <code>!q.empty()</code> is false and the while loop ends.',q.length?`<p>Queue = <b>[${q.map(x=>'('+x+')').join(', ')}]</b> → not empty → keep going.</p>`:'<p>Nothing left to process: <b>the queue became empty</b>. BFS is finished.</p>');
+ if(!q.length)break;
+ const [r,c]=q.shift();cur=[r,c];nb=null;ci=null;res=[null,null,null,null];log=[];v.r=r;v.c=c;delete v.i;delete v.nr;delete v.nc;
+ P([19,20],`Take the front cell out of the queue. It becomes the current cell (r, c) = (${r}, ${c}).`,`<p>We removed <b>(${r},${c})</b> from the front of the queue. This is the cell we process now: we will look at its 4 neighbors.</p>`,{changed:['r','c']});
+ for(let i=0;i<4;i++){
+  ci=i;v.i=i;nb=null;delete v.nr;delete v.nc;
+  P([22,22],`Loop with i = ${i}, which means ${DIR[i]}. Look at the ${DIR[i]} neighbor of (${r},${c}).`,`<p>i = ${i} → <b>${DIR[i]}</b> (dr=${DR[i]}, dc=${DC[i]}).</p>`,{changed:['i']});
+  const nr=r+DR[i],nc=c+DC[i];v.nr=nr;v.nc=nc;nb=[nr,nc];
+  P([24,25],`nr = r + dr[i] = ${r} + (${DR[i]}) = ${nr}; nc = c + dc[i] = ${c} + (${DC[i]}) = ${nc}. The ${DIR[i]} neighbor is (${nr},${nc}).`,`<p>Adding the direction offsets to the current cell gives the neighbor: <b>(${nr},${nc})</b>.</p>`,{changed:['nr','nc']});
+  const b=[nr>=0,nr<R,nc>=0,nc<C],inb=b.every(Boolean),cd={nr,nc,b,col:undefined};
+  if(!inb){
+   res[i]='out';log.push(`${DIR[i]} (${nr},${nc}) → outside the grid → ignored`);
+   P([27,28],`Boundary check FAILS: (${nr},${nc}) is outside the grid, so we must not read image[${nr}][${nc}].`,`<p>(${nr},${nc}) is <b class="F">outside</b> the grid. A rejected boundary check means the whole <code>if</code> is false, so we skip this direction.</p>`,{cond:{...cd,col:'skip'},extra:first.out++?`Outside the grid: ignored.`:`<b>Why check boundaries?</b> The grid only has rows 0..${R-1} and columns 0..${C-1}. Reading <code>image[${nr}][${nc}]</code> would access memory that doesn't exist (a crash or garbage). Because <code>&&</code> stops at the first FALSE, the color test never runs.<br><br><pre>      outside
+         ↑
+         X
+      (${r},${c})</pre>`});
+   continue}
+  P([27,28],`Boundary check passes: (${nr},${nc}) is inside the grid (rows 0..${R-1}, cols 0..${C-1}), so reading image[${nr}][${nc}] is safe.`,`<p>All four boundary tests are <b class="T">TRUE</b>. Next the <code>&&</code> moves on to the color test.</p>`,{cond:cd});
+  const val=g[nr][nc],same=val===oc;cd.col=same;cd.val=val;
+  if(!same){
+   res[i]='no';const was=IMG[nr][nc]===oc;log.push(`${DIR[i]} (${nr},${nc}) → ${was?'already recolored':'different color ('+val+')'} → ignored`);
+   P([29,29],`image[${nr}][${nc}] = ${val}, which is NOT originalColor (${oc}). This neighbor is not part of the region (or is already filled), so we ignore it.`,`<p>Neighbor value <b>${val}</b> ≠ originalColor <b>${oc}</b> → <b class="F">DIFFERENT COLOR</b> → ignore.</p>`,{cond:cd,extra:was?`<b>This is the payoff of marking immediately.</b> (${nr},${nc}) was a ${oc} in the original image, but we already painted it ${COL} when it entered the queue. So it no longer equals originalColor and is ignored. If we had waited to paint it, it would still look like a ${oc} and we would push it a second time.`:`Value ${val}: a wall / different region. BFS never enters it.`});
+   continue}
+  P([29,29],`image[${nr}][${nc}] = ${val} equals originalColor (${oc}). It belongs to the region and has not been filled yet.`,`<p>Neighbor value <b>${val}</b> = originalColor <b>${oc}</b> → <b class="T">SAME COLOR</b> → add to BFS.</p>`,{cond:cd,extra:first.same++?'':`Note: we compare with <code>originalColor</code>, <i>not</i> with the current cell, because the current cell has already been repainted ${COL}.`});
+  g[nr][nc]=COL;
+  P([31,31],`Paint (${nr},${nc}) with the new color right now, at the moment we discover it.`,`<p>image[${nr}][${nc}] becomes ${COL}.</p>`,{cond:cd,extra:`<b>Why mark immediately (before it is popped)?</b> Painting it now means any other cell that looks at it later sees ${COL} ≠ ${oc} and skips it.<br><br><b>If we did NOT mark now:</b> ${first.mark++?'the same thing would happen here.':`e.g. (0,0) is a neighbor of both (0,1) and (1,0). Both would see a ${oc}, so (0,0) would be pushed twice, processed twice, and on bigger grids the duplicates multiply, wasting time or even looping forever.`}`});
+  q.push([nr,nc]);res[i]='ok';log.push(`${DIR[i]} (${nr},${nc}) → valid and same color → recolored and added to queue`);
+  P([32,32],`Push (${nr},${nc}) to the back of the queue so we process its neighbors later.`,`<p>Queue is now <b>[${q.map(x=>'('+x+')').join(', ')}]</b>. BFS order = order of discovery.</p>`,{cond:cd,changed:[]});
+ }
+ ci=null;nb=null;delete v.i;delete v.nr;delete v.nc;dn.push([r,c]);
+ P([34,34],`All 4 directions of (${r},${c}) are checked, the for loop ends. We jump back to the while condition.`,`<p>Summary for <b>(${r},${c})</b>:</p><ul>${log.map(l=>'<li>'+l+'</li>').join('')}</ul>`);
+ cur=null;delete v.r;delete v.c;
+}
+P([37,37],'The queue is empty, so every cell connected to (1,1) has been recolored. Return the image.','<p><b>Done!</b> Note that (2,2) is still 1: it only touches the region diagonally, and we only walk UP/DOWN/LEFT/RIGHT.</p>',{final:true,extra:`<b>Original:</b> ${mini(IMG)} &nbsp; <b>Filled:</b> ${mini(g)}<br>BFS pattern: push start → mark → pop → check 4 neighbors (bounds + original color) → mark → push → repeat until the queue is empty.`});
+// ---------- rendering ----------
+let idx=0;const $=id=>document.getElementById(id);
+const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\b(class|public|int|auto|if|for|while|return|vector|queue|pair|const)\b/g,'<span class="k">$1</span>');
+$('code').innerHTML=CODE.map((t,i)=>`<span class="ln" data-l="${i}"><i>${i+1}</i>${esc(t)}</span>`).join('');
+const pos={0:'1/3',1:'5/3',2:'3/1',3:'3/5'},apos={0:'2/3',1:'4/3',2:'3/2',3:'3/4'};
+function render(){const s=S[idx];
+ $('stp').textContent=`Step ${idx+1} / ${S.length}`;$('prev').disabled=idx===0;$('next').disabled=idx===S.length-1;
+ document.querySelectorAll('.ln').forEach(e=>{const l=+e.dataset.l;e.classList.toggle('on',l>=s.line[0]-0&&l<=s.line[1])});
+ const on=document.querySelector('.ln.on'),bx=$('codebox');if(on){const t=on.offsetTop;if(t<bx.scrollTop+20||t>bx.scrollTop+bx.clientHeight-60)bx.scrollTop=t-80}
+ $('expt').innerHTML=s.exp;$('whatt').innerHTML=s.what;
+ // grid
+ let h=`<div class="g" style="grid-template-columns:48px repeat(${C+2},var(--cs))"><i></i>`;
+ for(let c=-1;c<=C;c++)h+=`<i class="ax">${c>=0&&c<C?'col '+c:''}</i>`;
+ for(let r=-1;r<=R;r++){h+=`<i class="ax">${r>=0&&r<R?'row '+r:''}</i>`;
+  for(let c=-1;c<=C;c++){
+   if(r<0||r>=R||c<0||c>=C){const hit=s.nb&&s.nb[0]===r&&s.nb[1]===c;h+=`<div class="cell gh ${hit?'on':''}">${hit?`<b>✕</b><small>(${r},${c})</small>`:''}</div>`;continue}
+   const isn=s.nb&&s.nb[0]===r&&s.nb[1]===c,qi=s.queue.findIndex(x=>x[0]===r&&x[1]===c),dd=s.dn.some(x=>x[0]===r&&x[1]===c);
+   const di=isn?DR.findIndex((_,k)=>r===s.cur[0]+DR[k]&&c===s.cur[1]+DC[k]):-1;
+   let nc=isn?(s.res[s.i]||''):'';
+   h+=`<div class="cell v${s.grid[r][c]} ${s.cur&&s.cur[0]===r&&s.cur[1]===c?'cur':''} ${isn?'nb '+nc:''}"><b>${s.grid[r][c]}</b><small>(${r},${c})</small>${qi>=0?`<span class="q">#${qi+1}</span>`:''}${isn&&di>=0?`<span class="d">${GL[di]}</span>`:''}${dd?'<span class="ck">✓ done</span>':''}</div>`}}
+ $('grid').innerHTML=h+'</div>';
+ $('queue').innerHTML=`<div class="chips">${s.queue.length?s.queue.map((x,k)=>`<span class="chip">${k===0?'<em>front</em>':k===s.queue.length-1?'<em>back</em>':''}(${x})</span>`).join(''):'<span class="mut">empty</span>'}</div><p class="mut" style="margin:8px 0 0;font:13px ui-monospace,monospace">[${s.queue.map(x=>'('+x+')').join(', ')}]</p>`;
+ const ord=['originalColor','color','sr','sc','r','c','i','nr','nc'],prev=idx?S[idx-1].vars:{};
+ $('vars').innerHTML=ord.filter(k=>k in s.vars).map(k=>`<div class="vr ${(s.changed.includes(k)||prev[k]!==s.vars[k])?'fl':''}"><span>${k}</span><b>${s.vars[k]}</b></div>`).join('');
+ // compass
+ const [r,c]=s.cur||[0,0],has=!!s.cur;let cp='<div class="cp">';
+ for(let k=0;k<4;k++){const nr=r+DR[k],nc=c+DC[k],out=has&&(nr<0||nr>=R||nc<0||nc>=C),co=has?`(${nr},${nc})`:`(r${DR[k]?(DR[k]>0?'+1':'-1'):''}, c${DC[k]?(DC[k]>0?'+1':'-1'):''})`,rs=s.res[k];
+  cp+=`<div class="cb ${s.i===k?'act':''} ${rs||''}" style="grid-area:${pos[k]}"><small>i=${k} · ${DIR[k]}</small><b>${co}</b><small>${out?'outside grid':''}${rs==='ok'?'✔ added':rs==='no'?'✘ ignored':rs==='out'?'✘ skipped':''}</small></div><div class="ar ${s.i===k?'act':''}" style="grid-area:${apos[k]}">${GL[k]}</div>`}
+ cp+=`<div class="cb cu" style="grid-area:3/3"><small>CURRENT</small>${has?`(${r},${c})`:'(r, c)'}</div></div>`;
+ const ar=(a,n)=>a.map((x,k)=>`<span class="${s.i===k?'act':''}">${String(x).padStart(2)}</span>`).join(',');
+ cp+=`<div class="arr">dr = [${ar(DR)}]<br>dc = [${ar(DC)}]${has&&s.i!==null?`<br><br>nr = r + dr[i] = ${r} + (${DR[s.i]}) = <b>${r+DR[s.i]}</b><br>nc = c + dc[i] = ${c} + (${DC[s.i]}) = <b>${c+DC[s.i]}</b>`:''}</div>`;
+ $('cmp').innerHTML=cp;
+ // condition
+ const cd=s.cond;let ch='<p class="mut" style="margin:0">Shown when the <code>if</code> is evaluated.</p>';
+ if(cd){const t=(x)=>`<b class="${x?'T':'F'}">${x?'TRUE':'FALSE'}</b>`,L=[['nr >= 0',`${cd.nr} >= 0`],['nr < rows',`${cd.nr} < ${R}`],['nc >= 0',`${cd.nc} >= 0`],['nc < columns',`${cd.nc} < ${C}`]];
+  ch=L.map((l,k)=>`<div class="cr"><span>${l[0]}</span><span class="mut">${l[1]}</span>${t(cd.b[k])}</div>`).join('')+`<div class="cr"><span>image[nr][nc] == originalColor</span><span class="mut">${cd.col==='skip'?'':cd.val===undefined?'':cd.val+' == '+oc}</span>${cd.col==='skip'?'<b class="mut">skipped</b>':cd.col===undefined?'<b class="mut">not yet</b>':t(cd.col)}</div>`;
+  if(cd.col===true||cd.col===false)ch+=`<div class="flow ${cd.col?'s':'d'}">originalColor = ${oc} · Neighbor = ${cd.val}<br>↓<br>${cd.col?'SAME COLOR<br>↓<br>ADD TO BFS':'DIFFERENT COLOR<br>↓<br>IGNORE IT'}</div>`}
+ $('cond').innerHTML=ch;
+ $('xc').style.display=s.extra?'':'none';$('extra').innerHTML=s.extra;
+ $('rem').style.display=s.final?'':'none';
+}
+const go=d=>{idx=Math.max(0,Math.min(S.length-1,idx+d));render()};
+$('next').onclick=()=>go(1);$('prev').onclick=()=>go(-1);$('rst').onclick=()=>{idx=0;render()};
+addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(1);else if(e.key==='ArrowLeft')go(-1);else if(e.key==='r'||e.key==='R'){idx=0;render()}});
+render();
+</script></body></html>
