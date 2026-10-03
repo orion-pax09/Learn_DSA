@@ -1,0 +1,155 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>LeetCode 430 Flatten Visualizer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0e1117;--p:#171c26;--b:#2a3242;--t:#e6e9f0;--m:#8b94a7;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+.w{max-width:1200px;margin:auto;padding:14px}h1{font-size:20px;margin:4px 0 10px}
+.g{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:12px}@media(max-width:820px){.g{grid-template-columns:1fr}}
+.c{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:12px;margin-bottom:12px;overflow-x:auto}
+h3{margin:0 0 8px;font-size:12px;letter-spacing:.08em;color:var(--m);text-transform:uppercase}
+pre{margin:0;font:15px/1.65 ui-monospace,Menlo,Consolas,monospace}
+.l{display:block;padding:0 8px;border-left:3px solid transparent;color:#aab3c5;white-space:pre}.l.on{background:#24304a;border-color:#5aa9ff;color:#fff}
+.tabs button,.bt button{background:#222a39;color:var(--t);border:1px solid var(--b);border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer;margin:2px}
+.tabs button.a{background:#2b4a7a;border-color:#5aa9ff}.bt{text-align:center}.bt .go{background:#2563eb;border-color:#3b82f6;font-weight:600}
+button:disabled{opacity:.35;cursor:default}
+.pp{display:flex;flex-wrap:wrap;gap:8px}.ch{border:1px solid var(--b);border-radius:8px;padding:5px 10px;font-family:ui-monospace,monospace}.ch.ch2{box-shadow:0 0 0 2px #fff6}
+.ex{font-size:16px}.asc{background:#0b0e14;padding:8px;border-radius:8px;font:14px/1.3 ui-monospace,monospace;color:#9fe}
+.bad{border-left:4px solid #f87171;background:#3a1b1f;padding:8px 10px;border-radius:6px;margin-top:8px}
+.ok{border-left:4px solid #4ade80;background:#14301f;padding:8px 10px;border-radius:6px;margin-top:8px}
+.sm{color:var(--m);font-size:13px}.pr{height:6px;background:#222a39;border-radius:4px;margin:6px 0}.pr i{display:block;height:100%;background:#3b82f6;border-radius:4px}
+svg{width:100%;height:auto;display:block}svg text{font-family:ui-monospace,monospace}
+</style></head><body><div class="w">
+<h1>LeetCode 430 · Flatten a Multilevel Doubly Linked List — one pointer at a time</h1>
+<div class="tabs c" id="tabs"></div>
+<div class="g"><div><div class="c"><h3>C++ code</h3><pre id="code"></pre></div>
+<div class="c"><h3>Call stack</h3><pre id="stk" class="sm"></pre></div></div>
+<div><div class="c"><h3>Linked list <span class="sm" style="text-transform:none">· <b style="color:#5aa9ff">blue = next</b> · <b style="color:#ffb454">amber = prev</b> · <b style="color:#b48bff">purple dashed = child</b> · <b style="color:#f87171">red = just removed</b></span></h3><svg id="svg"></svg></div>
+<div class="c"><h3>Pointers</h3><div class="pp" id="pp"></div>
+<div class="sm" style="margin-top:8px"><b>curr_next</b> → original main-list next node &nbsp;|&nbsp; <b>next</b> → head of flattened child list &nbsp;|&nbsp; <b>tail</b> → last node of flattened child list. <b>curr_next</b> and <b>next</b> are different pointers!</div></div></div></div>
+<div class="c"><div class="sm" id="prog"></div><div class="pr"><i id="bar"></i></div><div class="ex" id="ex"></div><div id="note"></div>
+<div style="margin-top:8px"><button id="wy" style="background:#222a39;color:var(--t);border:1px solid var(--b);border-radius:8px;padding:6px 12px;cursor:pointer">Why?</button> <button id="wf" style="background:#222a39;color:var(--t);border:1px solid var(--b);border-radius:8px;padding:6px 12px;cursor:pointer">What if we remove this line?</button></div><div id="more"></div></div>
+<div class="c bt"><button id="pv">◀ Previous</button><button id="nx" class="go">Next Step ▶</button><button id="rs">Reset</button></div>
+<div class="c" id="sum" style="display:none"></div>
+<div class="c"><h3>"I understand this now" checklist</h3><div id="chk"></div></div>
+</div>
+<script>
+const CODE=["Node* flatten(Node* head) {","    Node* curr = head;","    while (curr != nullptr) {","        Node* curr_next = curr->next;","        if (curr->child != nullptr) {","            Node* next = flatten(curr->child);","            curr->next = next;","            curr->next->prev = curr;","            curr->child = nullptr;","            Node* tail = next;","            while (tail->next != nullptr) {","                tail = tail->next;","            }","            tail->next = curr_next;","            if (curr_next != nullptr) {","                curr_next->prev = tail;","            }","        }","        curr = curr->next;","    }","    return head;","}"];
+const SC={
+ m:{n:"Main example",main:[1,2,3,4,5,6],par:3,kid:[7,8]},
+ s:{n:"Example 2 (7⇄8⇄9)",main:[1,2,3,4,5,6],par:3,kid:[7,8,9]},
+ a:{n:"A: curr_next exists",main:[1,2,3,4,5],par:3,kid:[7,8]},
+ b:{n:"B: curr_next is nullptr",main:[1,2,3],par:3,kid:[7,8]}};
+const COL={curr:"#4ade80",curr_next:"#fbbf24",next:"#38bdf8",tail:"#f472b6"};
+const WHY={
+3:"Because we're about to replace <code>curr->next</code>. If we don't save the original next node first, we lose the rest of the main list.",
+13:"The child list's last node (<code>tail</code>) still points to nullptr. We must hook the saved main-list remainder onto it, or nodes after the child are cut off.",
+15:"Doubly linked means every link goes both ways. <code>tail->next</code> alone gives 8→4; this line adds 4→8 (the back arrow).",
+14:"<code>curr_next</code> is nullptr when curr was the LAST node. nullptr has no <code>prev</code> field, so writing to it crashes.",
+8:"After flattening, the child list lives in the main chain. Leaving <code>child</code> set would make the node look like it still has a sub-list."};
+const WIF={
+3:"Without it, after <code>curr->next = next</code> nobody remembers node 4. <code>tail->next = ???</code> has nothing to attach, and 4⇄5⇄6 is lost.",
+13:"8 keeps pointing to nullptr. List becomes 1⇄2⇄3⇄7⇄8 — nodes 4,5,6 vanish.",
+15:"You get 8→4 but 4.prev still says 3. Walking backward from 4 jumps to 3 and skips 7 and 8 — the doubly linked list is corrupted.",
+14:"If curr_next is nullptr you execute <code>nullptr->prev = tail</code> → undefined behavior / crash (segfault).",
+8:"Node 3 keeps its child pointer, so the list isn't truly flat (LeetCode requires all child = null). Traversals would flatten 7⇄8 again."};
+let steps=[],cur=0,sc,POS;
+function build(k){
+ sc=SC[k];const N={};POS={};
+ sc.main.forEach((id,i)=>{N[id]={n:sc.main[i+1]??null,p:sc.main[i-1]??null,c:null};POS[id]=[70+i*105,125]});
+ const pi=sc.main.indexOf(sc.par);
+ sc.kid.forEach((id,j)=>{N[id]={n:sc.kid[j+1]??null,p:sc.kid[j-1]??null,c:null};POS[id]=[70+(pi+j)*105,265]});
+ N[sc.par].c=sc.kid[0];
+ let P={curr:null,curr_next:null,next:null,tail:null},stk=["flatten(1)"],out=[];
+ const nm=x=>x===null?"nullptr":x;
+ const S=(line,t,x,o={})=>out.push({line:[].concat(line),t,x,why:o.why||WHY[[].concat(line)[0]],wif:WIF[[].concat(line)[0]],hi:o.hi||[],note:o.note,asc:o.asc,N:JSON.parse(JSON.stringify(N)),P:{...P},stk:[...stk]});
+ const head=sc.main[0];
+ P.curr=head;S(1,"curr starts at the head","<code>curr</code> is our walking pointer. It starts at node "+head+" and will visit every node of this list.",{hi:[head],why:"We need a pointer that can move along the list without losing <code>head</code>, which we return at the end."});
+ S(2,"while (curr != nullptr)","curr = "+head+", not nullptr, so there is a node to process. We keep looping until we fall off the end.",{hi:[head],why:"nullptr marks the end of the list. Checking it stops us from using a pointer that points to nothing."});
+ while(P.curr!==null){
+  const c=P.curr,nx=N[c].n;P.curr_next=nx;
+  S(3,"Save curr->next into curr_next","<code>curr_next</code> now points to "+nm(nx)+" — the node that was after "+c+". We remember it <b>before</b> we change <code>curr->next</code>.",{hi:[c,nx].filter(v=>v!==null),asc:"curr\n ↓\n["+c+"] → "+(nx===null?"nullptr":"["+nx+"]\n       ↑\n   curr_next")});
+  const ch=N[c].c;
+  if(ch===null){S([4,18],"No child → move on","Node "+c+" has no child so the <code>if</code> is skipped. Then <code>curr = curr->next</code> moves to "+nm(nx)+".",{hi:[c],why:"Nodes without children need no flattening; we just walk forward."});P.curr=N[c].n;continue}
+  S(4,"if (curr->child != nullptr)","Node "+c+" has a child ("+ch+"), so we must flatten that sub-list and splice it in.",{hi:[c,ch]});
+  const kids=[];for(let q=ch;q!==null;q=N[q].n)kids.push(q);
+  stk.push("flatten("+ch+")");
+  S(5,"Recursive call: flatten(curr->child)","We enter a <b>new</b> flatten whose <code>head</code> is "+ch+". It walks "+kids.join("⇄")+", flattens any grandchildren (none here) and will return its head.",{hi:kids,note:"<div class='sm'>Inside flatten("+ch+"): curr walks "+kids.join(" → ")+", nobody has a child, returns head = "+ch+".</div>",why:"The child list may itself contain children. Recursion lets the same function solve the smaller list for us."});
+  stk.pop();P.next=ch;
+  S(5,"Recursive call returns","<code>next</code> now points to "+ch+" — the <b>head of the flattened child list</b>. (Not the same as <code>curr_next</code>!)",{hi:[ch],why:"We need the child list's head to connect it after curr."});
+  N[c].n=ch;
+  S(6,"curr->next = next","Now "+c+" → "+ch+". The old "+c+" → "+nm(nx)+" link is gone, but "+nm(nx)+" is safe because <code>curr_next</code> remembers it.",{hi:[c,ch,nx].filter(v=>v!==null),why:"This splices the child list right after curr."});
+  N[ch].p=c;
+  S(7,"curr->next->prev = curr","Back arrow: "+ch+".prev = "+c+". Now "+c+" ⇄ "+ch+".",{hi:[c,ch],why:"Doubly linked lists need both directions kept consistent."});
+  N[c].c=null;
+  S(8,"curr->child = nullptr","The child arrow is removed — the child list is now part of the main chain.",{hi:[c]});
+  P.tail=ch;
+  S(9,"Node* tail = next","<code>tail</code> starts at the head of the child list: "+ch+".",{hi:[ch],why:"We need the LAST child node, so we start at the front and walk."});
+  while(N[P.tail].n!==null){
+   S(10,"while (tail->next != nullptr)","tail = "+P.tail+", and "+P.tail+"->next = "+N[P.tail].n+" (not nullptr) → TRUE, keep walking.",{hi:[P.tail],why:"We keep going until the next pointer is nullptr — that means we're at the last node."});
+   P.tail=N[P.tail].n;
+   S(11,"tail = tail->next","<code>tail</code> moves to "+P.tail+".",{hi:[P.tail]});
+  }
+  S(10,"Loop stops: tail->next == nullptr","tail = "+P.tail+" and "+P.tail+"->next is nullptr → FALSE, loop ends. <b>tail is the last node of the child list.</b>",{hi:[P.tail],why:"We need the last node because that's where the old main-list portion must be attached.",note:"<div class='asc'>tail\n ↓\n["+P.tail+"] → nullptr</div>"});
+  const t=P.tail;N[t].n=nx;
+  S(13,"tail->next = curr_next","Now "+t+" → "+nm(nx)+(nx===null?" (nullptr stays nullptr — nothing to reattach).":". The remaining main list is reattached after the child list."),{hi:[t,nx].filter(v=>v!==null),asc:nx===null?null:"["+t+"] → nullptr   becomes   ["+t+"] → ["+nx+"]"});
+  if(nx!==null){
+   S(14,"if (curr_next != nullptr)","curr_next = "+nx+" → <code>"+nx+" != nullptr</code> is <b>TRUE</b>, because node "+c+" originally had node "+nx+" after it.",{hi:[nx],note:"<div class='ok'>TRUE → run the next line.</div>"});
+   N[nx].p=t;
+   S(15,"curr_next->prev = tail","Now "+nx+".prev = "+t+" so "+t+" ⇄ "+nx+" is a proper two-way link.",{hi:[t,nx]});
+  }else{
+   S(14,"if (curr_next != nullptr)","curr_next = nullptr → <code>nullptr != nullptr</code> is <b>FALSE</b>. We skip <code>curr_next->prev = tail</code>.",{hi:[t],note:"<div class='bad'><b>Why this matters:</b> without the <code>if</code>, the code would run <code>nullptr->prev = tail</code> — accessing memory that doesn't exist → crash. Here "+c+" was the last node, so there's nothing after "+t+".</div>"});
+  }
+  S([17,18],"curr = curr->next","curr moves to "+P.curr+"'s new next: "+ch+". The loop will now walk through the freshly inserted nodes too.",{hi:[ch],why:"After splicing, the next node to check is the first child node."});P.curr=N[c].n;
+  S(2,"while (curr != nullptr)","curr = "+nm(P.curr)+(P.curr===null?" → loop ends.":" → keep going."),{hi:P.curr===null?[]:[P.curr]});
+ }
+ S(2,"while ends","curr is nullptr: we've visited the whole flattened list.",{why:"nullptr means we passed the last node."});
+ S(20,"return head","The list is fully flattened. We return the original head.",{hi:[head],why:"The head never changed, so the caller still has the start of the list."});
+ steps=out;cur=0;
+}
+const $=i=>document.getElementById(i);
+function edges(N){const e=[];for(const id in N){const n=N[id];if(n.n!==null)e.push([+id,n.n,"n"]);if(n.p!==null)e.push([+id,n.p,"p"]);if(n.c!==null)e.push([+id,n.c,"c"])}return e}
+const ek=e=>e.join(">");
+function seg(a,b,off){const[ax,ay]=POS[a],[bx,by]=POS[b],dx=bx-ax,dy=by-ay,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L;
+ const t=Math.min(dx?28/Math.abs(dx):1e9,dy?25/Math.abs(dy):1e9),px=-uy*off,py=ux*off;
+ return`M${ax+dx*t+px+ux*2} ${ay+dy*t+py+uy*2}L${bx-dx*t+px-ux*4} ${by-dy*t+py-uy*4}`}
+const MC={n:"#5aa9ff",p:"#ffb454",c:"#b48bff",x:"#f87171"};
+function render(){
+ const s=steps[cur],pv=steps[cur-1],last=cur===steps.length-1;
+ $("code").innerHTML=CODE.map((l,i)=>`<span class="l${s.line.includes(i)?" on":""}">${l.replace(/</g,"&lt;")||" "}</span>`).join("");
+ const W=Math.max(...Object.values(POS).map(p=>p[0]))+130;
+ let h="<defs>"+Object.entries(MC).map(([k,c])=>`<marker id="m${k}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")+"</defs>";
+ const ce=edges(s.N),cs=new Set(ce.map(ek)),os=new Set(pv?edges(pv.N).map(ek):[]);
+ if(pv)edges(pv.N).forEach(e=>{if(!cs.has(ek(e)))h+=`<path d="${seg(e[0],e[1],e[2]==="c"?0:-7)}" stroke="${MC.x}" stroke-width="2" stroke-dasharray="4 4" fill="none" opacity=".7" marker-end="url(#mx)"/>`});
+ ce.forEach(e=>{const nw=pv&&!os.has(ek(e));h+=`<path d="${seg(e[0],e[1],e[2]==="c"?0:-7)}" stroke="${MC[e[2]]}" stroke-width="${nw?3.5:2}" fill="none"${e[2]==="c"?' stroke-dasharray="6 4"':""} marker-end="url(#m${e[2]})"${nw?' style="filter:drop-shadow(0 0 4px '+MC[e[2]]+')"':""}/>`});
+ const lab={};
+ for(const k in s.P){const v=s.P[k];if(v!==null)(lab[v]=lab[v]||[]).push(k)}
+ for(const id in POS){const[x,y]=POS[id],hi=s.hi.includes(+id);
+  h+=`<rect x="${x-28}" y="${y-22}" width="56" height="44" rx="10" fill="${hi?"#2b4a7a":"#1d2433"}" stroke="${hi?"#fff":"#3a445a"}" stroke-width="${hi?2.5:1.5}"/><text x="${x}" y="${y+6}" text-anchor="middle" fill="#fff" font-size="18" font-weight="700">${id}</text>`;
+  if(s.N[id].n===null)h+=`<text x="${x+34}" y="${y-12}" fill="#6b7488" font-size="11">nullptr</text>`;
+  const up=y<200;(lab[id]||[]).forEach((k,i)=>{const ly=up?y-40-i*20:y+46+i*20;h+=`<text x="${x}" y="${ly}" text-anchor="middle" fill="${COL[k]}" font-size="13" font-weight="700">${k} ${up?"▼":"▲"}</text>`})}
+ $("svg").setAttribute("viewBox",`0 0 ${W} 350`);$("svg").innerHTML=h;
+ $("pp").innerHTML=Object.keys(COL).map(k=>{const v=s.P[k],c=pv&&pv.P[k]!==v;return`<span class="ch${c?" ch2":""}" style="color:${COL[k]};border-color:${COL[k]}">${k} → ${v===null?"nullptr":v}${c?" ✱":""}</span>`}).join("");
+ $("stk").textContent=s.stk.map((x,i)=>" ".repeat(i*3)+(i?"└── ":"")+x).join("\n");
+ $("prog").textContent=`Step ${cur+1} / ${steps.length} — ${s.t}`;$("bar").style.width=(cur+1)/steps.length*100+"%";
+ $("ex").innerHTML=s.x;$("note").innerHTML=(s.asc?`<pre class="asc">${s.asc}</pre>`:"")+(s.note||"");
+ $("more").innerHTML="";$("wy").disabled=!s.why;$("wf").disabled=!s.wif;
+ $("pv").disabled=cur===0;$("nx").disabled=last;
+ const su=$("sum");su.style.display=last?"block":"none";
+ if(last){const N=s.N,hd=sc.main[0],a=[];for(let q=hd;q!==null;q=N[q].n)a.push(q);const k=sc.kid,p=sc.par,nx=sc.main[sc.main.indexOf(p)+1]??null;
+  su.innerHTML=`<h3>Final summary</h3><div><b>BEFORE</b>: ${sc.main.join(" ⇄ ")} &nbsp;(${p} has child ${k.join(" ⇄ ")})<br><b>AFTER</b>: ${a.join(" ⇄ ")}</div><pre class="asc" style="margin-top:8px">Save:           curr_next = ${nm2(nx)}
+Flatten:        next = ${k[0]}
+Connect:        ${p} → ${k[0]}  (and ${k[0]}.prev = ${p})
+Find tail:      tail = ${k[k.length-1]}
+Reconnect:      ${k[k.length-1]} → ${nm2(nx)}
+Fix backward:   ${nx===null?"skipped (curr_next is nullptr)":nx+".prev = "+k[k.length-1]}
+Remove child:   ${p}.child = nullptr</pre>`}
+}
+const nm2=x=>x===null?"nullptr":x;
+$("nx").onclick=()=>{if(cur<steps.length-1){cur++;render()}};$("pv").onclick=()=>{if(cur>0){cur--;render()}};$("rs").onclick=()=>{cur=0;render()};
+$("wy").onclick=()=>{$("more").innerHTML=`<div class="ok"><b>Why?</b> ${steps[cur].why}</div>`};
+$("wf").onclick=()=>{$("more").innerHTML=`<div class="bad"><b>What if we remove it?</b> ${steps[cur].wif}</div>`};
+$("tabs").innerHTML=Object.keys(SC).map(k=>`<button data-k="${k}">${SC[k].n}</button>`).join("");
+$("tabs").onclick=e=>{const k=e.target.dataset.k;if(!k)return;[...$("tabs").children].forEach(b=>b.classList.toggle("a",b.dataset.k===k));build(k);render()};
+$("chk").innerHTML=["I know curr_next saves the old next node before it is overwritten","I know next is the head of the flattened child list","I know tail is the last child node, found by walking","I know tail->next = curr_next creates 8 → 4","I know curr_next->prev = tail makes it 8 ⇄ 4","I know curr_next != nullptr prevents nullptr->prev crashes","I know why curr->child = nullptr is needed"].map(t=>`<label style="display:block"><input type="checkbox"> ${t}</label>`).join("");
+$("tabs").children[0].click();
+</script></body></html>
