@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>C++ Circular Linked List Visualizer</title>
+<style>
+:root{--bg:#10151c;--pn:#18202b;--ln:#2a3544;--tx:#e6ebf2;--mu:#8fa0b5;--ac:#ffb454;--ok:#5fd3a6;--bad:#ff6b7a;--hl:#2b3a52;
+--c-head:#5aa9ff;--c-last:#c792ea;--c-previous:#ffb454;--c-current:#5fd3a6;--c-nodeToDelete:#ff6b7a}
+@media(prefers-color-scheme:light){:root{--bg:#f3f5f8;--pn:#fff;--ln:#d5dce6;--tx:#17202c;--mu:#5a6a7e;--hl:#dbe8ff;--ac:#b86a00;--ok:#0b8a5f;--bad:#c9293b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,Segoe UI,sans-serif;padding-bottom:84px}
+h1{font-size:20px;margin:0}header{padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;border-bottom:1px solid var(--ln)}
+.sc button,.nav button{font:inherit;background:var(--pn);color:var(--tx);border:1px solid var(--ln);border-radius:6px;padding:6px 12px;cursor:pointer}
+.sc button.on{border-color:var(--ac);color:var(--ac)}button:disabled{opacity:.35;cursor:not-allowed}button:focus-visible,summary:focus-visible{outline:2px solid var(--ac)}
+main{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:12px;padding:12px 16px}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.pn{background:var(--pn);border:1px solid var(--ln);border-radius:8px;padding:10px 12px;min-width:0}
+.pn h2{font-size:14px;margin:0 0 8px;color:var(--mu);font-weight:600}
+#code{font:12.5px/1.55 ui-monospace,Consolas,monospace;max-height:430px;overflow:auto;padding:0}
+.ln{white-space:pre;padding:0 8px;border-left:3px solid transparent;color:var(--mu)}
+.ln .no{display:inline-block;width:26px;opacity:.5}.ln.done{color:var(--tx);opacity:.85}
+.ln.cur{background:var(--hl);border-left-color:var(--ac);color:var(--tx);font-weight:700}
+#viz{overflow-x:auto}svg{display:block;min-width:620px;width:100%;height:auto}
+svg text{font:12px ui-monospace,Consolas,monospace;fill:var(--tx)}
+.nd{fill:var(--pn);stroke:var(--mu);stroke-width:1.5}.fr{stroke-dasharray:5 4;opacity:.45}
+.ed{fill:none;stroke:var(--mu);stroke-width:2}.ed.wrap{stroke:var(--c-head)}.ed.chg{stroke:var(--ac);stroke-width:3.5}
+.tag rect{stroke:none}.tag text{fill:#101820;font-weight:700}.chg-t{animation:pop .7s}
+@keyframes pop{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.chg-t,.flash{animation:none}}
+#vars{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:4px 16px;font:13px ui-monospace,Consolas,monospace}
+.row{padding:2px 6px;border-radius:4px}.flash{animation:fl 1.2s;background:transparent}@keyframes fl{0%{background:var(--ac);color:#000}100%{background:transparent}}
+.cond{border:1px solid var(--ln);border-radius:6px;padding:8px 10px;margin:8px 0;font:13px ui-monospace,Consolas,monospace}
+.res{display:inline-block;padding:1px 10px;border-radius:10px;font-weight:700;color:#10151c}.T{background:var(--ok)}.F{background:var(--bad)}
+.cl{font:14px ui-monospace,Consolas,monospace;background:var(--hl);padding:6px 10px;border-radius:6px}
+.warn{border-left:4px solid var(--bad);padding:6px 10px;margin:8px 0;background:rgba(255,107,122,.1)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:8px;font:13px ui-monospace,Consolas,monospace}.ba div{border:1px dashed var(--ln);padding:6px;border-radius:6px}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:12px;justify-content:center;align-items:center;padding:12px;background:var(--pn);border-top:1px solid var(--ln)}
+.nav button{min-width:130px;padding:10px 14px;font-weight:600}.nav span{min-width:110px;text-align:center}
+.qa{margin:6px 0}summary{cursor:pointer;font-weight:600}.qa p{margin:6px 0 6px 18px;color:var(--ok)}
+.hint{color:var(--mu);font-size:13px}pre.out{margin:6px 0 0;font:13px ui-monospace,monospace;color:var(--ok)}
+</style></head><body>
+<header><h1>C++ Circular Linked List Visualizer: deleteAll</h1>
+<div class="sc" id="sc"></div>
+<label class="hint"><input type="checkbox" id="fix"> Apply fix for the head-deletion bug</label></header>
+<main>
+<section class="pn"><h2>C++ CODE (excerpt: deleteAll and main)</h2><div id="code"></div></section>
+<section class="pn"><h2>MEMORY / CIRCULAR LINKED LIST <span class="hint" id="sdesc"></span></h2><div id="viz"></div><pre class="out" id="out"></pre></section>
+<section class="pn" style="grid-column:1/-1"><h2>VARIABLES / POINTERS (changed values flash)</h2><div id="vars"></div></section>
+<section class="pn" style="grid-column:1/-1" id="ex"></section>
+<section class="pn" style="grid-column:1/-1"><h2>GLOSSARY</h2>
+<p class="hint"><b>Pointer</b>: a variable that stores the address of another object. <b>Node</b>: one box in the list. <b>Head</b>: stores the address of the first node. <b>Circular</b>: the last node points back to head, not nullptr. <b>delete</b>: releases memory that was created with <code>new</code>.</p></section>
+<section class="pn" style="grid-column:1/-1"><h2>TEST YOURSELF</h2><div id="quiz"></div></section>
+</main>
+<div class="nav"><button id="pv">← Previous</button><span id="ct"></span><button id="nx">Next →</button><button id="rs">↺ Reset</button></div>
+<script>
+const U=-1;
+const BASE=`void deleteAll(Node*& head, int target) {
+  if (head != nullptr) {
+    Node* last = head;
+    while (last->next != head) {
+      last = last->next;
+    }
+    Node* previous = last;
+    Node* current = head;
+    bool finished = false;
+    while (!finished && head != nullptr) {
+      if (current->data == target) {
+        if (current == current->next) {
+          delete current;
+          head = nullptr;
+          finished = true;
+        } else {
+          Node* nodeToDelete = current;
+          previous->next = current->next;
+          if (current == head) {
+            head = current->next;
+          }
+          current = current->next;
+          delete nodeToDelete;
+          if (current == head) {
+            finished = true;
+          }
+        }
+      } else {
+        previous = current;
+        current = current->next;
+        if (current == head) {
+          finished = true;
+        }
+      }
+    }
+  }
+}
+
+int main() {
+  Node* head = nullptr;
+  // insert(head, v) for each value builds the list
+  display(head);
+  int target = 20;
+  deleteAll(head, target);
+  display(head);
+}`.split('\n');
+const SCEN={main:{n:'Main demo',v:[10,20,30,20,40,50],t:20,d:'10→20→30→20→40→50, target 20'},
+head:{n:'Head is target',v:[20,30,40,50],t:20,d:'20→30→40→50, target 20 (head gets deleted)'},
+all:{n:'Delete Everything',v:[20,20,20,20],t:20,d:'20→20→20→20, target 20. The original code stops early here; tick the fix to see head = nullptr.'}};
+function build(vals,target,fix){
+ const N=vals.map((v,i)=>({d:v,a:'0x'+((i+1)*256).toString(16),n:(i+1)%vals.length,f:false}));
+ const st={N,P:{head:0,last:U,previous:U,current:U,nodeToDelete:U},V:{target:U,finished:U},out:''},P=st.P,V=st.V,S=[];
+ const nm=i=>i===null?'nullptr':i===U?'(not set yet)':`Node(${N[i].d})@${N[i].a}`;
+ const snap=(line,why,o={})=>S.push({line,why,...o,st:JSON.parse(JSON.stringify(st))});
+ const C=(expr,parts,res,note)=>({expr,parts,res,note});
+ const show=()=>{if(P.head===null)return 'List is empty.';let s='',c=P.head;do{s+=N[c].d+' ';c=N[c].n}while(c!==P.head);return s.trim()};
+ const D=i=>N[i].d, nx=i=>N[i].n;
+ const bugNote=()=>(!fix&&N[P.head]&&D(P.head)===target)?'⚠ BUG in the original code: current is the NEW head (not a wrap-around), yet finished becomes true. The new head also holds the target and will never be checked, so matching nodes survive. Tick "Apply fix" to compare.':'';
+ snap(40,'Start. main already built the circular list with insert(). Every insert used new Node, so each box lives at its own address. (The individual insert steps are skipped here.)',{c:'A <b>node</b> is one box in the list. <b>head</b> is a pointer: it stores the address of the first node. The list is <b>circular</b>: the last node points back to head.'});
+ st.out='Before deletion: '+show();snap(41,'display prints every value once, starting at head and stopping when it returns to head.');
+ V.target=target;snap(42,`target is a plain int. Every node whose data equals ${target} will be removed.`);
+ snap(43,'deleteAll is called. head is passed by reference (Node*&), so changing head inside the function changes main\'s head too.');
+ snap(1,'Guard: only work if the list is not empty.',{cond:C('head != nullptr',[`head = ${nm(P.head)}`,'nullptr'],true,'head is not null, so the list has nodes.')});
+ P.last=P.head;snap(2,'last starts at head. We will walk it forward to find the real last node.',{c:'<code>last = head</code> copies the <i>address</i> stored in head into last. Two pointers now point at the same node. No node is copied.'});
+ for(;;){const t=nx(P.last)!==P.head;
+  snap(3,'Check: does last point back to head? If not, last is not the final node yet.',{cond:C('last->next != head',[`last = ${nm(P.last)}`,`last->next = ${nm(nx(P.last))}`,`head = ${nm(P.head)}`],t,t?'Not equal, so keep walking.':`${D(P.last)}->next == head. We found the last node: the circle closes here.`)});
+  if(!t)break;P.last=nx(P.last);snap(4,'Move last one node forward.',{c:'<code>last = last->next</code> does not change any node. It changes <i>which node the pointer variable last points to</i>.'});}
+ P.previous=P.last;snap(6,'previous must always trail one node behind current. current will start at head, and in a circle the node behind head is the last node.');
+ P.current=P.head;snap(7,'current is the node we are inspecting. It starts at head.');
+ V.finished=false;snap(8,'finished is a flag. When it becomes true the loop stops.');
+ let wasHead=false;
+ for(;;){const c=!V.finished&&P.head!==null;
+  snap(9,'Loop while we are not finished and the list still has nodes.',{cond:C('!finished && head != nullptr',[`finished = ${V.finished}, so !finished = ${!V.finished}`,`head = ${nm(P.head)}, so head != nullptr = ${P.head!==null}`],c,c?'Both parts are true, run the loop body.':'The condition is false, so the loop ends.')});
+  if(!c)break;
+  const m=D(P.current)===target;
+  snap(10,'Is this node one we need to delete?',{cond:C('current->data == target',[`current->data = ${D(P.current)}`,`target = ${target}`],m,m?'Match: delete this node.':'No match: keep it and move on.')});
+  if(m){const one=P.current===nx(P.current);
+   snap(11,'A node that points to itself is the only node left in the circle.',{cond:C('current == current->next',[`current = ${nm(P.current)}`,`current->next = ${nm(nx(P.current))}`],one,one?'It points to itself, so this is the LAST remaining node.':'More than one node remains, so we must reconnect neighbours before deleting.')});
+   if(one){N[P.current].f=true;snap(12,'Free the last node.',{c:'<b>delete</b> releases memory created with <code>new</code>. The pointers still hold the old address, but using it now would be a bug (dangling pointer).'});
+    P.head=null;snap(13,'No nodes remain, so head must become nullptr. LIST EMPTY.');
+    V.finished=true;snap(14,'Nothing more to do, stop the loop.');}
+   else{P.nodeToDelete=P.current;snap(16,'Remember which node we are deleting. current is about to move, and we still need this address to call delete.');
+    wasHead=P.current===P.head;
+    const b=`${D(P.previous)} → ${D(P.current)} → ${D(nx(P.current))}`,a=`${D(P.previous)} ─────→ ${D(nx(P.current))}   (${D(P.current)} is skipped)`;
+    N[P.previous].n=nx(P.current);
+    snap(17,`previous (${nm(P.previous)}) now skips current and points to ${nm(nx(P.current))}.`,{ba:[b,a],c:'<code>previous->next = current->next</code> <b>does</b> change a node: it overwrites the next field inside the node previous points to. The node holding '+D(P.current)+' is now disconnected from the circle (nothing points to it). If the deleted node was just after the last node, this is also what repairs the circular link.'});
+    snap(18,'Are we deleting the head? If yes, head would point at a node that is about to disappear.',{cond:C('current == head',[`current = ${nm(P.current)}`,`head = ${nm(P.head)}`],wasHead,wasHead?'Yes, we are deleting the head.':'No, head stays where it is.')});
+    if(wasHead){const hb=`head → ${D(P.head)}`;P.head=nx(P.current);snap(19,'Because we are deleting the old head, head must move to the next node.',{ba:[hb+' (about to be deleted)',`head → ${D(P.head)}`]});}
+    const cb=nm(P.current);P.current=nx(P.current);snap(21,'current moves on to the next node. (Deleted node is still safe to point at via nodeToDelete.)',{ba:['current → '+cb,'current → '+nm(P.current)],c:'<code>current = current->next</code> does not change the node. It changes where the pointer variable current points.'});
+    N[P.nodeToDelete].f=true;snap(22,'Free the memory of the unlinked node.',{c:'<b>delete</b> releases the memory. nodeToDelete still holds the old address (a <i>dangling pointer</i>): never use it again. That is why we saved it before moving current.'});
+    const f=P.current===P.head&&!(fix&&wasHead);
+    snap(23,'Have we wrapped around to head? That means we visited every node.',{cond:C(fix?'current == head && !wasHead':'current == head',[`current = ${nm(P.current)}`,`head = ${nm(P.head)}`,...(fix?[`wasHead = ${wasHead}`]:[])],f,f?'Back at head: finished.':'Not back at head yet.'),warn:f&&wasHead?bugNote():''});
+    if(f){V.finished=true;snap(24,'We went full circle, stop.',{warn:wasHead?bugNote():''});}}
+  }else{
+   const pb=nm(P.previous);P.previous=P.current;snap(28,'We keep this node, so previous follows current.',{ba:['previous → '+pb,'previous → '+nm(P.previous)],c:'Both pointer variables now point at the same node, then current moves ahead on the next line so previous stays one behind.'});
+   P.current=nx(P.current);snap(29,'current moves to the next node.');
+   const f=P.current===P.head;
+   snap(30,'Back at head means we went all the way around.',{cond:C('current == head',[`current = ${nm(P.current)}`,`head = ${nm(P.head)}`],f,f?'Full circle: finished.':'Keep going.')});
+   if(f){V.finished=true;snap(31,'Every node has been checked.');}}
+ }
+ st.out+='\nAfter deletion:  '+show();snap(44,P.head===null?'head is nullptr: the list is empty.':'Done. The list now has no node equal to the target.');
+ return S;
+}
+let sc='main',fix=false,steps=[],i=0,CODE=[];
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function load(){const s=SCEN[sc];fix=$('fix').checked;steps=build(s.v,s.t,fix);i=0;
+ CODE=BASE.slice();if(fix){CODE[16]+=' bool wasHead = (current == head);';CODE[23]='          if (current == head && !wasHead) {';}
+ $('sdesc').textContent='  '+s.d;
+ $('sc').innerHTML=Object.keys(SCEN).map(k=>`<button data-k="${k}" class="${k==sc?'on':''}">${k=='all'?'Scenario: ':''}${SCEN[k].n}</button>`).join(' ');
+ $('code').innerHTML=CODE.map((t,k)=>`<div class="ln" id="L${k}"><span class="no">${k+1}</span>${esc(t)}</div>`).join('');render();}
+const L2I=l=>l; // trace line number -> index in CODE
+function nmS(s,x){return x===null?'nullptr':x===U?'(not set)':`Node(${s.N[x].d})@${s.N[x].a}`}
+function diff(a,b){const ch=[],keys=new Set();if(!a)return{ch:['Starting state.'],keys};
+ for(const k in b.P)if(a.P[k]!==b.P[k]){keys.add(k);ch.push(`${k} moved from ${nmS(a,a.P[k])} to ${nmS(b,b.P[k])}`);}
+ for(const k in b.V)if(a.V[k]!==b.V[k]){keys.add(k);ch.push(`${k} changed from ${a.V[k]===U?'(not set)':a.V[k]} to ${b.V[k]}`);}
+ b.N.forEach((n,x)=>{const o=a.N[x];if(o.n!==n.n){keys.add('e'+x);ch.push(`${n.d}@${n.a}->next changed from ${nmS(a,o.n)} to ${nmS(b,n.n)}`);}
+  if(!o.f&&n.f){keys.add('f'+x);ch.push(`${nmS(b,x)} was deleted (memory freed)`);}});
+ if(a.out!==b.out)ch.push('Output printed to the console.');
+ return{ch:ch.length?ch:['Nothing changed. This step only checks a condition.'],keys};}
+const COL={head:'--c-head',last:'--c-last',previous:'--c-previous',current:'--c-current',nodeToDelete:'--c-nodeToDelete'};
+function svg(s,keys){const n=s.N.length,W=n*120+40,NY=120,H=NY+50+30+18*n+20;
+ let o=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Linked list"><defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="context-stroke"/></marker></defs>`;
+ const X=x=>20+x*120;
+ s.N.forEach((nd,x)=>{if(nd.f)return;const j=nd.n,sx=X(x)+45,ch=keys.has('e'+x);
+  let cls='ed'+(j<=x?' wrap':'')+(ch?' chg':''),d,lx,ly;
+  if(j===x+1){o+=`<path class="${cls}" marker-end="url(#ar)" d="M${X(x)+90} ${NY+25}L${X(j)} ${NY+25}"/>`;return;}
+  const sy=NY+50,ex=X(j)+45;
+  if(j===x){d=`M${sx-15} ${sy}C${sx-45} ${sy+60} ${sx+45} ${sy+60} ${sx+15} ${sy+2}`;lx=sx;ly=sy+52;}
+  else{const cy=sy+30+18*Math.abs(j-x);d=`M${sx} ${sy}C${sx} ${cy} ${ex} ${cy} ${ex} ${sy+3}`;lx=(sx+ex)/2;ly=sy+.75*(cy-sy)+14;}
+  o+=`<path class="${cls}" marker-end="url(#ar)" d="${d}"/>`;
+  if(j===s.P.head&&j<=x)o+=`<text x="${lx}" y="${ly}" text-anchor="middle">${nd.d}->next = head</text>`;});
+ s.N.forEach((nd,x)=>{o+=`<g class="${nd.f?'fr':''}"><rect class="nd" x="${X(x)}" y="${NY}" width="90" height="50" rx="6"/><text x="${X(x)+8}" y="${NY+18}">data: ${nd.d}</text><text x="${X(x)+8}" y="${NY+36}">next: ${nd.f?'—':s.N[nd.n].a}</text><text x="${X(x)+8}" y="${NY+64}" opacity=".6">@${nd.a}</text></g>`;
+  if(nd.f)o+=`<text x="${X(x)+45}" y="${NY+30}" text-anchor="middle" font-size="22">❌</text><text x="${X(x)+45}" y="${NY-6}" text-anchor="middle" style="fill:var(--bad)">FREED</text>`;});
+ const stack={};
+ for(const k in COL){const t=s.P[k];if(t===null||t===U)continue;const q=stack[t]=(stack[t]||0)+1,y=NY-6-q*20-(s.N[t].f?14:0),dang=s.N[t].f;
+  o+=`<g class="tag ${keys.has(k)?'chg-t':''}" style="transform-origin:${X(t)+45}px ${y+8}px"><rect x="${X(t)+4}" y="${y-8}" width="82" height="17" rx="4" fill="var(${COL[k]})"/><text x="${X(t)+45}" y="${y+5}" text-anchor="middle" font-size="11">${dang?'⚠ ':''}${k} ▼</text></g>`;}
+ if(s.P.head===null)o+=`<text x="20" y="40" font-size="20" style="fill:var(--bad)">head → nullptr   LIST EMPTY</text>`;
+ return o+'</svg>';}
+function render(){const s=steps[i],p=i?steps[i-1].st:null,{ch,keys}=diff(p,s.st);
+ const idx=L2I(s.line),seen=new Set(steps.slice(0,i+1).map(z=>L2I(z.line)));
+ CODE.forEach((t,k)=>{const e=$('L'+k);e.className='ln'+(k===idx?' cur':seen.has(k)?' done':'');e.lastChild.textContent=t;});
+ const cd=$('code'),cl=$('L'+idx);cd.scrollTop=Math.max(0,cl.offsetTop-cd.clientHeight/2);
+ $('viz').innerHTML=svg(s.st,keys);$('out').textContent=s.st.out;
+ const P=s.st.P,V=s.st.V;
+ $('vars').innerHTML=[...['target','finished'].map(k=>[k,V[k]===U?'(not declared yet)':V[k],k]),...Object.keys(COL).map(k=>[k,'→ '+nmS(s.st,P[k]),k])].map(([k,v,key])=>`<div class="row ${keys.has(key)?'flash':''}">${k.padEnd(13)}${k=='target'||k=='finished'?'= ':''}${v}</div>`).join('');
+ let h=`<h2>STEP ${i+1} / ${steps.length}</h2><div><b>Executing:</b></div><div class="cl">${esc(CODE[idx].trim())}</div>
+ <p><b>What changed:</b></p><ul>${ch.map(c=>`<li>${esc(c)}</li>`).join('')}</ul><p><b>Why:</b> ${esc(s.why)}</p>`;
+ if(s.cond)h+=`<div class="cond"><b>Condition:</b> ${esc(s.cond.expr)}<br>${s.cond.parts.map(x=>esc(x)+'<br>').join('')}<span class="res ${s.cond.res?'T':'F'}">${s.cond.res?'TRUE ✓':'FALSE ✗'}</span> ${esc(s.cond.note)}</div>`;
+ if(s.ba)h+=`<div class="ba"><div><b>BEFORE</b><br>${esc(s.ba[0])}</div><div><b>AFTER</b><br>${esc(s.ba[1])}</div></div>`;
+ if(s.c)h+=`<p>💡 ${s.c}</p>`;if(s.warn)h+=`<div class="warn">${esc(s.warn)}</div>`;
+ $('ex').innerHTML=h;$('ct').textContent=`Step ${i+1} / ${steps.length}`;$('pv').disabled=i===0;$('nx').disabled=i===steps.length-1;}
+const go=d=>{const n=i+d;if(n>=0&&n<steps.length){i=n;render();}};
+$('nx').onclick=()=>go(1);$('pv').onclick=()=>go(-1);$('rs').onclick=()=>{i=0;render();};
+$('sc').onclick=e=>{const k=e.target.dataset.k;if(k){sc=k;load();}};$('fix').onchange=load;
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;
+ if(e.key==='ArrowRight')go(1);else if(e.key==='ArrowLeft')go(-1);else if(e.key==='r'||e.key==='R'){i=0;render();}});
+const Q=[['What does <code>previous->next = current->next</code> do?','It overwrites the next field of the node previous points to, so that node skips current and links to the node after it. current is now unreachable from the list.'],
+['Why do we update head when deleting the head?','Head must always point at a real node. If it still pointed at the deleted node it would be a dangling pointer, so head moves to the next node.'],
+['Why does <code>last->next</code> point to head?','Because the list is circular: the last node links back to the first instead of nullptr.'],
+['What does <code>current = current->next</code> change?','Only the pointer variable current: it now points at the next node. No node is modified.'],
+['What happens when <code>current == current->next</code>?','The node points to itself, so it is the only node left. We delete it and set head = nullptr.'],
+['Why save <code>nodeToDelete</code> before calling delete?','current moves to the next node first, so without the saved address we would lose track of the node to free.'],
+['What should head contain when every node is deleted?','nullptr.']];
+$('quiz').innerHTML=Q.map((q,k)=>`<details class="qa"><summary>${k+1}. ${q[0]}</summary><p>${q[1]}</p></details>`).join('');
+load();
+</script></body></html>
