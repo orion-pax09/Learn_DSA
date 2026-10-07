@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linked List Cycle — see it first</title>
+<style>
+:root{--bg:#10161f;--panel:#182130;--line:#2b3a50;--ink:#e8eef7;--mute:#8fa0b8;--cur:#ffb02e;--vis:#2fbf8f;--nxt:#58a6ff;--bad:#ff5d73}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 "Trebuchet MS","Segoe UI",sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:26px;margin:4px 0 2px}
+.sub{color:var(--mute);margin:0 0 16px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab,.pill,.btn{font:inherit;cursor:pointer;border:2px solid var(--line);background:var(--panel);color:var(--ink);border-radius:12px}
+.tab{padding:10px 16px;font-weight:700}
+.tab.on,.pill.on{border-color:var(--cur);background:#2a2314}
+.pill{padding:8px 18px;font-weight:700}
+.sec{display:none}.sec.on{display:block}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:16px}
+.basics{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:16px}
+.basics div{font-size:15px}.basics b{display:block;font-size:16px;margin-bottom:2px}
+.bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.ctr{font-size:22px;font-weight:800;color:var(--cur)}
+svg{width:100%;height:auto;display:block}
+.node rect{fill:#222f44;stroke:#4a5d7a;stroke-width:3;transition:.3s}
+.node text{fill:var(--ink);font-size:34px;font-weight:800;text-anchor:middle}
+.node .idx{font-size:14px;fill:var(--mute);font-weight:400}
+.node.visited rect{fill:#143a30;stroke:var(--vis)}
+.node.cur rect{fill:#4a3410;stroke:var(--cur);stroke-width:5}
+.node.next rect{stroke:var(--nxt);stroke-dasharray:9 6;stroke-width:5}
+.edge{stroke:#5b6b85;stroke-width:4;fill:none;transition:.3s}
+.edge.seen{stroke:var(--vis)}.edge.active{stroke:var(--cur);stroke-width:8}
+.edge.back{stroke:var(--bad)}
+#back,#q,#nullbox,#enull{opacity:0;transition:opacity .4s}
+#back.show,#q.show,#nullbox.show,#enull.show{opacity:1}
+.nullbox rect{fill:none;stroke:#5b6b85;stroke-width:3;stroke-dasharray:6 5}
+.nullbox text{fill:var(--mute);font-size:24px;font-weight:800;text-anchor:middle}
+#marker{transition:transform .6s cubic-bezier(.5,0,.2,1)}
+#marker rect{fill:var(--cur)}#marker text{fill:#1a1200;font-size:14px;font-weight:800;text-anchor:middle}
+#marker path{fill:var(--cur)}
+.lbl{fill:var(--bad);font-size:17px;font-weight:700;text-anchor:middle}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--mute);margin:6px 0 10px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;border:3px solid;vertical-align:-2px;margin-right:5px}
+.say{min-height:110px;margin-top:8px}
+.say h2{margin:0 0 4px;font-size:22px}.say p{margin:0;font-size:19px}
+.path{margin-top:10px;font-size:18px;color:var(--mute);min-height:28px}
+.path b{color:var(--ink)}
+.loop{margin-top:10px;padding:10px 14px;border-radius:12px;border:2px dashed var(--bad);color:#ffd0d6;font-size:20px;font-weight:700;display:none}
+.ans{margin-top:12px;padding:14px;border-radius:14px;font-size:24px;font-weight:800;text-align:center;display:none}
+.ans.t{background:#3a1620;border:3px solid var(--bad)}.ans.f{background:#10352a;border:3px solid var(--vis)}
+.ctl{display:flex;gap:10px;margin-top:14px}
+.btn{flex:1;padding:18px 10px;font-size:20px;font-weight:800}
+.btn.go{background:var(--cur);color:#1a1200;border-color:var(--cur)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.rs{flex:.6}
+:focus-visible{outline:3px solid var(--nxt);outline-offset:2px}
+.big{background:#3a1620;border:2px solid var(--bad);border-radius:14px;padding:12px 16px;margin:12px 0;font-size:18px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:12px 0}
+.two .emo{font-size:46px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div class="wrap">
+<h1>Linked List Cycle</h1>
+<p class="sub">LeetCode 141 — first, just see what the question is asking.</p>
+<div class="tabs">
+<button class="tab on" data-s="s1">1. Watch the problem</button>
+<button class="tab" data-s="s2">2. What is pos?</button>
+<button class="tab" data-s="s3">3. How could we detect this?</button>
+</div>
+
+<!-- SECTION 1 -->
+<div class="sec on" id="s1">
+<div class="basics">
+<div class="card"><b>Node</b>A box holding a number, plus an arrow (called <i>next</i>) to the next box.</div>
+<div class="card"><b>NULL</b>"Nothing here." If an arrow goes to NULL, the list has ended.</div>
+<div class="card"><b>Cycle</b>An arrow that goes <i>back</i> to an earlier box, so the list never ends.</div>
+</div>
+<div class="card">
+<div class="bar">
+<div><button class="pill on" data-ex="cycle">Cycle</button> <button class="pill" data-ex="nocycle">No Cycle</button></div>
+<div class="ctr" id="ctr">Step 1 / 6</div>
+</div>
+<div id="given" class="sub" style="margin:0"></div>
+<div class="legend">
+<span><i style="border-color:var(--cur);background:#4a3410"></i>you are here</span>
+<span><i style="border-color:var(--vis);background:#143a30"></i>already visited</span>
+<span><i style="border-color:var(--nxt);border-style:dashed"></i>arrow points here</span>
+</div>
+<div id="stage"></div>
+<div class="path" id="path"></div>
+<div class="loop" id="loop"></div>
+<div class="say"><h2 id="h"></h2><p id="d"></p></div>
+<div class="ans" id="ans"></div>
+<div class="ctl">
+<button class="btn" id="prev">← Previous Step</button>
+<button class="btn go" id="next">Next Step →</button>
+<button class="btn rs" id="reset">Reset</button>
+</div>
+</div>
+</div>
+
+<!-- SECTION 2 -->
+<div class="sec" id="s2">
+<div class="card">
+<p style="margin-top:0">Every node has a position number, called its <b>index</b>. It starts at 0.</p>
+<p>Pick a <b>pos</b> and see what it means:</p>
+<div id="posbtns" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+<div id="posvis"></div>
+<p id="postxt" style="font-size:20px;font-weight:700"></p>
+<div class="big"><b>pos is NOT given to your function.</b><br>Your function only receives <b>head</b> (the first node). <b>pos</b> is just LeetCode's way of telling <i>us</i> how the test list was built. Your code has to find the cycle without it.</div>
+</div>
+</div>
+
+<!-- SECTION 3 -->
+<div class="sec" id="s3">
+<div class="card">
+<h2 style="margin-top:0">How could we detect this?</h2>
+<p>We can't "see" the whole picture like you just did. We can only follow arrows. So: send two walkers down the list at different speeds.</p>
+<div class="two">
+<div class="card"><div class="emo">🐢</div><b>Slow</b><br>moves 1 node at a time</div>
+<div class="card"><div class="emo">🐇</div><b>Fast</b><br>moves 2 nodes at a time</div>
+</div>
+<p>Think of a race track. On a <b>loop</b>, the rabbit eventually laps the turtle and they meet. On a <b>road that ends</b> (NULL), the rabbit just reaches the end.</p>
+<p style="color:var(--mute)">The step-by-step algorithm is the next lesson — for now, the picture above is the whole problem.</p>
+</div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+// ---- tabs
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+ document.querySelectorAll('.sec').forEach(s=>s.classList.toggle('on',s.id===t.dataset.s));
+});
+// ---- lesson data
+const EX={
+cycle:{vals:[3,2,0,-4],given:'head = [3, 2, 0, -4]   pos = 1   (the last node points back to the node at index 1)',steps:[
+ {cur:0,vis:[],path:[0],h:'Start at node 3',d:'This is the head — the first node. We begin here.'},
+ {cur:1,vis:[0],edge:0,path:[0,1],h:'Follow the arrow: 3 → 2',d:'This node points to another node. We follow the arrow.'},
+ {cur:2,vis:[0,1],edge:1,path:[0,1,2],h:'Follow the arrow: 2 → 0',d:'Now we move from 2 to 0.'},
+ {cur:3,vis:[0,1,2],edge:2,path:[0,1,2,3],h:'Follow the arrow: 0 → -4',d:'Now we move from 0 to -4. Where does -4 point? Not shown yet…'},
+ {cur:3,vis:[0,1,2],edge:'back',back:1,next:1,path:[0,1,2,3],h:'-4 points back to 2!',d:'Instead of going to NULL, -4 points back to 2. We did NOT reach NULL.'},
+ {cur:1,vis:[0,1,2,3],edge:'back',back:1,path:[0,1,2,3,1],loop:'2 → 0 → -4 → 2 → 0 → -4 → …',h:'We are stuck in a loop',d:'We came back to a node we already visited. The same nodes keep repeating. Therefore, the list contains a cycle.',ans:true}]},
+nocycle:{vals:[1,2,3],given:'head = [1, 2, 3]   pos = -1   (-1 means: no cycle, the last node points to NULL)',steps:[
+ {cur:0,vis:[],path:[0],h:'Start at node 1',d:'This is the head. We begin here.'},
+ {cur:1,vis:[0],edge:0,path:[0,1],h:'Follow the arrow: 1 → 2',d:'We follow the arrow from 1 to 2.'},
+ {cur:2,vis:[0,1],edge:1,path:[0,1,2],h:'Follow the arrow: 2 → 3',d:'Now we move from 2 to 3.'},
+ {cur:2,vis:[0,1],edge:'null',nul:1,path:[0,1,2],end:1,h:'3 → NULL',d:'Node 3 points to NULL. NULL means "nothing here". The list ends.'},
+ {cur:2,vis:[0,1],nul:1,seen:1,path:[0,1,2],end:1,h:'We reached the end',d:'We never came back to a node we already visited. The arrows just stop. So there is no loop.',ans:false}]}
+};
+// ---- stage building
+const X0=70,GAP=170,W=110,H=70,Y=80,NS='http://www.w3.org/2000/svg';
+let ex='cycle',i=0;
+const nx=k=>X0+k*GAP;
+function build(){
+ const E=EX[ex],n=E.vals.length;let s='';
+ s+=`<svg viewBox="0 0 780 290" role="img" aria-label="Linked list diagram"><defs>
+ <marker id="a0" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="#5b6b85"/></marker></defs>`;
+ for(let k=0;k<n-1;k++)s+=`<line class="edge" id="e${k}" x1="${nx(k)+W}" y1="${Y+H/2}" x2="${nx(k+1)-6}" y2="${Y+H/2}" marker-end="url(#a0)"/>`;
+ const L=n-1;
+ if(ex==='cycle'){
+  s+=`<g id="q"><line class="edge" x1="${nx(L)+W}" y1="${Y+H/2}" x2="${nx(L)+W+40}" y2="${Y+H/2}" stroke-dasharray="6 6"/><text x="${nx(L)+W+58}" y="${Y+H/2+10}" fill="#8fa0b8" font-size="30" font-weight="800" text-anchor="middle">?</text></g>`;
+  const x1=nx(L)+W/2,x2=nx(1)+W/2,by=Y+H;
+  s+=`<g id="back"><path class="edge back" id="bp" d="M${x1},${by+2} C${x1},${by+130} ${x2},${by+130} ${x2},${by+10}" marker-end="url(#a1)"/><text class="lbl" x="${(x1+x2)/2}" y="${by+108}">-4 points back to 2</text></g>`;
+  s=s.replace('</defs>','<marker id="a1" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="#ff5d73"/></marker></defs>');
+ }else{
+  s+=`<g id="nullbox" class="nullbox"><rect x="${nx(L+1)}" y="${Y+10}" width="${W}" height="${H-20}" rx="10"/><text x="${nx(L+1)+W/2}" y="${Y+H/2+8}">NULL</text></g>`;
+  s+=`<line class="edge" id="enull" x1="${nx(L)+W}" y1="${Y+H/2}" x2="${nx(L+1)-6}" y2="${Y+H/2}" marker-end="url(#a0)"/>`;
+ }
+ E.vals.forEach((v,k)=>{s+=`<g class="node" id="n${k}"><rect x="${nx(k)}" y="${Y}" width="${W}" height="${H}" rx="14"/><text x="${nx(k)+W/2}" y="${Y+H/2+12}">${v}</text><text class="idx" x="${nx(k)+W/2}" y="${Y+H+20}">index ${k}</text></g>`});
+ s+=`<g id="marker" style="transform:translate(${nx(0)+W/2}px,0)"><rect x="-55" y="14" width="110" height="26" rx="13"/><text y="32">YOU ARE HERE</text><path d="M-9,40 L9,40 L0,52z"/></g></svg>`;
+ $('stage').innerHTML=s;$('given').textContent=E.given;
+}
+function show(el,on){el.classList.toggle('show',!!on)}
+function update(){
+ const E=EX[ex],S=E.steps[i],n=E.vals.length;
+ $('ctr').textContent=`Step ${i+1} / ${E.steps.length}`;
+ const reached=Math.max(S.cur,...S.vis);
+ E.vals.forEach((v,k)=>{const g=$('n'+k);g.classList.toggle('cur',k===S.cur);g.classList.toggle('visited',S.vis.includes(k)&&k!==S.cur);g.classList.toggle('next',S.next===k)});
+ for(let k=0;k<n-1;k++){const e=$('e'+k);e.classList.toggle('active',S.edge===k);e.classList.toggle('seen',S.edge!==k&&k<reached)}
+ $('marker').style.transform=`translate(${nx(S.cur)+W/2}px,0)`;
+ if(ex==='cycle'){show($('back'),S.back);show($('q'),!S.back);}
+ else{show($('nullbox'),S.nul);const en=$('enull');show(en,S.nul);en.classList.toggle('active',S.edge==='null');en.classList.toggle('seen',!!S.seen)}
+ $('h').textContent=S.h;$('d').textContent=S.d;
+ $('path').innerHTML='Path so far: <b>'+S.path.map(k=>E.vals[k]).join(' → ')+(S.end?' → NULL':'')+'</b>';
+ const lp=$('loop');lp.style.display=S.loop?'block':'none';lp.textContent=S.loop||'';
+ const a=$('ans');a.style.display=S.ans===undefined?'none':'block';
+ if(S.ans!==undefined){a.className='ans '+(S.ans?'t':'f');a.textContent=S.ans?'ANSWER: TRUE — A CYCLE EXISTS':'ANSWER: FALSE — NO CYCLE'}
+ $('prev').disabled=i===0;$('next').disabled=i===E.steps.length-1;
+}
+function setEx(k){ex=k;i=0;document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('on',p.dataset.ex===k));build();update()}
+document.querySelectorAll('.pill').forEach(p=>p.onclick=()=>setEx(p.dataset.ex));
+$('next').onclick=()=>{if(i<EX[ex].steps.length-1){i++;update()}};
+$('prev').onclick=()=>{if(i>0){i--;update()}};
+$('reset').onclick=()=>{i=0;update()};
+document.addEventListener('keydown',e=>{if(!$('s1').classList.contains('on'))return;if(e.key==='ArrowRight')$('next').click();if(e.key==='ArrowLeft')$('prev').click()});
+setEx('cycle');
+
+// ---- pos explainer
+let pos=1;
+const PV=[3,2,0,-4];
+function drawPos(){
+ const px=k=>50+k*170,y=70,w=110,h=64;let s='<svg viewBox="0 0 800 300"><defs><marker id="pa" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0L6,3L0,6z" fill="#ff5d73"/></marker></defs>';
+ PV.forEach((v,k)=>{const hit=k===pos,last=k===3;
+  s+=`<text x="${px(k)+w/2}" y="28" fill="#8fa0b8" font-size="16" text-anchor="middle">index ${k}</text><text x="${px(k)+w/2}" y="50" fill="#8fa0b8" font-size="18" text-anchor="middle">↓</text>`;
+  s+=`<rect x="${px(k)}" y="${y}" width="${w}" height="${h}" rx="14" fill="${hit?'#4a3410':last?'#3a1620':'#222f44'}" stroke="${hit?'#ffb02e':last?'#ff5d73':'#4a5d7a'}" stroke-width="${hit||last?5:3}"/><text x="${px(k)+w/2}" y="${y+43}" fill="#e8eef7" font-size="32" font-weight="800" text-anchor="middle">${v}</text>`;
+  if(k<3)s+=`<line x1="${px(k)+w}" y1="${y+h/2}" x2="${px(k+1)-6}" y2="${y+h/2}" stroke="#5b6b85" stroke-width="4"/>`});
+ s+=`<text x="${px(3)+w/2}" y="${y+h+22}" fill="#ff8a9a" font-size="15" text-anchor="middle">last node</text>`;
+ if(pos>=0){let x1=px(3)+w/2,x2=px(pos)+w/2;if(x1===x2){x1-=22;x2+=22}
+  s+=`<path d="M${x1},${y+h+30} C${x1},${y+h+140} ${x2},${y+h+140} ${x2},${y+h+6}" stroke="#ff5d73" stroke-width="5" fill="none" marker-end="url(#pa)"/>`;
+ }else{
+  s+=`<line x1="${px(3)+w}" y1="${y+h/2}" x2="${px(3)+w+50}" y2="${y+h/2}" stroke="#5b6b85" stroke-width="4"/><text x="${px(3)+w+80}" y="${y+h/2+8}" fill="#8fa0b8" font-size="22" font-weight="800" text-anchor="middle">NULL</text>`;}
+ $('posvis').innerHTML=s+'</svg>';
+ $('postxt').textContent=pos<0?'pos = -1 → the last node (-4) points to NULL. No cycle.':pos===3?'pos = 3 → the last node (-4) points to itself.':`pos = ${pos} → the last node (-4) points back to the node at index ${pos} (${PV[pos]}).`;
+ document.querySelectorAll('#posbtns button').forEach(b=>b.classList.toggle('on',+b.dataset.p===pos));
+}
+[-1,0,1,2,3].forEach(p=>{const b=document.createElement('button');b.className='pill';b.dataset.p=p;b.textContent='pos = '+p;b.onclick=()=>{pos=p;drawPos()};$('posbtns').appendChild(b)});
+drawPos();
+</script></body></html>
