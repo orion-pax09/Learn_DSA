@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LeetCode 678 Visual Debugger</title>
+<style>
+:root{--bg:#eef1f4;--card:#fff;--ink:#16233a;--mut:#58667c;--line:#d5dce6;--mn:#0b7a75;--mx:#b86a05;--bad:#c23b3b;--ok:#1e8a4c;--hl:#fff1b8;--hlb:#e0b400;--acc:#2b4acb;--accT:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1722;--card:#172233;--ink:#e6ecf4;--mut:#9fb0c6;--line:#2c3b52;--mn:#3fd0c6;--mx:#f2b24a;--bad:#ff7b7b;--ok:#5fd68c;--hl:#3a3210;--hlb:#e0b400;--acc:#7c93ff;--accT:#0f1722}}
+:root[data-theme="dark"]{--bg:#0f1722;--card:#172233;--ink:#e6ecf4;--mut:#9fb0c6;--line:#2c3b52;--mn:#3fd0c6;--mx:#f2b24a;--bad:#ff7b7b;--ok:#5fd68c;--hl:#3a3210;--hlb:#e0b400;--acc:#7c93ff;--accT:#0f1722}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Avenir Next","Trebuchet MS",system-ui,sans-serif}
+main{max-width:1120px;margin:0 auto;padding:18px 14px 60px}
+h1{font-size:clamp(26px,5vw,40px);line-height:1.1;margin:8px 0 6px;letter-spacing:-.5px}
+h2{font-size:22px;margin:0 0 8px}h3{font-size:16px;margin:0 0 6px}
+p{margin:6px 0;max-width:72ch}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:16px 0}
+code,.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.mn{color:var(--mn)}.mxc{color:var(--mx)}b.mn,b.mxc{font-weight:800}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+button,.chip{font:inherit;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:8px 14px}
+button:hover{border-color:var(--acc)}button:disabled{opacity:.4;cursor:default}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+#next{background:var(--acc);color:var(--accT);border-color:var(--acc);font-weight:700;font-size:18px;padding:10px 26px}
+input[type=text]{font:20px ui-monospace,Menlo,monospace;padding:8px 12px;border:1.5px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);width:210px;letter-spacing:3px}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.rules div{border:1px solid var(--line);border-radius:10px;padding:10px}
+.rules big{font:700 26px ui-monospace,monospace}
+/* number line */
+.nl{position:relative;height:96px;margin:14px 0 4px;overflow-x:auto;overflow-y:hidden;--w:42px}
+.nl .in{position:relative;height:100%;min-width:max-content}
+.cells{display:flex}
+.cell{width:var(--w);height:46px;border:1px solid var(--line);text-align:center;font:700 13px/22px ui-monospace,monospace;color:var(--mut);position:relative}
+.cell.on{background:color-mix(in srgb,var(--mn) 14%,transparent);color:var(--ink)}
+.cell.neg{background:color-mix(in srgb,var(--bad) 14%,transparent)}
+.cell i{display:block;font-style:normal;color:var(--ink);font-size:18px;line-height:20px}
+.bar{position:absolute;top:50px;height:8px;border-radius:5px;background:linear-gradient(90deg,var(--mn),var(--mx));transition:left .55s ease,width .55s ease,opacity .3s}
+.bar.bad{background:var(--bad)}
+.mk{position:absolute;top:62px;font:700 13px ui-monospace,monospace;transition:left .55s ease;white-space:nowrap}
+.mk.m1{color:var(--mn)}.mk.m2{color:var(--mx)}
+/* chars */
+#chars{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.ch{width:64px;text-align:center}
+.ch b{display:block;font:700 34px/58px ui-monospace,monospace;border:2.5px solid var(--line);border-radius:10px;transition:.3s}
+.ch i{font:13px ui-monospace,monospace;color:var(--mut);font-style:normal}
+.ch.past b{opacity:.45}.ch.cur b{border-color:var(--hlb);background:var(--hl);transform:translateY(-6px) scale(1.08)}
+/* lab */
+.grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:12px}
+@media(min-width:880px){.grid{grid-template-columns:minmax(0,5fr) minmax(0,6fr)}}
+.panel{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg)}
+.ln{display:flex;align-items:center;font:14px/1.9 ui-monospace,Menlo,Consolas,monospace;border-left:4px solid transparent;white-space:pre}
+.ln .ar{width:24px;visibility:hidden}.ln .no{width:26px;color:var(--mut);font-size:12px}
+.ln.on{background:var(--hl);border-left-color:var(--hlb);font-weight:700}.ln.on .ar{visibility:visible}
+.cnt{display:flex;gap:12px}
+.cnt div{flex:1;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--card)}
+.cnt small{color:var(--mut)}.cnt output{display:block;font:800 46px/1.1 ui-monospace,monospace}
+.cnt .d{font:14px ui-monospace,monospace;min-height:20px}
+.bump{animation:bump .5s}@keyframes bump{40%{transform:scale(1.4)}}
+.say{border-left:5px solid var(--acc);padding:6px 12px;margin:10px 0;background:var(--card);border-radius:0 10px 10px 0}
+.say b{display:block;font-size:13px;color:var(--acc)}
+.box{border:1.5px dashed var(--line);border-radius:12px;padding:10px 12px;margin:10px 0;background:var(--card)}
+.tree{text-align:center;font:700 26px ui-monospace,monospace}
+.br{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0}
+.bx{border:2px solid var(--line);border-radius:10px;padding:6px;text-align:center;font-size:13px;opacity:.55;transition:.3s}
+.bx b{display:block;font:700 22px ui-monospace,monospace}.bx.lit{opacity:1;border-color:var(--hlb);background:var(--hl)}
+.res{font-weight:800;font-size:20px;padding:10px 14px;border-radius:10px;margin:10px 0;color:#fff}
+.res.t{background:var(--ok)}.res.f{background:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}th:nth-child(1),td:nth-child(1),th:nth-child(3),td:nth-child(3),th:nth-child(4),td:nth-child(4){text-align:right}
+td:nth-child(2){font:700 18px ui-monospace,monospace}tr.cur td{background:var(--hl)}
+.tw{overflow-x:auto}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.cards div{border:1px solid var(--line);border-radius:12px;padding:12px}
+.cards pre{margin:6px 0;font:14px/1.5 ui-monospace,monospace;white-space:pre-wrap}
+input[type=range]{width:200px;accent-color:var(--acc)}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body><main>
+<header>
+<h1>LeetCode 678: Valid Parenthesis String</h1>
+<p>Press <b>Next Step</b> and watch your C++ code run one line at a time. You do not need to know the trick first. You will find it as you go.</p>
+</header>
+
+<section id="idea">
+<h2>1. First, the big idea</h2>
+<p>The string has <code>*</code> characters. A star can be <code>(</code>, <code>)</code> or nothing. So we are never sure how many <code>(</code> are still waiting to be closed. Instead of guessing, we keep a <b>range</b> of possible answers:</p>
+<p><b class="mn">minimum</b> = the smallest number of unmatched <code>(</code> that could exist right now.<br><b class="mxc">maximum</b> = the largest number of unmatched <code>(</code> that could exist right now.</p>
+<p>Drag the sliders and see what the range means:</p>
+<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+<label>minimum <input type="range" id="s1" min="0" max="5" value="1"></label>
+<label>maximum <input type="range" id="s2" min="0" max="5" value="3"></label></div>
+<div class="nl" id="nl0"></div>
+<p id="demoTxt" style="font-weight:700"></p>
+<p>Your code only has to update these two numbers for each character. Here are the three rules you will see in the code:</p>
+<div class="rules">
+<div><big>(</big><br>It is definitely open.<br><b>max +1, min +1</b></div>
+<div><big>)</big><br>It closes one open <code>(</code>.<br><b>max −1, min −1</b> (min never below 0)</div>
+<div><big>*</big><br>It is a joker: <code>(</code>, <code>)</code> or empty.<br><b>max +1, min −1</b> (min never below 0)</div></div>
+</section>
+
+<section id="lab">
+<h2>2. Step through your code</h2>
+<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+<label for="inp">Enter string:</label><input type="text" id="inp" value="(*))" maxlength="12" aria-label="Enter a string using ( ) and *">
+<button id="go">Start Visualization</button></div>
+<div class="chips" id="ex"></div><p id="msg" style="color:var(--bad);min-height:22px;margin:0"></p>
+<div id="chars" aria-label="Characters"></div>
+<div class="chips">
+<button id="prev">Previous Step</button><button id="next">Next Step</button><button id="reset">Reset</button>
+<button id="play">Play</button><button id="helpB">Explain This Line</button><button id="codeB">Show/Hide Code</button></div>
+<p style="font-size:14px;color:var(--mut)">Tip: arrow keys also work. Play only starts when you press it, and it stops at the end.</p>
+<div class="grid">
+<div class="panel" id="codeWrap"><h3>C++ code</h3><div id="code"></div></div>
+<div>
+<div class="cnt">
+<div><small class="mn">minimum</small><output id="vmn" class="mn">–</output><span class="d" id="dmn"></span></div>
+<div><small class="mxc">maximum</small><output id="vmx" class="mxc">–</output><span class="d" id="dmx"></span></div></div>
+<div class="panel" style="margin-top:10px"><h3>Possible number of unmatched <code>(</code></h3><div class="nl" id="nl1"></div></div>
+<div class="say"><b>What just happened?</b><span id="what"></span></div>
+<div class="say"><b>Why did this value change?</b><span id="why"></span></div>
+<div class="box" id="help" hidden></div>
+<div class="box" id="star" hidden></div>
+<div class="box" id="extra" hidden></div>
+<div id="result"></div>
+</div></div>
+</section>
+
+<section>
+<h2>3. Execution table</h2>
+<div class="tw"><table><thead><tr><th>Index</th><th>Character</th><th>Minimum</th><th>Maximum</th><th>Explanation</th></tr></thead><tbody id="tb"></tbody></table></div>
+</section>
+
+<section>
+<h2>4. Two end lines, with examples</h2>
+<div class="cards">
+<div><h3>maximum &lt; 0 means false</h3><pre>maximum = 0
+read ')'
+maximum = -1</pre><p>Even the most hopeful reading has fewer than 0 open parentheses. That is impossible, so no reading works. Return false.</p><button data-t=")">Try ")"</button></div>
+<div><h3>minimum == 0 gives true</h3><pre>minimum = 0
+maximum = 2
+return true</pre><p>At least one reading closes every <code>(</code>. The smallest possible count is 0.</p><button data-t="(*">Try "(*"</button></div>
+<div><h3>minimum &gt; 0 gives false</h3><pre>minimum = 2
+maximum = 4
+return false</pre><p>Even the smallest count is 2, so at least two <code>(</code> are never closed.</p><button data-t="(((*">Try "(((*"</button></div>
+</div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const CODE=["int maximum = 0;","int minimum = 0;","for (int i = 0; i < s.size(); i++) {","  if (s[i] == '(') {","    maximum++;","    minimum++;","  } else if (s[i] == ')') {","    maximum--;","    minimum = max(0, minimum - 1);","  } else {","    maximum++;","    minimum = max(0, minimum - 1);","  }","  if (maximum < 0)","    return false;","}","return minimum == 0;"];
+const LH={0:"This creates a box named maximum. We start at 0 because we have read nothing, so there are 0 open parentheses.",1:"This creates a box named minimum, also 0. Right now the range is just one point: 0 to 0.",2:"The for loop walks over the string. First i = 0, then 1, then 2... Each round looks at the character s[i]. When i reaches the string length, the loop stops.",3:"An if is a yes/no question. If YES, the lines inside run. If NO, C++ jumps to the next else.",4:"maximum++ adds 1 to maximum. A ( adds one open parenthesis in every possible reading.",5:"minimum++ adds 1 to minimum. A ( is definitely open, so even the smallest count grows.",6:"Another yes/no question. We only get here if the character was not (. If it is ), the lines inside run.",7:"maximum-- subtracts 1. A ) closes one open parenthesis, so the best case has one fewer.",8:"minimum - 1 is the smallest case. max(0, ...) picks the bigger of 0 and the result, so it can never go below 0.",9:"We only get here if the character was not ( and not ). So it must be *. Next, the two lines for a star.",10:"maximum++ is the best case for open parentheses: the star becomes (.",11:"minimum - 1 is the case where the star becomes ). max(0, ...) stops the count from going negative.",13:"We ask: is even the best case below 0? If yes, there are fewer than 0 open parentheses, which is impossible.",14:"return false ends the function right now and answers false.",16:"The loop is done. We answer true only if 0 open parentheses is one of the possibilities."};
+const NOTE={"(":"Open","*":"Could be (, ), or empty",")":"Close"};
+function build(s){const st=[];let mx=0,mn=0;
+const add=(line,i,pm,px,what,why,x)=>st.push(Object.assign({line,i,pmn:pm,pmx:px,mn,mx,what,why},x||{}));
+add(0,-1,0,0,"We make a box called maximum and put 0 in it.","Before we read anything, there are 0 open parentheses. So the biggest possible count is 0.",{ch:"mx"});
+add(1,-1,0,0,"We make a box called minimum and put 0 in it.","Same reason: the smallest possible count is 0. The range is now just one point.",{ch:"mn"});
+for(let i=0;i<s.length;i++){const c=s[i];
+add(2,i,mn,mx,`Loop round ${i}. Now i = ${i}, so s[i] is "${c}".`,"The loop hands us one character at a time. Nothing changed yet.");
+add(3,i,mn,mx,`Question: is "${c}" an opening parenthesis? ${c==="("?"YES":"NO"}.`,c==="("?"It is (, so we go inside and run the two lines.":"No, so C++ skips those lines and tries the next question.");
+if(c==="("){let p=mx;mx++;add(4,i,mn,p,"maximum goes up by 1.","A ( opens one new parenthesis. The most open parentheses we could have grows by 1.",{ch:"mx"});
+p=mn;mn++;add(5,i,p,mx,"minimum goes up by 1.","A ( is not a mystery. It is definitely open, so even the smallest count grows by 1.",{ch:"mn"});}
+else{add(6,i,mn,mx,`Question: is "${c}" a closing parenthesis? ${c===")"?"YES":"NO"}.`,c===")"?"Yes, so the lines for ) run.":"No. It is not ( and not ), so it must be *. The else part runs.");
+if(c===")"){let p=mx;mx--;add(7,i,mn,p,"maximum goes down by 1.","A ) closes one open parenthesis. Even in the best case there is one fewer open.",{ch:"mx"});
+p=mn;const raw=mn-1;mn=Math.max(0,raw);add(8,i,p,mx,raw<0?"minimum would be -1, so max(0, -1) fixes it to 0.":"minimum goes down by 1.","A ) closes one open parenthesis, so the smallest count drops. But the count can never be below 0.",{ch:"mn",clamp:raw<0,raw});}
+else{add(9,i,mn,mx,"We enter the else part. The character is a star.","A star is a joker. Next we think about what it could become.",{star:"all"});
+let p=mx;mx++;add(10,i,mn,p,"maximum goes up by 1.","The biggest count happens if the star becomes (. So we assume the best case for open parentheses.",{ch:"mx",star:"open"});
+p=mn;const raw=mn-1;mn=Math.max(0,raw);add(11,i,p,mx,raw<0?"minimum would be -1, so max(0, -1) fixes it to 0.":"minimum goes down by 1.","The smallest count happens if the star becomes ). That closes one open parenthesis. The count stops at 0.",{ch:"mn",star:"close",clamp:raw<0,raw});}}
+add(13,i,mn,mx,`Question: is maximum (${mx}) less than 0? ${mx<0?"YES":"NO"}.`,mx<0?"The best case is below 0. That cannot happen in any reading.":"No. The best case is not negative, so some reading may still work. Keep going.",{fail:mx<0});
+if(mx<0){add(14,i,mn,mx,"return false. The function stops here.","Too many ) came too early. No way to read the stars can fix that.",{end:1,result:false});return st}}
+add(2,s.length,mn,mx,`Now i = ${s.length}, which is not smaller than s.size(). The loop stops.`,"We have read every character. min and max are final.",{exit:1});
+add(16,s.length,mn,mx,`Question: is minimum (${mn}) equal to 0? ${mn===0?"YES":"NO"}.`,mn===0?`Yes. 0 is one of the possible counts, so some reading closes every (.`:`No. Even the smallest count is ${mn}, so at least ${mn} ( are never closed.`,{end:1,result:mn===0});
+return st}
+/* number line */
+function NL(el){el.innerHTML='<div class="in"><div class="cells"></div><div class="bar"></div><div class="mk m1">min</div><div class="mk m2">max</div></div>';
+const W=42,cells=el.querySelector(".cells"),bar=el.querySelector(".bar"),m1=el.querySelector(".m1"),m2=el.querySelector(".m2");
+return(mn,mx,lo,hi,show)=>{let h="";for(let v=lo;v<=hi;v++){const on=show&&mx>=mn&&v>=mn&&v<=mx;h+=`<div class="cell ${on?"on":""} ${v<0?"neg":""}">${v}<i>${on?"●":""}</i></div>`}cells.innerHTML=h;
+bar.style.opacity=m1.style.opacity=m2.style.opacity=show?1:0;if(!show)return;
+const bad=mx<mn;bar.classList.toggle("bad",bad);
+const a=bad?mx:mn;bar.style.left=(a-lo)*W+3+"px";bar.style.width=(bad?1:mx-mn+1)*W-6+"px";
+const same=mn===mx;m1.style.left=(mn-lo)*W+(same?2:W/2-12)+"px";m2.style.left=(mx-lo)*W+(same?W/2+2:W/2-12)+"px";m1.textContent="min";m2.textContent="max";m2.style.top=same?"78px":"62px"}}
+const nl0=NL($("nl0")),nl1=NL($("nl1"));
+function demo(){let a=+$("s1").value,b=+$("s2").value;nl0(a,b,0,5,true);const l=[];for(let v=a;v<=b;v++)l.push(v);
+$("demoTxt").textContent=`minimum = ${a}, maximum = ${b}. There could be ${l.length>1?l.slice(0,-1).join(", ")+" or "+l[l.length-1]:l[0]} open parenthes${l.length>1||l[0]!==1?"es":"is"} right now.`}
+$("s1").oninput=()=>{if(+$("s1").value>+$("s2").value)$("s2").value=$("s1").value;demo()};
+$("s2").oninput=()=>{if(+$("s2").value<+$("s1").value)$("s1").value=$("s2").value;demo()};demo();
+/* lab */
+let S="",steps=[],idx=-1,help=false,timer=null;const prev={};
+$("code").innerHTML=CODE.map((t,n)=>`<div class="ln" id="L${n}"><span class="ar">👉</span><span class="no">${n+1}</span><span></span></div>`).join("");
+CODE.forEach((t,n)=>$("L"+n).lastChild.textContent=t);
+function setN(id,v){const e=$(id);e.textContent=v;if(prev[id]!==v){e.classList.remove("bump");void e.offsetWidth;e.classList.add("bump")}prev[id]=v}
+function load(str){const c=str.replace(/[^()*]/g,"").slice(0,12);if(!c){$("msg").textContent="Use only ( ) and * characters, up to 12.";return}
+$("msg").textContent="";S=c;$("inp").value=c;steps=build(c);idx=-1;stop();render()}
+function stop(){clearInterval(timer);timer=null;$("play").textContent="Play"}
+function render(){const s=steps[idx],n=S.length;
+$("chars").innerHTML=[...S].map((c,k)=>`<div class="ch ${s&&s.i===k?"cur":""} ${s&&k<s.i?"past":""}"><b>${c}</b><i>${k}</i></div>`).join("");
+CODE.forEach((t,k)=>$("L"+k).classList.toggle("on",!!s&&s.line===k));
+setN("vmn",s?s.mn:"–");setN("vmx",s?s.mx:"–");
+$("dmn").textContent=s?(s.pmn!==s.mn?`${s.pmn} → ${s.mn}`:"no change"):"";$("dmx").textContent=s?(s.pmx!==s.mx?`${s.pmx} → ${s.mx}`:"no change"):"";
+nl1(s?s.mn:0,s?s.mx:0,-1,Math.max(4,n+1),!!s);
+$("what").textContent=s?s.what:"Ready. Press Next Step. The first line to run is int maximum = 0;";
+$("why").textContent=s?s.why:"Nothing has run yet, so no value has changed.";
+const h=$("help");h.hidden=!help;if(help)h.innerHTML=s?`<b>Line ${s.line+1}:</b> <code>${CODE[s.line].trim()}</code><br>${LH[s.line]}`:"<b>Explain This Line:</b> Press Next Step first, then click this button to get a closer explanation of the highlighted line.";
+const st=$("star"),isStar=s&&s.i>=0&&S[s.i]==="*";st.hidden=!isStar;
+if(isStar){const l=s.star;st.innerHTML=`<h3>This character is a star. It is a joker.</h3><div class="tree">*</div><div style="text-align:center">╱ &nbsp; │ &nbsp; ╲</div><div class="br"><div class="bx ${l==="all"||l==="open"?"lit":""}"><b>(</b>* → ( <br>open count +1<br>the <span class="mxc">maximum</span> case</div><div class="bx ${l==="all"||l==="close"?"lit":""}"><b>)</b>* → )<br>open count −1<br>the <span class="mn">minimum</span> case</div><div class="bx ${l==="all"?"lit":""}"><b>empty</b>* → ""<br>no change<br>lands in between</div></div><p style="font-size:14px">${l==="open"?"Why maximum++? The biggest count happens if * becomes (.":l==="close"?"Why minimum − 1? The smallest count happens if * becomes ). Why max(0, …)? Open parentheses can never be negative.":"Why only two numbers? The empty choice always lands between the two ends, so every possible answer fits inside min to max. We never store the three branches."}</p>`}
+const ex=$("extra");let x="";
+if(s&&(s.line===8||s.line===11)){const r=s.pmn-1;x=s.clamp?`<h3>Why max(0, ...)?</h3><p class="mono">minimum − 1 = ${r} ❌ impossible<br>max(0, ${r}) = 0 ✅ minimum = 0</p><p>Open parentheses cannot be negative.</p>`:`<h3>Why max(0, ...)?</h3><p class="mono">minimum − 1 = ${r}<br>max(0, ${r}) = ${s.mn} ✅ nothing to fix</p>`}
+else if(s&&(s.line===13||s.line===14))x=s.mx<0?`<h3>maximum &lt; 0</h3><p class="mono">maximum = ${s.mx}<br>↓ NO POSSIBLE SOLUTION<br>↓ false</p><p>Even the most hopeful reading has fewer than 0 open parentheses.</p>`:`<h3>maximum is ${s.mx}</h3><p>0 or more is fine. We keep going.</p>`;
+else if(s&&s.line===16)x=`<h3>return minimum == 0;</h3><p class="mono">minimum = ${s.mn}, maximum = ${s.mx}</p><p>${s.result?"At least one reading matches every open parenthesis.":`Even the smallest count is ${s.mn}, so at least ${s.mn} ( stay unclosed.`}</p>`;
+ex.hidden=!x;ex.innerHTML=x;
+$("result").innerHTML=s&&s.end?`<div class="res ${s.result?"t":"f"}">Result: ${s.result}</div>`:"";
+const fin={};steps.slice(0,idx+1).forEach(q=>{if(q.i>=0&&q.i<n)fin[q.i]=q});
+let rows="";if(s)for(let k=0;k<=Math.min(s.i,n-1);k++){const q=fin[k];if(!q)continue;rows+=`<tr class="${k===s.i&&!s.exit?"cur":""}"><td>${k}</td><td>${S[k]}</td><td>${q.mn}</td><td>${q.mx}</td><td>${NOTE[S[k]]}</td></tr>`}
+$("tb").innerHTML=rows||'<tr><td colspan="5" style="color:var(--mut)">Rows appear here as you step.</td></tr>';
+$("prev").disabled=idx<0;$("next").disabled=idx>=steps.length-1;if($("next").disabled)stop()}
+const next=()=>{if(idx<steps.length-1){idx++;render()}},back=()=>{if(idx>=0){idx--;render()}};
+$("next").onclick=()=>{stop();next()};$("prev").onclick=()=>{stop();back()};
+$("reset").onclick=()=>{stop();idx=-1;render()};
+$("go").onclick=()=>load($("inp").value);$("inp").onkeydown=e=>{if(e.key==="Enter")load($("inp").value)};
+$("helpB").onclick=()=>{help=!help;render()};
+$("codeB").onclick=()=>{const w=$("codeWrap");w.hidden=!w.hidden};
+$("play").onclick=()=>{if(timer){stop();return}if(idx>=steps.length-1)idx=-1;$("play").textContent="Pause";next();timer=setInterval(next,1600)};
+document.addEventListener("keydown",e=>{if(e.target.tagName==="INPUT")return;if(e.key==="ArrowRight"){stop();next()}if(e.key==="ArrowLeft"){stop();back()}});
+["()","(*)","(*))","(",")*"].forEach(t=>{const b=document.createElement("button");b.className="chip";b.textContent=t;b.onclick=()=>load(t);$("ex").appendChild(b)});
+document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{load(b.dataset.t);$("lab").scrollIntoView({behavior:"smooth"})});
+load("(*))");
+</script></body></html>
