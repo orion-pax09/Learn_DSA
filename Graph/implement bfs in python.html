@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Learn BFS in Python — Step by Step</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#0e1013;--panel:#171a20;--line:#2a2f38;--tx:#e6e8ec;--mut:#8b93a1;--cy:#22d3ee;--ye:#facc15;--gr:#34d399;--gy:#4b5361;--rd:#f87171}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:1400px;margin:0 auto;padding:20px}
+h1{font-size:2rem;margin:.2em 0}h2{color:var(--cy);margin:1.6em 0 .4em;font-size:1.4rem}h3{margin:.2em 0;font-size:1rem;color:var(--ye)}
+p{margin:.4em 0}.mut{color:var(--mut)}
+code,.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+code{background:#222732;padding:1px 6px;border-radius:5px;color:var(--ye);font-size:.9em}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.viz{display:grid;grid-template-columns:minmax(300px,1.05fr) minmax(360px,1.3fr) minmax(260px,.9fr);gap:12px;margin-top:10px}
+@media(max-width:1000px){.viz{grid-template-columns:1fr}}
+.code{font-size:13px;overflow-x:auto;padding:8px 0}
+.cl{white-space:pre;padding:1px 12px;border-left:3px solid transparent;color:#cfd5df}
+.cl.on{background:rgba(250,204,21,.16);border-left-color:var(--ye)}
+.kw{color:#c792ea}.bi{color:#82aaff}.st{color:#a5e075}.nm{color:#f78c6c}.fn{color:#ffd479}
+svg{width:100%;height:auto;display:block}
+.edge{stroke:#3a4150;stroke-width:3}.edge.h1{stroke:var(--cy);stroke-width:5}.edge.h2{stroke:#fff;stroke-dasharray:6 5;stroke-width:3}
+.nd circle{stroke-width:3;transition:fill .25s}.nd text{font:700 20px system-ui;fill:#0e1013;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.lv{font:12px system-ui;fill:var(--mut);text-anchor:middle}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+button,select{background:#222732;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--cy)}button:disabled{opacity:.4;cursor:not-allowed}
+button.pri{background:var(--cy);color:#06222a;border-color:var(--cy);font-weight:700}
+button.sel{border-color:var(--ye);color:var(--ye)}
+.bar{height:8px;background:#222732;border-radius:4px;flex:1;min-width:120px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cy),var(--ye));width:0;transition:width .2s}
+.chips{display:flex;flex-wrap:wrap;gap:6px;min-height:42px;align-items:center}
+.chip{min-width:38px;height:38px;border-radius:8px;display:grid;place-items:center;font-weight:700;color:#06222a}
+.chip.q{background:var(--cy)}.chip.v{background:var(--gr)}.chip.new{animation:pop .5s}
+@keyframes pop{from{transform:scale(.3) translateY(-12px);opacity:0}to{transform:none;opacity:1}}
+.tag{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.state{width:100%;font-size:13px;border-collapse:collapse}.state td{padding:3px 4px;border-bottom:1px solid var(--line);vertical-align:top}.state td:first-child{color:var(--mut);width:84px}
+.explain{margin-top:12px;border-color:#3b4350;font-size:1.02rem}.explain b{color:var(--ye)}
+.ok{color:var(--gr)}.no{color:var(--rd)}
+.lg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--mut);margin-top:4px}.lg span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;background:var(--c)}
+table.tr{border-collapse:collapse;width:100%;font-size:14px}table.tr th,table.tr td{border:1px solid var(--line);padding:6px 10px;text-align:left}table.tr th{color:var(--cy)}tr.dim td{color:#4b5361}
+.warn{color:var(--ye);font-size:13px}
+.q-opt{display:block;width:100%;text-align:left;margin:5px 0}.q-opt.right{border-color:var(--gr);color:var(--gr)}.q-opt.wrong{border-color:var(--rd);color:var(--rd)}
+.fb{margin-top:6px;font-size:14px;color:var(--mut)}
+.fifo{display:flex;align-items:center;gap:6px;margin:8px 0}
+</style></head><body><main>
+<h1>Learn Breadth-First Search (BFS) in Python</h1>
+<p class="mut">Nothing plays by itself. You decide when each line runs, using <b>Next Step</b> and <b>Previous Step</b>.</p>
+
+<h2>1. The idea, before the code</h2>
+<div class="grid2">
+<div class="card"><h3>The friends analogy</h3>
+<p>You are exploring a social network, starting with one person.</p>
+<p>1. Visit the starting person.<br>2. Visit <b>all</b> their direct friends.<br>3. Then visit friends of those friends.<br>4. Keep going outward, one level at a time.</p>
+<p>You never jump to a far-away person before finishing everyone closer.</p></div>
+<div class="card"><h3>The queue: First In, First Out (FIFO)</h3>
+<p>Think of a line at a shop. The person who arrived first is served first.</p>
+<div class="fifo"><span class="tag">back ← in</span><span class="chip q">C</span><span class="chip q">B</span><span class="chip q">A</span><span class="tag">out → front</span></div>
+<p>A was added first, so A leaves first. That is FIFO, and it is what makes BFS go level by level.</p></div>
+<div class="card"><h3><code>queue</code> vs <code>visited</code></h3>
+<p><code>queue</code> = people <b>waiting</b> to be explored (found, but not processed yet).</p>
+<p><code>visited</code> = people we have <b>already processed</b>, in the order we processed them. This list is the answer.</p></div>
+</div>
+
+<h2>2. Step through the real code</h2>
+<p class="mut">Graph: A–B, A–C, B–D, B–E, C–F, E–F. Start: <code>v = "A"</code>. Expected result: <code>["A","B","C","D","E","F"]</code>.</p>
+<div id="lesson"></div>
+
+<h2>3. Queue trace table</h2>
+<p class="mut">Rows fill in as you step through the lesson above (the state after each vertex is fully processed).</p>
+<div class="card"><table class="tr" id="trace"></table></div>
+
+<h2>4. Small visual lessons</h2>
+<div class="grid2">
+<div class="card"><h3>Why check both conditions?</h3>
+<p>Look at E and F. When we process C, F goes in the queue. Later, when we process E, F is a neighbor again. <code>neighbor not in queue</code> stops F from being added twice.</p>
+<p>Once F has been processed, <code>neighbor not in visited</code> stops us from going back to it. Example: when processing F, its neighbors C and E are already visited, so both are skipped. Without both checks we would get duplicates and loop forever on cycles.</p></div>
+<div class="card"><h3>Why sort neighbors?</h3>
+<p>Neighbors live in a <b>set</b>, and sets do not promise any order. <code>sorted(...)</code> gives alphabetical order, so the result is always the same: <code>["A","B","C","D","E","F"]</code>. The assignment requires it. Try turning sorting off in the playground below.</p></div>
+<div class="card"><h3>Why <code>queue.pop(0)</code>?</h3>
+<p><code>pop(0)</code> removes and returns the <b>first</b> item (index 0), so the oldest waiting vertex goes next. That is FIFO. It is easy to understand for this assignment, but every <code>pop(0)</code> shifts the whole list, which is slow for big queues. <code>collections.deque</code> with <code>popleft()</code> is faster.</p></div>
+<div class="card"><h3>Why level by level?</h3>
+<p>Distance from A: <span style="color:var(--ye)">A = 0</span>; B, C = 1; D, E, F = 2. The queue always holds closer vertices in front of farther ones, so all distance-1 vertices leave before any distance-2 vertex. Tick <b>Show levels</b> in the visualizers to see distances. Sorting decides the order <i>inside</i> a level.</p></div>
+</div>
+
+<h2>5. Playground</h2>
+<p class="mut">Change the start vertex, edges, or sorting. The traversal is recomputed and you step through it again.</p>
+<div id="play"></div>
+
+<h2>6. Quiz</h2>
+<div id="quiz"></div>
+</main>
+<script>
+const LINES=[
+'def breadth_first_search(self, v: str) -> list[str]:',
+'    visited = []',
+'    queue = [v]',
+'',
+'    while queue:',
+'        current = queue.pop(0)',
+'        visited.append(current)',
+'',
+'        neighbors = sorted(self.graph[current])',
+'',
+'        for neighbor in neighbors:',
+'            if neighbor not in visited and neighbor not in queue:',
+'                queue.append(neighbor)',
+'',
+'    return visited'];
+const POS={A:[250,40],B:[140,140],C:[360,140],D:[70,245],E:[210,245],F:[360,245]};
+const VS=Object.keys(POS);
+const BASE=["AB","AC","BD","BE","CF","EF"];
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function hl(l){return esc(l).replace(/(\b(?:def|while|for|in|if|not|and|return)\b)|(\b(?:sorted|self|list|str|pop|append)\b)|("[^"]*")|(\b\d+\b)|(\b\w+(?=\())/g,(m,a,b,c,d,e)=>`<span class="${a?'kw':b?'bi':c?'st':d?'nm':'fn'}">${m}</span>`)}
+const L=a=>'['+a.join(', ')+']';
+function build(edges){const G={};edges.forEach(e=>{(G[e[0]]??=new Set()).add(e[1]);(G[e[1]]??=new Set()).add(e[0])});return G}
+function sim(edges,s,srt){
+ const G=build(edges),S=[];let visited=[],queue=[],cur=null,nb=[],n=null,cond=null,edge=null,done=null;
+ const P=(line,op,why,x={})=>S.push({line,visited:[...visited],queue:[...queue],cur,nb:[...nb],n,cond,edge,op,why,done:null,...x});
+ P(0,`Call breadth_first_search("${s}")`,`We call the method with <b>v = "${s}"</b>. Nothing has run yet. <code>current</code>, <code>neighbors</code> and <code>neighbor</code> don't exist yet, so they show as None.`);
+ P(1,'visited = []','We create an empty <code>visited</code> list. It will hold vertices we have <b>processed</b>, in order. It is empty now.');
+ queue=[s];
+ P(2,`queue = [${s}]`,`The queue starts with only the start vertex <b>${s}</b>. BFS needs at least one vertex waiting, otherwise <code>while queue</code> would never run.`);
+ while(queue.length){
+  P(4,'while queue → True',`The queue is not empty (<code>${L(queue)}</code>), so the loop runs once more. Each pass processes exactly one vertex.`);
+  cur=queue.shift();n=null;nb=[];cond=null;edge=null;
+  P(5,`current = queue.pop(0) → ${cur}`,`<code>pop(0)</code> removes the <b>first</b> item of the queue and returns it. <b>${cur}</b> was waiting longest, so it goes first (FIFO). Queue is now <code>${L(queue)}</code>.`);
+  visited.push(cur);
+  P(6,`visited.append(${cur})`,`We process <b>${cur}</b> by adding it to the <b>end</b> of <code>visited</code>: <code>${L(visited)}</code>.`);
+  const ns=[...(G[cur]||[])].sort(); nb=srt?ns:[...ns].reverse();
+  P(8,`neighbors = ${srt?'sorted(':'list('}graph[${cur}])`,srt?`Neighbors of <b>${cur}</b>, sorted alphabetically: <code>${L(nb)}</code>. Sets have no guaranteed order, so sorting makes the result predictable.`:`<span class="warn">Unsorted mode (simulated):</span> neighbors of <b>${cur}</b> in arbitrary set order: <code>${L(nb)}</code>. The assignment requires sorting!`);
+  for(const x of nb){
+   n=x;edge=[cur,x];cond=null;
+   P(10,`neighbor = ${x}`,`Now we examine the neighbor <b>${x}</b> by itself.`,{edge:[cur,x],ehl:2});
+   const nv=!visited.includes(x),nq=!queue.includes(x);cond=[nv,nq];
+   const ok=nv&&nq;
+   P(11,`${x} not in visited: ${nv}; not in queue: ${nq}`,`<code>neighbor not in visited</code> → <b class="${nv?'ok':'no'}">${nv}</b> (${nv?`${x} hasn't been processed`:`${x} was already processed`}).<br><code>neighbor not in queue</code> → <b class="${nq?'ok':'no'}">${nq}</b> (${nq?`${x} isn't already waiting`:`${x} is already waiting`}).<br>${ok?'Both are true → add it.':`At least one is false → <b>skip ${x}</b>, so we don't create a duplicate or go backwards.`}`,{ehl:2});
+   if(ok){queue.push(x);P(12,`queue.append(${x})`,`<b>${x}</b> is new, so it joins the <b>back</b> of the queue: <code>${L(queue)}</code>.`,{ehl:1,newQ:x});}
+  }
+  n=null;cond=null;
+  S.push({line:10,visited:[...visited],queue:[...queue],cur,nb:[...nb],n:null,cond:null,edge:null,op:`Finished checking ${cur}; next is ${queue.length?queue[0]:'—'}.`,why:`No neighbors left. Finished <b>${cur}</b>. ${queue.length?`The front of the queue is <b>${queue[0]}</b>, so it is next.`:'The queue is empty.'}`,done:{p:cur,q:[...queue],v:[...visited]}});
+ }
+ cur=cur;P(4,'while queue → False','The queue is empty, so nothing is waiting. The loop ends.',{yel:0});
+ P(14,`return ${L(visited)}`,`Return <code>visited</code>: <b>${L(visited)}</b>. BFS visits level by level; sorting decides the order inside each level.`,{yel:0});
+ return S;
+}
+function mount(root,play,onStep){
+ let edges=new Set(BASE),start='A',srt=true,lv=false,i=0,S;
+ root.innerHTML=`${play?`<div class="card ctl" style="margin:0 0 10px"><span class="tag">Start at</span><span id="sb"></span>
+ <label><input type="checkbox" id="so" checked> sorted neighbors</label><span class="warn" id="sw"></span>
+ <span style="flex-basis:100%"></span><span class="tag">Edit edges</span><select id="e1"></select><select id="e2"></select><button id="ea">Add edge</button><button id="er">Remove edge</button><button id="erst">Restore original graph</button></div>`:''}
+ <div class="ctl"><button id="pv">◀ Previous Step</button><button id="nx" class="pri">Next Step ▶</button><button id="rs">Reset</button><button id="ra">Run All</button>
+ <label><input type="checkbox" id="lvl"> Show levels</label><span class="mut mono" id="sn"></span><div class="bar"><i id="pb"></i></div></div>
+ <div class="viz"><div class="card code" id="cd"></div>
+ <div><div class="card"><svg viewBox="0 0 430 300" id="sv"></svg><div class="lg"><span style="--c:var(--gy)">unvisited</span><span style="--c:var(--cy)">in queue</span><span style="--c:var(--ye)">current</span><span style="--c:var(--gr)">visited</span></div></div>
+ <div class="card explain" id="ex"></div></div>
+ <div class="card"><div class="tag">Queue (front → back)</div><div class="chips" id="qu"></div>
+ <div class="tag" style="margin-top:8px">Visited</div><div class="chips" id="vi"></div>
+ <table class="state" id="st" style="margin-top:8px"></table><div class="mono" id="fin" style="margin-top:8px;color:var(--gr)"></div></div></div>`;
+ const $=s=>root.querySelector(s);
+ function recompute(){S=sim([...edges].sort(),start,srt);i=0;draw();}
+ function draw(){
+  const s=S[i],last=i==S.length-1;
+  $('#cd').innerHTML=LINES.map((l,k)=>{let t=l;if(k==8&&!srt)t='        neighbors = list(self.graph[current])';return `<div class="cl${k==s.line?' on':''}">${hl(t)||' '}</div>`}).join('');
+  const yel=s.cur&&s.yel!==0&&[5,6,8,10,11,12].includes(s.line);
+  const dist={[start]:0};const Gx=build([...edges]);const qq=[start];while(qq.length){const c=qq.shift();[...(Gx[c]||[])].forEach(x=>{if(!(x in dist)){dist[x]=dist[c]+1;qq.push(x)}})}
+  let h='';
+  [...edges].forEach(e=>{const [a,b]=POS[e[0]],[c,d]=POS[e[1]];const m=s.edge&&((s.edge[0]==e[0]&&s.edge[1]==e[1])||(s.edge[0]==e[1]&&s.edge[1]==e[0]));h+=`<line class="edge${m&&s.line==12?' h1':m?' h2':''}" x1="${a}" y1="${b}" x2="${c}" y2="${d}"/>`});
+  VS.forEach(v=>{const [x,y]=POS[v];let f='#4b5361',st='#2a2f38';
+   if(s.visited.includes(v))f='#34d399';if(s.queue.includes(v))f='#22d3ee';if(yel&&v==s.cur)f='#facc15';
+   if(s.line==8&&s.nb.includes(v))st='#22d3ee';if(s.n==v)st='#fff';
+   h+=`<g class="nd"><circle cx="${x}" cy="${y}" r="24" fill="${f}" stroke="${st}"/><text x="${x}" y="${y}">${v}</text>${lv&&dist[v]!==undefined?`<text class="lv" style="fill:#8b93a1;font:12px system-ui" x="${x}" y="${y+38}">d=${dist[v]}</text>`:''}</g>`});
+  $('#sv').innerHTML=h;
+  const chips=(a,c,nw)=>a.length?a.map((x,k)=>`<span class="chip ${c}${nw&&k==a.length-1?' new':''}">${x}</span>`).join(''):'<span class="mut mono">[ ] empty</span>';
+  $('#qu').innerHTML=chips(s.queue,'q',s.line==12);$('#vi').innerHTML=chips(s.visited,'v',s.line==6);
+  const cs=s.cond?`not in visited: ${s.cond[0]}, not in queue: ${s.cond[1]}`:'—';
+  $('#st').innerHTML=[['v',`"${start}"`],['current',s.cur??'None'],['neighbor',s.n??'None'],['neighbors',s.cur&&s.line>=8||s.nb.length?L(s.nb):'None'],['queue',L(s.queue)],['visited',L(s.visited)],['checks',cs],['operation',esc(s.op)]].map(r=>`<tr><td>${r[0]}</td><td class="mono">${r[1]}</td></tr>`).join('');
+  $('#ex').innerHTML=s.why;
+  $('#fin').textContent=last?'Result: '+JSON.stringify(s.visited):'';
+  $('#sn').textContent=`Step ${i+1} / ${S.length}`;$('#pb').style.width=(i/(S.length-1)*100)+'%';
+  $('#pv').disabled=i==0;$('#nx').disabled=last;
+  if(play)$('#sb').innerHTML=VS.map(v=>`<button class="${v==start?'sel':''}" data-v="${v}">${v}</button>`).join(' ');
+  onStep&&onStep(i,S);
+ }
+ $('#pv').onclick=()=>{if(i>0){i--;draw()}};$('#nx').onclick=()=>{if(i<S.length-1){i++;draw()}};
+ $('#rs').onclick=()=>{i=0;draw()};$('#ra').onclick=()=>{i=S.length-1;draw()};
+ $('#lvl').onchange=e=>{lv=e.target.checked;draw()};
+ if(play){
+  root.querySelector('#sb').onclick=e=>{if(e.target.dataset.v){start=e.target.dataset.v;recompute()}};
+  $('#so').onchange=e=>{srt=e.target.checked;$('#sw').textContent=srt?'':'⚠ The assignment requires sorted neighbors. Unsorted order is simulated here.';recompute()};
+  ['#e1','#e2'].forEach(s=>$(s).innerHTML=VS.map(v=>`<option>${v}</option>`).join(''));$('#e2').selectedIndex=1;
+  const key=()=>[$('#e1').value,$('#e2').value].sort().join('');
+  $('#ea').onclick=()=>{const k=key();if(k[0]!=k[1]){edges.add(k);recompute()}};
+  $('#er').onclick=()=>{edges.delete(key());recompute()};
+  $('#erst').onclick=()=>{edges=new Set(BASE);recompute()};
+ }
+ recompute();return S;
+}
+let full;
+const tr=document.getElementById('trace');
+function drawTrace(i,S){
+ full=full||S;const rows=full.map((s,k)=>({s,k})).filter(o=>o.s.done);
+ tr.innerHTML='<tr><th>Processed</th><th>Queue after processing</th><th>Visited</th></tr>'+rows.map(o=>{const r=i>=o.k;return `<tr class="${r?'':'dim'}"><td>${o.s.done.p}</td><td class="mono">${r?L(o.s.done.q):'…'}</td><td class="mono">${r?L(o.s.done.v):'…'}</td></tr>`}).join('');
+}
+mount(document.getElementById('lesson'),false,drawTrace);
+mount(document.getElementById('play'),true);
+const Q=[
+['What does FIFO mean?',['First In, First Out','Last In, First Out','Fastest In, Fastest Out'],0,'The first item added is the first removed, like a line at a shop.'],
+['What does queue.pop(0) do?',['Adds 0 to the queue','Removes and returns the first item','Removes the last item'],1,'Index 0 is the front of the list, so pop(0) takes the oldest waiting vertex.'],
+['Why do we use sorted(self.graph[current])?',['Neighbors are in a set with no guaranteed order','Sets can\'t be looped over','It makes BFS faster'],0,'Sorting gives a predictable alphabetical order, which the assignment requires.'],
+['Why check that a neighbor is not in visited?',['To save memory','To avoid processing a vertex again or going backwards','To sort the list'],1,'Visited vertices are already done. Re-adding them would repeat work and could loop forever.'],
+['Why also check that a neighbor is not in queue?',['Queues can only hold 3 items','To avoid adding a vertex that is already waiting','To remove the front item'],1,'A vertex can be reached from two places (like F from C and E). This stops duplicates in the queue.'],
+['When does "while queue" become false?',['When visited is full','When the queue list is empty','After the first loop'],1,'An empty list is falsy in Python, so the loop ends when nothing is waiting.'],
+['What is the result from A in the example graph?',['["A","C","B","F","E","D"]','["A","B","C","D","E","F"]','["A","B","D","E","C","F"]'],1,'Level 0: A. Level 1: B, C. Level 2: D, E, F, in sorted order.']];
+document.getElementById('quiz').innerHTML=Q.map((q,n)=>`<div class="card" style="margin-bottom:10px"><b>${n+1}. ${esc(q[0])}</b>${q[1].map((o,k)=>`<button class="q-opt" data-n="${n}" data-k="${k}">${esc(o)}</button>`).join('')}<div class="fb" id="fb${n}"></div></div>`).join('');
+document.getElementById('quiz').onclick=e=>{const b=e.target.closest('.q-opt');if(!b)return;const n=+b.dataset.n,k=+b.dataset.k,q=Q[n];
+ document.querySelectorAll(`[data-n="${n}"]`).forEach(x=>x.classList.remove('right','wrong'));
+ b.classList.add(k==q[2]?'right':'wrong');
+ document.getElementById('fb'+n).innerHTML=(k==q[2]?'<b class="ok">Correct!</b> ':'<b class="no">Not quite.</b> ')+esc(q[3]);};
+</script></body></html>
