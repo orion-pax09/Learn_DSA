@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Linked-List Stack, Step by Step</title>
+<style>
+:root{--bg:#0c0d10;--p:#15171c;--b:#2a2d35;--t:#e6e8ee;--m:#8b90a0;--c:#33d6e6;--y:#ffd23f;--r:#ff5d6c;--o:#ff9a3c;--g:#6ee7a0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);font:16px/1.55 system-ui,"Segoe UI",sans-serif;padding-bottom:60px}
+header,main{max-width:1180px;margin:auto;padding:0 16px}
+h1{font-size:1.7rem;margin:22px 0 4px}h2{font-size:1.3rem;margin:38px 0 10px;color:var(--y)}
+.sub{color:var(--m);margin:0 0 10px}
+code,.mono{font-family:ui-monospace,Consolas,monospace;color:var(--c);font-size:.92em}
+button{font:inherit;cursor:pointer;background:#1d2027;color:var(--t);border:1px solid var(--b);border-radius:8px;padding:7px 13px}
+button:hover:not(:disabled){border-color:var(--c)}button:disabled{opacity:.4;cursor:default}
+button.on{background:var(--c);color:#06292d;border-color:var(--c)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--y);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.card{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:14px}
+#viz{overflow-x:auto}
+svg text{font-family:ui-monospace,Consolas,monospace}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+#call{font:13px ui-monospace,Consolas,monospace;padding:6px 14px;border-bottom:1px solid var(--b);color:var(--m)}
+#call.on,.ln.on{background:#3a3210;color:#fff}
+#code{position:relative;max-height:400px;overflow:auto;font:13px/1.6 ui-monospace,Consolas,monospace;padding:6px 0}
+.ln{display:flex;white-space:pre;padding:0 10px;border-left:3px solid transparent}
+.ln i{color:#555a68;width:2.4em;font-style:normal;user-select:none}
+.ln.on{border-left-color:var(--y)}
+#expl{font-size:1.04rem;min-height:130px}
+.eff{display:inline-block;background:var(--y);color:#2a2200;border-radius:6px;padding:0 8px;font-size:.82rem;font-weight:600;margin-bottom:6px}
+#bar{height:5px;background:var(--b);border-radius:4px;flex:1;min-width:80px}#bar div{height:100%;background:var(--c);border-radius:4px;transition:width .25s}
+#vars{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;font-size:.88rem;margin-top:10px}
+#vars span{background:#0f1115;border:1px solid var(--b);border-radius:8px;padding:4px 8px}
+#vars b{color:var(--m);font-weight:500}
+#ret{margin-top:10px;padding:8px 12px;border-radius:8px;border:1px dashed var(--b);color:var(--m)}
+#ret.hit{border:1px solid var(--g);color:var(--g)}#ret.err{border:1px solid var(--r);color:var(--r)}
+.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--m);margin-top:6px}
+.lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.hide{display:none!important}
+#log{margin:8px 0 0;padding-left:20px;font-size:.88rem}#log button{border:0;background:none;padding:2px;text-align:left;color:var(--m)}#log .cur button{color:var(--y)}
+input[type=number]{font:inherit;width:90px;background:#0f1115;color:var(--t);border:1px solid var(--b);border-radius:8px;padding:6px}
+table{border-collapse:collapse;width:100%}th,td{border:1px solid var(--b);padding:7px 10px;text-align:left}th{background:#1d2027}
+details{background:var(--p);border:1px solid var(--b);border-radius:10px;padding:8px 14px;margin:6px 0}summary{cursor:pointer;color:var(--c)}
+.fl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}.bx{border:2px solid var(--b);border-radius:8px;padding:8px 12px;text-align:center}
+.q{margin:14px 0}.q p{margin:0 0 6px;font-weight:600}.q button{display:block;width:100%;text-align:left;margin:4px 0}
+.q .ok{border-color:var(--g);color:var(--g)}.q .no{border-color:var(--r);color:var(--r)}.fb{font-size:.95rem;color:var(--m)}
+.nd rect{fill:#1d2027;stroke:#5b6172;stroke-width:2}.top rect{fill:#0b2f35;stroke:#33d6e6;stroke-width:3}.new rect{fill:#3a3210;stroke:#ffd23f;stroke-width:3}
+.del rect{fill:#2e1217;stroke:#ff5d6c;stroke-width:3;stroke-dasharray:6 4}.del{opacity:.75}
+.nul{fill:none;stroke:#6b7080;stroke-width:2;stroke-dasharray:4 4}
+@keyframes pop{from{opacity:0;transform:scale(.85)}}.new g,g.new{animation:pop .35s;transform-box:fill-box;transform-origin:center}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<header>
+<h1>How a linked-list Stack works</h1>
+<p class="sub">Step through your own C++ code one line at a time. Nothing plays by itself: you press Next.</p>
+<div class="row" id="tabs" role="tablist"></div>
+</header>
+<main>
+<div class="card" id="viz"></div>
+<div class="lg"><span><i style="background:#33d6e6"></i>current top node</span><span><i style="background:#ffd23f"></i>new node</span><span><i style="background:#ff5d6c"></i>node being deleted</span><span><i style="border:2px dashed #6b7080"></i>NULL</span><span><i style="background:#ff9a3c"></i>temp pointer</span></div>
+<div class="row"><button id="prev">&#9664; Previous step</button><button id="next" class="on">Next step &#9654;</button><button id="reset">Reset</button><span id="prog" class="mono"></span><div id="bar"><div></div></div></div>
+<div id="sim" class="card hide"><b>Operation simulator</b> <span class="sub">- real JavaScript runs your push/pop/top logic. Use Previous/Next to replay each operation.</span>
+<div class="row"><button data-o="push" data-a="10">Push 10</button><button data-o="push" data-a="20">Push 20</button><button data-o="push" data-a="30">Push 30</button>
+<input id="cv" type="number" step="any" value="42" aria-label="Custom value"><button id="pc">Push custom value</button>
+<button data-o="pop">Pop</button><button data-o="top">Top</button></div>
+<b style="font-size:.9rem">Exact sequence of steps for the last operation:</b><ol id="log"></ol></div>
+<div class="grid">
+<div class="card" style="padding:0"><div id="call"></div><div id="code"></div></div>
+<div class="card"><div id="expl" aria-live="polite"></div><div id="ret"></div><div id="vars"></div></div>
+</div>
+<div id="cmp" class="card hide" style="margin-top:14px"><b>top() vs pop()</b>
+<table><tr><th></th><th>top()</th><th>pop()</th></tr><tr><td>Returns</td><td>the top value</td><td>the top value</td></tr><tr><td>Changes <code>topNode</code>?</td><td>No</td><td>Yes, moves to the next node</td></tr><tr><td>Deletes a node?</td><td>No (peek only)</td><td>Yes, <code>delete temp</code></td></tr><tr><td>Stack afterwards</td><td>unchanged</td><td>one node smaller</td></tr></table></div>
+
+<h2>Pointers, explained simply</h2>
+<div class="card"><p>Think of a <b>pile of plates</b>. You only add or remove a plate on the <b>top</b>. Each plate (<b>node</b>) has a number written on it and a sticky note saying where the plate below it is. <code>topNode</code> is your finger resting on the top plate. <code>NULL</code> means "nothing below: the table".</p>
+<div class="fl"><div class="bx" style="border-color:var(--c)"><small>pointer variable</small><br><code>topNode</code><br>holds address 0x1080</div><span>&#10142;</span>
+<div class="bx"><small>node (lives at 0x1080)</small><div class="fl" style="margin:4px 0"><div class="bx"><small>data</small><br><b>30</b></div><div class="bx"><small>next pointer</small><br><code>0x1040</code></div></div></div><span>&#10142;</span><div class="bx"><small>the next node...</small><br>[20 | next]</div></div>
+<p><b>Three different things:</b> the <i>pointer variable</i> (<code>topNode</code>, <code>temp</code>, <code>newNode</code>, <code>next</code>: they only store addresses), the <i>node</i> (the box in memory), and the <i>data</i> (the number inside the box).</p></div>
+<details><summary>What is a <code>Node</code>?</summary>One plate. It stores one number (<code>data</code>) and one pointer (<code>next</code>) to another node.</details>
+<details><summary>What does <code>Node* next</code> mean?</summary><code>next</code> is a variable that holds the <i>address</i> of another Node, not the Node itself. It is the sticky note saying where the next plate is.</details>
+<details><summary>What does <code>Node* topNode</code> mean?</summary>The same kind of variable, stored in the Stack. It holds the address of the first (top) node, or NULL when the stack is empty.</details>
+<details><summary>What does <code>Node* newNode = new Node(val)</code> do?</summary>It asks the computer for memory for one Node, runs the constructor (<code>data = val; next = NULL;</code>), and gives back the node's address. <code>newNode</code> stores that address.</details>
+<details><summary>What does <code>-&gt;</code> mean?</summary>"Follow the pointer, then use the member." <code>topNode-&gt;data</code> means: go to the node <code>topNode</code> points to and read its <code>data</code>.</details>
+<details><summary>What is <code>NULL</code>?</summary>A special address meaning "points to nothing". It marks the end of the chain and the empty stack. Never follow it with <code>-&gt;</code>.</details>
+<details><summary>Why do we use <code>temp</code> in <code>pop()</code>?</summary>After <code>topNode</code> moves, nothing else points to the old top node. <code>temp</code> keeps its address so we can still delete it. Without <code>temp</code> the node would be lost forever (a memory leak). The value is saved in <code>val</code> first because after <code>delete</code> the data is gone.</details>
+<details><summary>What does <code>delete temp</code> do?</summary>It gives the node's memory back to the computer. <code>temp</code> still holds the old address (a "dangling pointer"), but you must not use it again.</details>
+<details><summary>Why does <code>topNode = topNode-&gt;next</code> remove the first node?</summary>A stack is only reached through <code>topNode</code>. Once it points to the second node, the first node is no longer part of the stack. <code>delete temp</code> then frees it.</details>
+
+<h2>Time complexity</h2>
+<table><tr><th>Operation</th><th>Time</th><th>Reason</th></tr><tr><td>push()</td><td>O(1)</td><td>Insert at the head</td></tr><tr><td>pop()</td><td>O(1)</td><td>Remove from the head</td></tr><tr><td>top()</td><td>O(1)</td><td>Read the head node</td></tr></table>
+<p>Each operation touches only the first node and a few pointers, so the stack's size never changes the work. An array stack needs a fixed capacity chosen up front; this one allocates one node at a time with <code>new</code>, so it grows as needed. Memory is still limited: <code>new</code> fails when the computer runs out, and each node also stores a pointer.</p>
+
+<h2>Knowledge check</h2><div id="quiz"></div>
+</main>
+<script>
+// ---------- The user's C++ code, shown line by line (line numbers below match step.line) ----------
+const CODE=`#include <iostream>
+using namespace std;
+
+class Node {
+public:
+    double data;
+    Node* next;
+
+    Node(double val) {
+        data = val;
+        next = NULL;
+    }
+};
+
+class Stack {
+    Node* topNode;
+
+public:
+    Stack() {
+        topNode = NULL;
+    }
+
+    void push(double val) {
+        Node* newNode = new Node(val);
+        newNode->next = topNode;
+        topNode = newNode;
+    }
+
+    double pop() {
+        if (topNode != NULL) {
+            double val = topNode->data;
+            Node* temp = topNode;
+            topNode = topNode->next;
+            delete temp;
+            return val;
+        }
+        else {
+            cout << "Stack is empty" << endl;
+            return -1;
+        }
+    }
+
+    double top() {
+        if (topNode != NULL) {
+            return topNode->data;
+        }
+        else {
+            cout << "Stack is empty" << endl;
+            return -1;
+        }
+    }
+};`.split('\n');
+const $=id=>document.getElementById(id);
+const clone=o=>JSON.parse(JSON.stringify(o));
+let uid=0;                       // unique id for every node ("memory address")
+const addr=id=>'0x'+(0x1000+id*0x40).toString(16).toUpperCase();
+
+// ---------- State model: S = {nodes:[{id,v,n}], top, vars:{newNode,temp,val}, ret, out, call} ----------
+// n and top hold node ids (our stand-in for addresses); null means NULL; undefined means "not set yet".
+function base(S0){const S=clone(S0);S.vars={newNode:null,temp:null,val:null};S.ret=null;S.out='';S.call='';return S}
+function mk(vals){const S={nodes:[],top:null};let prev=null;vals.forEach(v=>{const id=++uid;S.nodes.push({id,v,n:prev});prev=id});S.top=prev;return S}
+const intro=(S0,t)=>({line:-1,eff:'setup',text:t,S:base(S0)});
+
+// build(): runs ONE operation with real logic and records a snapshot after every C++ statement.
+function build(op,arg,S0){
+  const S=base(S0),st=[],N=id=>S.nodes.find(n=>n.id===id),V=id=>N(id).v;
+  S.call=op==='ctor'?'Stack s;':'s.'+op+'('+(arg===undefined?'':arg)+');';
+  const add=(line,eff,text,fn)=>{if(fn)fn();st.push({line,eff,text,S:clone(S)})};
+  const call=t=>add(-1,'function call',t);
+  if(op==='ctor'){
+    S.top=undefined;
+    add(-1,'object created','<code>Stack s;</code> creates a Stack object. C++ automatically runs the constructor <code>Stack()</code>. Right now <code>topNode</code> exists but holds garbage (shown as <b>?</b>).');
+    add(18,'constructor starts','The constructor <code>Stack()</code> begins. Its job is to give <code>topNode</code> a safe starting value.');
+    add(19,'topNode = NULL','<code>topNode = NULL;</code> NULL means "points to nothing". There is no first node yet, so the pointer must not point anywhere.',()=>S.top=null);
+    add(20,'constructor ends','The stack is <b>empty</b>: no nodes exist and <code>topNode</code> is NULL. Later, "is the stack empty?" simply means "is topNode NULL?".');
+  }
+  if(op==='push'){
+    call('You call <code>'+S.call+'</code>. The number '+arg+' is passed in as <code>val</code>.');
+    S.vars.val=arg;st[0].S.vars.val=arg;
+    add(22,'enter push','<code>push(double val)</code> starts running with <code>val = '+arg+'</code>.');
+    add(23,'new node created','<code>new Node(val)</code> creates a node in memory. Its constructor sets <code>data = '+arg+'</code> and <code>next = NULL</code>. <code>newNode</code> points to it. It is not in the stack yet.',()=>{const id=++uid;S.nodes.push({id,v:arg,n:null});S.vars.newNode=id});
+    const old=S.top;
+    add(24,'newNode->next = topNode',old==null?'<code>topNode</code> is NULL, so <code>newNode->next</code> becomes NULL (it already was). The new node will be the last node. The line is still needed for later pushes.':'<code>newNode->next = topNode</code> copies the address stored in <code>topNode</code>, so the new node now points at the old top ('+V(old)+'). <b>This must happen first</b>: if we moved <code>topNode</code> first we would lose the only pointer to the old stack.',()=>N(S.vars.newNode).n=S.top);
+    add(25,'topNode = newNode',old==null?'<code>topNode = newNode</code> moves the topNode arrow to the new node. It is the only node, so it is also the top.':'<code>topNode = newNode</code> moves the topNode arrow to the new node. The old top ('+V(old)+') is now the <b>second</b> node. We inserted at the <b>beginning</b> (the head), not the end.',()=>S.top=S.vars.newNode);
+    add(26,'push finished','<code>push</code> ends. Local variables (<code>newNode</code>, <code>val</code>) disappear, but the node stays in the stack. Top is now '+arg+'.',()=>{S.vars.newNode=null;S.vars.val=null});
+  }
+  if(op==='pop'){
+    call('You call <code>'+S.call+'</code>. It will remove the top node and give back its value.');
+    add(28,'enter pop','<code>pop()</code> starts running.');
+    if(S.top==null){
+      add(29,'check fails','<code>topNode != NULL</code> is <b>false</b>: topNode is NULL, so there is nothing to remove. We jump to <code>else</code>.');
+      add(37,'print message','The message <b>Stack is empty</b> is printed.',()=>S.out='Stack is empty');
+      add(38,'return -1','<code>return -1</code>. The stack stays empty. (Note: -1 could also be a real value, so a real program might need a better error signal.)',()=>S.ret=-1);
+      return st;
+    }
+    const val=V(S.top);
+    add(29,'check passes','<code>topNode != NULL</code> is <b>true</b>, so the stack has a node we can remove.');
+    add(30,'val = topNode->data','The data ('+val+') is saved in <code>val</code> <b>before</b> we delete anything, because after <code>delete</code> the node and its data are gone.',()=>S.vars.val=val);
+    add(31,'temp = topNode','<code>temp</code> now holds the same address as <code>topNode</code>: both point to node '+val+'. <code>temp</code> is our handle for deleting it later.',()=>S.vars.temp=S.top);
+    const nx=N(S.top).n;
+    add(32,'topNode = topNode->next','<code>topNode</code> moves to the second node ('+(nx==null?'NULL, so the stack becomes empty':V(nx))+'). <code>temp</code> still points to node '+val+'. Node '+val+' is already outside the stack.',()=>S.top=nx);
+    add(33,'delete temp','<code>delete temp</code> frees node '+val+' from memory. We needed <code>temp</code> because nothing else points to this node. <code>temp</code> now points to freed memory (dangling): never use it again.',()=>N(S.vars.temp).del=true);
+    add(34,'return val','<code>return val</code> gives back <b>'+val+'</b>. The local variables vanish. The stack is now '+(nx==null?'empty.':'topNode &rarr; ... starting at '+V(nx)+'.'),()=>{S.nodes=S.nodes.filter(n=>!n.del);S.ret=val;S.vars.temp=null;S.vars.val=null});
+  }
+  if(op==='top'){
+    call('You call <code>'+S.call+'</code>. It only <i>looks</i> at the top value.');
+    add(42,'enter top','<code>top()</code> starts running.');
+    if(S.top==null){
+      add(43,'check fails','<code>topNode != NULL</code> is <b>false</b>. The stack is empty, so we go to <code>else</code>.');
+      add(47,'print message','The message <b>Stack is empty</b> is printed.',()=>S.out='Stack is empty');
+      add(48,'return -1','<code>return -1</code>. Nothing was changed.',()=>S.ret=-1);
+    }else{
+      add(43,'check passes','<code>topNode != NULL</code> is <b>true</b>: there is a top node to read.');
+      add(44,'return topNode->data','Returns <b>'+V(S.top)+'</b>. No pointer moved and no node was deleted: the stack is <b>unchanged</b>. That is the difference from <code>pop()</code>.',()=>S.ret=V(S.top));
+    }
+  }
+  return st;
+}
+
+// ---------- Lessons: each chapter is just a list of recorded steps ----------
+const E={nodes:[],top:null};
+const CH={
+  ctor:()=>build('ctor',undefined,E),
+  push:()=>{let S=E;const o=[intro(S,'We start with an empty stack and push 10, then 20, then 30. Watch where every new node goes.')];
+    [10,20,30].forEach(v=>{const b=build('push',v,S);o.push(...b);S=b[b.length-1].S});return o},
+  pop:()=>{const A=mk([10,20,30]);return [intro(A,'We start with <code>topNode &rarr; [30] &rarr; [20] &rarr; [10] &rarr; NULL</code>. Now we call <code>pop()</code>.'),...build('pop',undefined,A)]},
+  top:()=>{const A=mk([10,20,30]);return [intro(A,'The stack holds 30, 20, 10. Let us call <code>top()</code>.'),...build('top',undefined,A),
+    intro(A,'Same stack again: nothing changed after <code>top()</code>. Now an <b>empty</b> stack...'.replace('Same stack again: nothing changed after <code>top()</code>. Now an <b>empty</b> stack...','Notice the stack is still 30, 20, 10 after <code>top()</code>. Compare this with <code>pop()</code> in the table below.')),
+    intro(E,'New situation: an <b>empty</b> stack. What does <code>top()</code> do now?'),...build('top',undefined,E)]}
+};
+const TABS=[['ctor','Stack s;'],['push','push()'],['pop','pop()'],['top','top()'],['sim','Try it yourself']];
+let ch='ctor',cur={steps:[],i:0},SS=E;
+
+// ---------- Drawing the linked list as SVG ----------
+const COL={c:'#33d6e6',y:'#ffd23f',o:'#ff9a3c',w:'#aeb4c4'};
+function arrow(x1,y1,x2,y2,c){return `<path d="M${x1} ${y1}L${x2} ${y2}" stroke="${COL[c]}" stroke-width="2.5" fill="none" marker-end="url(#m${c})"/>`}
+function nullBox(x,y){return `<rect class="nul" x="${x}" y="${y}" width="70" height="44" rx="8"/><text x="${x+35}" y="${y+28}" text-anchor="middle" fill="#8b90a0" font-size="14">NULL</text>`}
+function tag(x,y,txt,c){return `<rect x="${x}" y="${y}" width="78" height="26" rx="13" fill="${COL[c]}"/><text x="${x+39}" y="${y+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#11131a">${txt}</text>`}
+function draw(S){
+  const by=id=>S.nodes.find(n=>n.id===id),chain=[];
+  for(let id=S.top;id!=null;){const n=by(id);if(!n||chain.includes(n))break;chain.push(n);id=n.n}
+  const X=i=>150+i*170,Y=150,Y0=26,pos={};
+  chain.forEach((n,i)=>pos[n.id]={x:X(i),y:Y,c:1});
+  S.nodes.forEach(n=>{if(!pos[n.id])pos[n.id]={x:X(0),y:Y0,c:0}});   // nodes outside the stack float above
+  const W=Math.max(720,X(chain.length)+110);
+  let s=`<svg width="${W}" height="320" viewBox="0 0 ${W} 320" role="img" aria-label="Diagram of the linked-list stack"><defs>`+
+    Object.keys(COL).map(k=>`<marker id="m${k}" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="${COL[k]}"/></marker>`).join('')+'</defs>';
+  if(!chain.length&&S.top===null)s+=nullBox(X(0),Y+8);
+  S.nodes.forEach(n=>{
+    const p=pos[n.id],isTop=n.id===S.top,isNew=n.id===S.vars.newNode&&!isTop,cl=n.del?'del':isTop?'top':isNew?'new':'nd';
+    s+=`<g class="${cl}"><rect x="${p.x}" y="${p.y}" width="130" height="60" rx="8"/><line x1="${p.x+70}" y1="${p.y}" x2="${p.x+70}" y2="${p.y+60}" stroke="#5b6172" stroke-width="2"/>
+      <text x="${p.x+35}" y="${p.y+39}" text-anchor="middle" font-size="21" font-weight="700" fill="#fff">${n.v}</text>
+      <text x="${p.x+100}" y="${p.y+17}" text-anchor="middle" font-size="10" fill="#8b90a0">next</text><circle cx="${p.x+100}" cy="${p.y+36}" r="5" fill="${COL.w}"/>
+      <text x="${p.x+2}" y="${p.y-6}" font-size="10" fill="#6b7080">${addr(n.id)}</text>${n.del?`<text x="${p.x+65}" y="${p.y+80}" text-anchor="middle" font-size="12" fill="#ff5d6c">memory freed</text>`:''}</g>`;
+    // the next-pointer arrow
+    if(n.n==null){
+      if(p.c)s+=nullBox(p.x+170,p.y+8)+arrow(p.x+100,p.y+30,p.x+168,p.y+30,'w');
+      else s+=nullBox(p.x+160,p.y+8)+arrow(p.x+100,p.y+30,p.x+158,p.y+30,'w');
+    }else{const t=pos[n.n];if(t)s+=p.c?arrow(p.x+100,p.y+30,t.x-2,t.y+30,'w'):arrow(p.x+100,p.y+62,t.x+65,t.y-2,'w')}
+  });
+  // pointer tags: below the list for nodes in the stack, left side for floating nodes
+  const cnt={};
+  [['topNode','c',S.top],['newNode','y',S.vars.newNode],['temp','o',S.vars.temp]].forEach(([nm,c,id])=>{
+    if(id===undefined){if(nm==='topNode')s+=tag(X(0),Y+110,'topNode = ?','c').replace('width="78"','width="100"');return}
+    if(id===null&&nm!=='topNode')return;
+    const t=id===null?null:pos[id];
+    if(t&&!t.c){const k=cnt.f=(cnt.f||0)+1,ty=Y0+10+(k-1)*32;s+=tag(10,ty,nm,c)+arrow(90,ty+13,X(0)-2,Y0+30,c);return}
+    const key=id===null?'n':id,k=cnt[key]=(cnt[key]||0)+1,x0=t?t.x:X(0),tx=x0+(k-1)*84;
+    s+=tag(tx,Y+110,nm,c)+arrow(tx+39,Y+108,t?x0+20+(k-1)*90:x0+15+(k-1)*40,Y+(t?64:54),c);
+  });
+  if(S.vars.val!=null)s+=`<rect x="${W-130}" y="8" width="118" height="28" rx="8" fill="none" stroke="#6ee7a0"/><text x="${W-71}" y="27" text-anchor="middle" font-size="14" fill="#6ee7a0">val = ${S.vars.val}</text>`;
+  return s+'</svg>';
+}
+
+// ---------- Render everything for the current step ----------
+const cl=CODE.map((t,i)=>{const d=document.createElement('div');d.className='ln';d.innerHTML='<i>'+(i+1)+'</i>';const sp=document.createElement('span');sp.textContent=t;d.append(sp);$('code').append(d);return d});
+function nm(id,S){return id===undefined?'?':id==null?'NULL':'&rarr; node '+S.nodes.find(n=>n.id===id).v}
+function render(){
+  const st=cur.steps[cur.i],S=st.S,n=cur.steps.length;
+  $('viz').innerHTML=draw(S);
+  cl.forEach((d,i)=>d.classList.toggle('on',i===st.line));
+  if(st.line>=0){const c=$('code');c.scrollTop=cl[st.line].offsetTop-c.clientHeight/2+10}
+  $('call').textContent='main():  '+(S.call||'// (setup)');$('call').classList.toggle('on',st.line===-1&&!!S.call);
+  $('expl').innerHTML=(st.eff?`<span class="eff">${st.eff}</span><br>`:'')+st.text;
+  $('prog').textContent='Step '+(cur.i+1)+' / '+n;$('bar').firstChild.style.width=(cur.i+1)/n*100+'%';
+  $('prev').disabled=cur.i===0;$('next').disabled=cur.i===n-1;
+  $('vars').innerHTML=`<span><b>topNode</b> ${nm(S.top,S)}</span><span><b>newNode</b> ${S.vars.newNode?nm(S.vars.newNode,S):'-'}</span><span><b>temp</b> ${S.vars.temp?nm(S.vars.temp,S):'-'}</span><span><b>val</b> ${S.vars.val==null?'-':S.vars.val}</span>`;
+  const r=$('ret');r.className=S.out?'err':S.ret!=null?'hit':'';
+  r.innerHTML=S.out?`Console: "${S.out}"<br>Return value: <b>${S.ret==null?'-':S.ret}</b>`:S.ret!=null?`Return value: <b>${S.ret}</b>`:'Return value: (none yet)';
+  $('log').innerHTML=ch==='sim'?cur.steps.map((x,i)=>`<li class="${i===cur.i?'cur':''}"><button data-i="${i}">${x.line>=0?CODE[x.line].trim():x.S.call||'start'} <small>- ${x.eff}</small></button></li>`).join(''):'';
+}
+
+// ---------- Chapters, buttons ----------
+function setCh(k){
+  ch=k;
+  if(k==='sim'){SS=E;cur={steps:[intro(SS,'Your stack is empty. Press a button below to run an operation, then step through what happened.')],i:0}}
+  else cur={steps:CH[k](),i:0};
+  [...$('tabs').children].forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+  $('sim').classList.toggle('hide',k!=='sim');$('cmp').classList.toggle('hide',k!=='top');
+  render();
+}
+function simOp(op,arg){
+  const b=build(op,arg,SS);cur={steps:b,i:b.length-1};SS=clone(b[b.length-1].S);render();
+}
+TABS.forEach(([k,t])=>{const b=document.createElement('button');b.textContent=t;b.dataset.k=k;b.onclick=()=>setCh(k);$('tabs').append(b)});
+$('prev').onclick=()=>{if(cur.i>0){cur.i--;render()}};
+$('next').onclick=()=>{if(cur.i<cur.steps.length-1){cur.i++;render()}};
+$('reset').onclick=()=>setCh(ch);     // lesson: back to step 1; simulator: empty stack
+$('sim').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.i!==undefined){cur.i=+b.dataset.i;render()}
+  else if(b.id==='pc'){const v=parseFloat($('cv').value);if(isNaN(v)){cur={steps:[intro(SS,'Please type a number first.')],i:0};render()}else simOp('push',v)}
+  else if(b.dataset.o)simOp(b.dataset.o,b.dataset.a?+b.dataset.a:undefined)});
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='ArrowRight')$('next').click();if(e.key==='ArrowLeft')$('prev').click()});
+
+// ---------- Knowledge check ----------
+const Q=[
+ ['After pushing 10, 20 and 30, what does <code>topNode</code> point to?',['Node 10 (pushed first)','Node 30 (pushed last)','NULL','Node 20'],1,'Every push moves topNode to the new node, so the most recent push (30) is on top. Node 10 is at the bottom and its next is NULL.'],
+ ['Why does <code>newNode->next = topNode</code> run before <code>topNode = newNode</code>?',['Either order works the same','If topNode moved first, we would lose the address of the old stack','C++ requires it alphabetically','So newNode can be deleted'],1,'topNode is the only pointer to the old stack. Overwrite it first and the old nodes become unreachable. Link first, then move topNode.'],
+ ['During <code>pop()</code>, what happens to <code>temp</code> and <code>topNode</code>?',['Both move to the second node','temp remembers the old top; topNode moves to the second node','temp moves, topNode stays','Both become NULL'],1,'temp = topNode copies the address. Then topNode moves on, while temp still points at the old top so we can delete it.'],
+ ['Does <code>top()</code> delete a node?',['Yes, it removes and returns the top','No, it only reads the data; the stack is unchanged','Only when one node is left','Only when the stack is empty'],1,'top() just returns topNode->data. It changes no pointers and deletes nothing. pop() is the one that removes.'],
+ ['What happens if <code>pop()</code> is called on an empty stack?',['The program deletes NULL','It prints "Stack is empty" and returns -1','It silently returns 0','It crashes immediately'],1,'The check topNode != NULL fails, so the else branch prints the message and returns -1. No node is touched.']];
+Q.forEach(([q,o,a,e],qi)=>{const d=document.createElement('div');d.className='q card';
+  d.innerHTML=`<p>${qi+1}. ${q}</p>`+o.map((t,i)=>`<button data-i="${i}">${t}</button>`).join('')+'<div class="fb"></div>';
+  d.onclick=ev=>{const b=ev.target.closest('button');if(!b)return;const i=+b.dataset.i;
+    [...d.querySelectorAll('button')].forEach(x=>x.classList.remove('ok','no'));
+    b.classList.add(i===a?'ok':'no');d.querySelector('.fb').innerHTML=(i===a?'Correct. ':'Not quite. ')+e};
+  $('quiz').append(d)});
+setCh('ctor');
+</script></body></html>
