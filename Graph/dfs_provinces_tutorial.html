@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeetCode 547 — Number of Provinces (DFS in C++)</title>
+<style>
+:root{color-scheme:dark;--bg:#0d0f13;--pn:#161a21;--ln:#282e39;--tx:#e6e8ec;--mu:#8b93a1;--cy:#22d3ee;--ye:#facc15;--gr:#34d399;--or:#fb923c;--gy:#4b5361;--rd:#f87171}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 system-ui,sans-serif}
+main{max-width:1500px;margin:auto;padding:12px}h1{font-size:1.4rem;margin:.2em 0}h2{font-size:1.15rem;color:var(--cy);margin:1.3em 0 .3em}h3{margin:0 0 4px;font-size:.78rem;color:var(--mu);text-transform:uppercase;letter-spacing:.07em}
+code,.m{font-family:ui-monospace,Menlo,Consolas,monospace}code{background:#222732;color:var(--ye);padding:1px 5px;border-radius:5px;font-size:.9em}
+.c{background:var(--pn);border:1px solid var(--ln);border-radius:12px;padding:10px 12px}.mu{color:var(--mu)}.top{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+button,input,select{background:#222732;color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer}input{cursor:text}button:hover:not(:disabled){border-color:var(--cy)}button:disabled{opacity:.4;cursor:not-allowed}
+.pri{background:var(--cy);color:#06222a;font-weight:700}.sel{border-color:var(--ye);color:var(--ye)}
+.bar{flex:1;min-width:100px;height:8px;background:#222732;border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cy),var(--ye))}
+.lay{display:grid;grid-template-columns:minmax(300px,1.1fr) minmax(320px,1fr) minmax(280px,.9fr);gap:10px}@media(max-width:1050px){.lay{grid-template-columns:1fr}}.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+#cd{height:560px;overflow:auto;font-size:12.5px}@media(max-width:1050px){#cd{height:340px}}
+.cl{display:flex;white-space:pre;border-left:3px solid transparent;color:#cfd5df}.cl b{display:inline-block;width:30px;text-align:right;padding-right:10px;color:#566070;font-weight:400;flex:none}.cl.on{background:rgba(250,204,21,.2);border-left-color:var(--ye)}
+.kw{color:#c792ea}.bi{color:#82aaff}.st{color:#a5e075}.fn{color:#ffd479}
+svg{width:100%;display:block}.e{stroke:#3a4150;stroke-width:3}.e.x{stroke:var(--cy);stroke-width:6}.e.b{stroke:var(--or);stroke-width:6;stroke-dasharray:3 6}.e.p{stroke:#fff;stroke-width:5;stroke-dasharray:6 5}
+.n text{font:700 20px system-ui;fill:#0d0f13;text-anchor:middle;dominant-baseline:central;pointer-events:none}.n circle{stroke-width:4}
+.lg{display:flex;flex-wrap:wrap;gap:9px;font-size:11.5px;color:var(--mu)}.lg span:before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;background:var(--k)}
+table{border-collapse:collapse;font-size:13px}th,td{border:1px solid var(--ln);padding:3px 9px;text-align:center}th{color:var(--mu);font-weight:500}td.on{background:rgba(250,204,21,.35)}td.pu{color:var(--gr);font-weight:700}td.dg{color:#566070}
+#vr{width:100%}#vr td{text-align:left}.fr{border:1px solid var(--cy);background:#1b3540;border-radius:7px;padding:3px 9px;margin-top:3px;font-family:ui-monospace,monospace;font-size:13px}.fr.t{background:var(--ye);color:#222;border-color:var(--ye);font-weight:700}
+.ex{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;margin-top:10px}.ex .c b.l{color:var(--ye);font-size:12px;text-transform:uppercase;letter-spacing:.05em;display:block}
+.ok{color:var(--gr)}.no{color:var(--rd)}.q{border-color:var(--ye)}.op{display:block;width:100%;text-align:left;margin:4px 0}.op.r{border-color:var(--gr);color:var(--gr)}.op.w{border-color:var(--rd);color:var(--rd)}.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+</style></head><body><main>
+<h1>LeetCode 547 — Number of Provinces, with DFS in C++</h1>
+<p class="mu">No autoplay: you control every step with Previous / Next. Everything on screen comes from a real run of the code.</p>
+<div class="top"><button id="pv">◀ Previous Step</button><button id="nx" class="pri">Next Step ▶</button><button id="rs">↺ Restart</button><span class="mu">Matrix:</span><button id="m1" class="sel">Tutorial (3×3)</button><button id="m2">Practice (4×4)</button><span class="m mu" id="sn"></span><div class="bar"><i id="pb"></i></div></div>
+<div class="lay">
+<div class="col"><div class="c"><h3>C++ solution <span id="ln" class="m" style="text-transform:none;color:var(--ye)"></span></h3><div id="cd"></div></div></div>
+<div class="col"><div class="c"><h3>Cities (graph built from <code>adj</code>)</h3><svg viewBox="0 0 360 260" id="sv"></svg><div class="lg"><span style="--k:var(--gy)">unvisited</span><span style="--k:var(--ye)">currently exploring</span><span style="--k:var(--gr)">visited</span><span style="--k:var(--cy)">waiting on stack</span><span style="--k:#fff">outer-loop candidate</span></div></div>
+<div class="c"><h3><code>isConnected</code> (the input matrix, read only)</h3><div id="mx"></div><p class="mu" style="font-size:12px;margin:4px 0 0">Row i, column j = 1 means city i and city j are connected. The diagonal (a city with itself) is ignored.</p></div>
+<div class="c q" id="qa" style="display:none"></div></div>
+<div class="col"><div class="c"><h3>Live variable inspector</h3><table id="vr"></table></div><div class="c"><h3>Recursion stack (top first)</h3><div id="stk"></div></div></div></div>
+<div class="ex" id="ex"></div>
+
+<h2>Difficult syntax, in plain words</h2>
+<div class="g2"><div class="c"><code>vector&lt;int&gt;&amp; vis</code><p>The <code>&amp;</code> means "reference": the function works on the <b>original</b> vector, not a copy. This is why every recursive call shares one <code>vis</code>. Without it, each call would change a private copy and DFS would forget where it has been.</p></div>
+<div class="c"><code>vector&lt;vector&lt;int&gt;&gt; adj(n)</code><p>A vector whose elements are vectors: a list of lists. <code>adj(n)</code> creates n empty inner vectors, so <code>adj[2]</code> is the neighbour list of city 2. (<code>isConnected</code> has the same type but holds a matrix of 0s and 1s.)</p></div>
+<div class="c"><code>for (int neighbor : adj[node])</code><p>Range-based for: take each element of <code>adj[node]</code> one at a time and call it <code>neighbor</code>. No index needed.</p></div>
+<div class="c"><b>Recursion</b><p>dfs calls dfs. Each call gets its own <code>node</code> and its own place in the loop, stacked on the call stack. <code>return</code> ends <b>only the current call</b>; the caller continues after its call line.</p></div></div>
+
+<h2>Compare with your original DFS</h2>
+<div class="c" style="overflow-x:auto"><table style="width:100%"><tr><th>Your first DFS</th><th>LeetCode 547</th><th>Same or different?</th></tr>
+<tr><td><code>char</code> node</td><td><code>int</code> node (0 … n-1)</td><td>Different type, same idea: a name for a city</td></tr>
+<tr><td><code>unordered_map&lt;char, vector&lt;char&gt;&gt; adj</code></td><td><code>vector&lt;vector&lt;int&gt;&gt; adj(n)</code></td><td>Both give "neighbours of X". Vector index replaces the map key</td></tr>
+<tr><td><code>unordered_map&lt;char,int&gt; vis</code></td><td><code>vector&lt;int&gt; vis(n, 0)</code></td><td>Same 0/1 meaning; vector starts filled with 0</td></tr>
+<tr><td><code>dfs_Search(curr)</code></td><td><code>dfs(node, adj, vis)</code></td><td>Same recursion; LeetCode version passes data in (with &amp;)</td></tr>
+<tr><td>Check, mark, print, loop</td><td>Check, mark, loop</td><td>Printing is gone: we <b>count</b> components instead</td></tr>
+<tr><td>One DFS from A</td><td>DFS from every unvisited city</td><td>Counting DFS starts = counting provinces</td></tr></table></div>
+
+<h2>Practice: solve the 4×4 matrix yourself</h2>
+<p class="mu">Click <b>Practice (4×4)</b> above to step through it first, then predict. Hints first; answers only when you click Reveal.</p>
+<div class="g2" id="pr"></div>
+
+<script>
+const CODE=`class Solution {
+public:
+    void dfs(int node, vector<vector<int>>& adj,
+             vector<int>& vis) {
+        if (vis[node] == 1) {
+            return;
+        }
+
+        vis[node] = 1;
+
+        for (int neighbor : adj[node]) {
+            dfs(neighbor, adj, vis);
+        }
+    }
+
+    int findCircleNum(vector<vector<int>>& isConnected) {
+        int n = isConnected.size();
+        vector<vector<int>> adj(n);
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (isConnected[i][j] == 1 && i != j) {
+                    adj[i].push_back(j);
+                }
+            }
+        }
+
+        vector<int> vis(n, 0);
+        int provinces = 0;
+
+        for (int i = 0; i < n; i++) {
+            if (vis[i] == 0) {
+                provinces++;
+                dfs(i, adj, vis);
+            }
+        }
+
+        return provinces;
+    }
+};`.split('\n');
+const HL={2:[2,3]};
+// Static teaching text per line: p = plain English, t = technical meaning, w = why needed, x = what if removed/changed
+const LX={
+2:{p:'A new dfs call starts. It is given a city number and two things to work with.',t:'Parameters: node (copy of an int), adj and vis (references, because of &).',w:'adj tells it who the neighbours are; vis is the shared notebook of visited cities.',x:'Remove the & on vis: each call edits its own copy, so cities are never remembered and DFS can loop forever.'},
+4:{p:'Ask: have I been to this city before?',t:'vis[node] == 1 compares (it does not assign). True means visited.',w:'Cycles and two-way links mean we can reach a city again; the check stops repeats.',x:'Without it, cities 0 and 1 would call each other forever (stack overflow).'},
+5:{p:'Already visited, so leave this call right away.',t:'return ends only this dfs call; the caller continues after its call line.',w:'It is the base case that makes the recursion stop.',x:'Without return, a visited city would be processed again and recurse again.'},
+8:{p:'Mark this city as visited.',t:'Assignment: vis[node] = 1 stores 1 in the shared vector.',w:'So any later check on this city is true and stops.',x:'Without it, vis stays 0, so the check never stops anything.'},
+10:{p:'Go through every neighbour of this city, one by one.',t:'Range-based for: neighbor takes each element of adj[node] in order.',w:'DFS must explore every connection to find the whole province.',x:'Skipping the loop would visit only this city, not the rest of its province.'},
+11:{p:'Visit that neighbour by calling dfs again (recursion).',t:'A new stack frame is created with node = neighbor. Same adj and vis are passed along.',w:'Going deeper is what makes it depth-first.',x:'Without this call, DFS would never leave the first city.'},
+13:{p:'This city has no more neighbours. This call finishes.',t:'The function reaches its closing brace and returns; its frame is popped.',w:'The earlier call (below on the stack) can now continue its loop: that is backtracking.',x:'—'},
+15:{p:'The function gets the matrix of connections.',t:'isConnected is passed by reference; isConnected[i][j] = 1 means i and j are directly connected.',w:'This is the input. We will convert it to a friendlier form.',x:'—'},
+16:{p:'Count how many cities there are.',t:'The matrix is n×n, so its row count is n.',w:'Every loop below runs from 0 to n-1.',x:'A wrong n means cities are missed or we read outside the matrix.'},
+17:{p:'Make n empty neighbour lists, one per city.',t:'vector<vector<int>> is a list of lists. adj(n) creates n empty inner vectors.',w:'We need somewhere to store "who is connected to whom".',x:'Without it, adj[i].push_back(j) would write into nothing (undefined behaviour).'},
+19:{p:'Pick a city i (a row of the matrix).',t:'The outer loop: i is the row, the city we are describing.',w:'We must look at every row.',x:'Skipping rows leaves some cities with no neighbours.'},
+20:{p:'Pick a city j (a column) to compare with city i.',t:'The inner loop: j is the column, the possible neighbour of i.',w:'Two loops are needed because the matrix has two dimensions: every pair (i, j).',x:'With only one loop we could not look at every pair.'},
+21:{p:'Are i and j really connected, and are they different cities?',t:'isConnected[i][j] == 1 is the connection test. i != j rejects a city paired with itself.',w:'The diagonal is always 1 ("I am connected to myself"), but a city is not its own neighbour.',x:'Remove i != j: every city lists itself, which is useless (though DFS would still survive thanks to vis).'},
+22:{p:'Add j to the neighbour list of i.',t:'adj[i].push_back(j) appends j at the end of the vector adj[i].',w:'This copies the matrix information into list form that DFS loops over easily.',x:'Without it, adj stays empty and DFS never moves.'},
+25:{p:'All rows and columns are done. adj is complete.',t:'adj holds exactly the same connections as the matrix, as lists.',w:'Matrix: n×n numbers. List: only real connections.',x:'—'},
+27:{p:'Create a visited notebook with n zeros.',t:'vector<int> vis(n, 0): size n, every element 0 (unvisited).',w:'We must remember which cities are already counted in a province.',x:'Uninitialised values would make the 0/1 checks unpredictable.'},
+28:{p:'Start the province counter at 0.',t:'An int that will be increased once per new province.',w:'We have not found any province yet.',x:'Uninitialised provinces gives a random starting number.'},
+30:{p:'Look at each city in order.',t:'Outer loop over every city i.',w:'Some cities are not reachable from city 0, so we must try them all.',x:'Only starting at 0 would miss other provinces.'},
+31:{p:'Is this city still unvisited?',t:'vis[i] == 0 compares; 0 means no earlier DFS reached it.',w:'An unvisited city means a brand-new province. A visited one is already counted.',x:'Without this test we would count every city as a province.'},
+32:{p:'We found a new province, so add one.',t:'provinces++ increases the counter by 1.',w:'Done BEFORE dfs: this city starts a new province regardless of what dfs does.',x:'Counting after or never gives the wrong total.'},
+33:{p:'Visit every city of this province.',t:'dfs(i, adj, vis) marks every city reachable from i.',w:'After it, the whole province is visited, so it is never counted again.',x:'Without it, cities in the same province would be counted separately.'},
+37:{p:'Return the number of provinces.',t:'provinces holds the number of DFS starts.',w:'It is the answer LeetCode wants.',x:'—'}};
+// ---- Simulation: runs the real algorithm once, snapshotting all state after each executed step ----
+function sim(M){
+ const n=M.length,S=[];let pend=null;
+ const s={n:null,i:null,j:null,node:null,nb:null,adj:null,vis:null,prov:null,stack:[],cell:null,edge:null,bt:null,cand:null,starts:0,firstVis:null};
+ const E=(line,lab,now,chg,x={})=>{if(pend){now=pend+' '+now;pend=null}const o=JSON.parse(JSON.stringify(s));Object.assign(o,{line,lab,now,chg},x);S.push(o)};
+ const L=a=>'['+a.join(', ')+']';
+ function dfs(c){E(2,`enter dfs(${c})`,`dfs(node=${c}) begins. The stack now has ${s.stack.length} frame(s).`,'A new frame appears on the recursion stack.');
+  const v=s.vis[c];E(4,`vis[${c}]==1 ?`,`vis[${c}] is ${v}, so <code>vis[node] == 1</code> is <b>${v==1?'TRUE':'FALSE'}</b>.`,'Nothing changes: this is only a comparison.',v==1?{}:{});
+  if(v==1){E(5,'return',`City ${c} was already visited, so <code>return</code> ends <b>this one call</b> only. The calls below it on the stack are still waiting.`,'This frame will be removed.',q5(S));return}
+  s.vis[c]=1;E(8,`vis[${c}] = 1`,`City ${c} is marked visited.`,`vis = ${L(s.vis)}`,{q:{q:'What does vis[node] = 1 do?',o:['Checks whether node is visited','Marks node as visited','Removes node from the graph'],a:1,e:'= assigns. It stores 1 so later checks know this city is done.'}});
+  const f=s.stack.at(-1);f.nbs=[...s.adj[c]];
+  for(let k=0;k<f.nbs.length;k++){const x=f.nbs[k];f.idx=k;s.nb=x;E(10,`neighbor = ${x}`,`The range-for gives <code>neighbor = ${x}</code> (element ${k} of adj[${c}] = ${L(f.nbs)}).`,`neighbor = ${x}`,{edge:[c,x]});
+   s.stack.push({node:x,nbs:[],idx:-1});s.node=x;E(11,`call dfs(${x})`,`<b>Recursive call</b> dfs(${x}, adj, vis). The same vis is shared.`,'A new frame is pushed.',{edge:[c,x]});
+   dfs(x);s.stack.pop();s.node=c;s.nb=f.nbs[k];s.edge=null;pend=`dfs(${x}) returned and its frame was popped. We are back in dfs(${c}), right after the call.`;s.bt=[x,c]}
+  s.nb=null;E(13,`dfs(${c}) ends`,`No neighbours left for city ${c}, so dfs(${c}) reaches its closing brace and returns.`,'This frame is popped.',{bt:s.bt});s.bt=null}
+ function q5(S){return S.filter(t=>t.line==5).length==0?{q:{q:'What happens if DFS reaches an already visited node?',o:['It visits it again','The call returns immediately','The program stops completely'],a:1,e:'return ends only that call; other active calls continue.'}}:{}}
+ E(15,'findCircleNum(isConnected)',`The function starts with the ${n}×${n} matrix.`,'Nothing yet.');
+ s.n=n;E(16,`n = ${n}`,`isConnected has ${n} rows, so n = ${n}.`,`n = ${n}`);
+ s.adj=Array.from({length:n},()=>[]);E(17,`adj(${n})`,`${n} empty vectors are created.`,`adj = ${JSON.stringify(s.adj)}`);
+ for(let i=0;i<n;i++){s.i=i;s.j=null;s.cell=null;E(19,`i = ${i}`,`Outer loop: i = ${i}. We now describe the neighbours of city ${i} (row ${i}).`,`i = ${i}`);
+  for(let j=0;j<n;j++){s.j=j;s.cell=[i,j];s.edge=null;E(20,`j = ${j}`,`Inner loop: j = ${j}. We look at isConnected[${i}][${j}].`,`j = ${j}`);
+   const a=M[i][j]==1,b=i!=j;E(21,`isConnected[${i}][${j}]==1 && i!=j`,`isConnected[${i}][${j}] = ${M[i][j]} → <code>== 1</code> is ${a}. <code>i != j</code> (${i} != ${j}) is ${b}${!b?' (a city with itself)':''}. ${a&&b?'Both true → add the edge.':'Not both true → skip.'}`,a&&b?'Condition true: next line adds j.':'Nothing changes.');
+   if(a&&b){s.adj[i].push(j);s.edge=[i,j];E(22,`adj[${i}].push_back(${j})`,`${j} is appended to adj[${i}].`,`adj[${i}] = ${L(s.adj[i])}; adj = ${JSON.stringify(s.adj)}`);s.edge=null}}}
+ s.i=null;s.j=null;s.cell=null;E(25,'adj is complete',`The loops are finished. adj = ${JSON.stringify(s.adj)}, the same connections as the matrix.`,'No further change.',{q:{q:'Why do we need two loops for the matrix?',o:['One for rows (i), one for columns (j), to see every pair','To visit each city twice','One loop is for sorting'],a:0,e:'The matrix is two-dimensional, so every pair (i, j) needs both loops.'}});
+ s.vis=Array(n).fill(0);E(27,`vis(${n}, 0)`,'Every city starts unvisited.',`vis = ${L(s.vis)}`);
+ s.prov=0;E(28,'provinces = 0','No province counted yet.','provinces = 0');
+ for(let i=0;i<n;i++){s.i=i;s.cand=i;E(30,`i = ${i}`,`Outer loop looks at city ${i}.`,`i = ${i}`);
+  const z=s.vis[i]==0;E(31,`vis[${i}]==0 ?`,`vis[${i}] is ${s.vis[i]}, so <code>vis[i] == 0</code> is <b>${z}</b>. ${z?'City '+i+' is new: it starts a new province.':'City '+i+' is already visited, so it is part of a province we counted: skip it.'}`,'Nothing changes (comparison).',z?{}:{q:{q:`Why does city ${i} not start another province?`,o:['It is already visited by an earlier DFS','The loop ends early','Its row in the matrix is all zeros'],a:0,e:'An earlier dfs already reached it, so it belongs to a province that was already counted.'}});
+  if(z){s.prov++;E(32,'provinces++',`New province found. <code>provinces++</code> happens before dfs.`,`provinces = ${s.prov}`,{q:{q:'What is the purpose of provinces++?',o:['It counts one new connected group','It marks the city visited','It moves to the next city'],a:0,e:'Each time we find an unvisited city, we have found one more province.'}});
+   s.starts++;s.stack.push({node:i,nbs:[],idx:-1});s.node=i;E(33,`call dfs(${i})`,`Start DFS from city ${i}. Start call number ${s.starts}.`,'A frame is pushed.');
+   dfs(i);s.stack.pop();s.node=null;s.nb=null;pend=`dfs(${i}) returned to findCircleNum. vis = ${L(s.vis)}.`;if(!s.firstVis)s.firstVis=[...s.vis]}}
+ s.i=null;s.cand=null;E(37,`return ${s.prov}`,`All cities are checked. Return <b>provinces = ${s.prov}</b>. The answer is ${s.prov}, not ${n}: DFS starts only when a city is unvisited, and one DFS visits a whole province.`,`result = ${s.prov}`);
+ S.forEach(t=>t.firstVis=s.firstVis);return S;}
+const M1=[[1,1,0],[1,1,0],[0,0,1]],M2=[[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]],SIM={1:sim(M1),2:sim(M2)},MS={1:M1,2:M2};
+const $=q=>document.querySelector(q),L=a=>'['+a.join(', ')+']',esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+let cur=1,S=SIM[1],i=0,ans={};
+function hl(l){return esc(l).replace(/(\b(?:class|public|void|int|return|for|if)\b)|(\b(?:vector|size|push_back)\b)|(\b\w+(?=\())/g,(m,a,b)=>`<span class="${a?'kw':b?'bi':'fn'}">${m}</span>`)}
+function draw(){const s=S[i],n=MS[cur].length,on=HL[s.line]||[s.line];
+ $('#cd').innerHTML=CODE.map((l,k)=>`<div class="cl${on.includes(k)?' on':''}"><b>${k+1}</b>${hl(l)||' '}</div>`).join('');
+ const el=$('#cd .on');if(el){const c=$('#cd');c.scrollTop=el.offsetTop-c.clientHeight/2}
+ $('#ln').textContent=` line ${on[0]+1}`;
+ // graph: edges appear as adj fills
+ const P=[...Array(n).keys()].map(k=>[180+95*Math.sin(2*Math.PI*k/n),135-85*Math.cos(2*Math.PI*k/n)]);
+ const same=(a,b)=>a&&b&&((a[0]==b[0]&&a[1]==b[1])||(a[0]==b[1]&&a[1]==b[0]));let h='';
+ if(s.adj)for(let a=0;a<n;a++)for(const b of s.adj[a])if(a<b||!s.adj[b].includes(a)){const k=same(s.edge,[a,b])?(s.line==22?'p':'x'):same(s.bt,[a,b])?'b':'';h+=`<line class="e ${k}" x1="${P[a][0]}" y1="${P[a][1]}" x2="${P[b][0]}" y2="${P[b][1]}"/>`}
+ const onstk=s.stack.map(f=>f.node);
+ for(let v=0;v<n;v++){let f='#4b5361',k='#282e39';if(s.vis&&s.vis[v]==1)f='#34d399';if(onstk.includes(v))k='#22d3ee';if(s.cand===v&&s.line<=31)k='#fff';if(onstk.length&&v==onstk.at(-1)){f='#facc15'}
+  h+=`<g class="n"><circle cx="${P[v][0]}" cy="${P[v][1]}" r="24" fill="${f}" stroke="${k}"/><text x="${P[v][0]}" y="${P[v][1]}">${v}</text></g>`}
+ $('#sv').innerHTML=h;
+ const A=s.adj,pushed=(r,c)=>A&&A[r].includes(c);
+ $('#mx').innerHTML='<table><tr><th></th>'+MS[cur].map((_,c)=>`<th>j=${c}</th>`).join('')+'</tr>'+MS[cur].map((row,r)=>`<tr><th>i=${r}</th>`+row.map((v,c)=>`<td class="${s.cell&&s.cell[0]==r&&s.cell[1]==c?'on':pushed(r,c)?'pu':r==c?'dg':''}">${v}</td>`).join('')+'</tr>').join('')+'</table>';
+ const U='<span class="mu">not created yet</span>',J=x=>x===null?'—':x;
+ $('#vr').innerHTML=[['isConnected (matrix)',JSON.stringify(MS[cur])],['n',J(s.n)],['i',J(s.i)],['j',J(s.j)],['node',s.stack.length?s.stack.at(-1).node:'—'],['neighbor',J(s.nb)],['adj (lists)',s.adj?JSON.stringify(s.adj):U],['vis',s.vis?L(s.vis):U],['provinces',J(s.prov)],['stack',s.stack.length?L(s.stack.map(f=>'dfs('+f.node+')')):'[ ]']].map(r=>`<tr><td class="mu">${r[0]}</td><td class="m">${r[1]}</td></tr>`).join('');
+ $('#stk').innerHTML=[...s.stack].reverse().map((f,k)=>`<div class="fr${k?'':' t'}" style="margin-left:${Math.min((s.stack.length-1-k)*8,56)}px">dfs(node=${f.node})${f.idx>=0?` · loop pos ${f.idx}`:''}${k?'':' ← running'}</div>`).join('')||'<span class="mu">empty (no dfs call active)</span>';
+ const t=LX[s.line],nx=S[i+1];
+ $('#ex').innerHTML=`<div class="c" style="grid-column:1/-1"><b class="l">Step ${i+1}: <code>${esc(CODE[on[0]].trim())}</code></b></div>
+ <div class="c"><b class="l">In plain English</b>${t.p}</div><div class="c"><b class="l">Technical meaning</b>${t.t}</div><div class="c"><b class="l">Why it is necessary</b>${t.w}</div>
+ <div class="c"><b class="l">Right now</b>${s.now}</div><div class="c"><b class="l">What changes after this line</b><span class="m">${s.chg}</span></div><div class="c"><b class="l">If removed or changed</b>${t.x}</div>
+ <div class="c mu">Next: ${nx?esc(nx.lab):'finished'}</div>`;
+ const q=s.q,qa=$('#qa');if(q){qa.style.display='';const d=ans[cur+'-'+i];qa.innerHTML=`<h3>Quick question</h3><b>${q.q}</b>${q.o.map((o,k)=>`<button class="op${d!==undefined?(k==q.a?' r':k==d?' w':''):''}" data-k="${k}">${o}</button>`).join('')}${d!==undefined?`<p class="${d==q.a?'ok':'no'}"><b>${d==q.a?'Correct!':'Not quite.'}</b> ${q.e}</p>`:''}`}else qa.style.display='none';
+ $('#sn').textContent=`Step ${i+1} / ${S.length}`;$('#pb').style.width=(i/(S.length-1)*100)+'%';$('#pv').disabled=!i;$('#nx').disabled=i==S.length-1;
+ $('#m1').className=cur==1?'sel':'';$('#m2').className=cur==2?'sel':''}
+$('#pv').onclick=()=>{if(i>0){i--;draw()}};$('#nx').onclick=()=>{if(i<S.length-1){i++;draw()}};$('#rs').onclick=()=>{i=0;draw()};
+$('#m1').onclick=()=>{cur=1;S=SIM[1];i=0;draw()};$('#m2').onclick=()=>{cur=2;S=SIM[2];i=0;draw()};
+$('#qa').onclick=e=>{const k=e.target.dataset.k;if(k===undefined||ans[cur+'-'+i]!==undefined)return;ans[cur+'-'+i]=+k;draw()};
+document.addEventListener('keydown',e=>{if(e.target.tagName=='INPUT')return;if(e.key=='ArrowRight')$('#nx').click();if(e.key=='ArrowLeft')$('#pv').click()});
+// ---- Practice mode: answers come from the real simulation of the 4×4 matrix ----
+const R=SIM[2].at(-1),dg=a=>a.join('').replace(/\D/g,'');
+const PQ=[['1. Adjacency list (e.g. 0:1 1:0 …)',()=>R.adj.map((a,k)=>k+':'+a.join(',')).join('  '),()=>R.adj.map((a,k)=>k+a.join('')).join(''),'Hint: row i lists every j with a 1, except j = i.'],
+['2. vis after the first DFS (e.g. 1 0 0 0)',()=>L(R.firstVis),()=>dg(R.firstVis),'Hint: the first DFS starts at city 0 and only reaches cities connected to it.'],
+['3. Number of DFS starting calls from findCircleNum',()=>R.starts,()=>String(R.starts),'Hint: a start call happens only when vis[i] == 0 in the outer loop.'],
+['4. Final province count',()=>R.prov,()=>String(R.prov),'Hint: it equals the number of start calls.']];
+$('#pr').innerHTML=PQ.map((q,k)=>`<div class="c"><b>${q[0]}</b><br><input id="pi${k}" style="width:100%;margin:6px 0"><div class="top" style="margin:0"><button data-a="c" data-k="${k}">Check</button><button data-a="h" data-k="${k}">Hint</button><button data-a="r" data-k="${k}">Reveal</button></div><div id="po${k}" style="margin-top:4px"></div></div>`).join('');
+$('#pr').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=+b.dataset.k,q=PQ[k],o=$('#po'+k);
+ if(b.dataset.a=='c'){const v=$('#pi'+k).value.replace(/\D/g,'');o.innerHTML=v==q[2]()?'<b class="ok">Correct!</b>':'<b class="no">Not yet.</b> Try again or ask for a hint.'}
+ else if(b.dataset.a=='h')o.innerHTML='<span class="mu">'+q[3]+'</span>';else o.innerHTML='Answer: <b class="m">'+q[1]()+'</b>'};
+draw();
+</script></main></body></html>
