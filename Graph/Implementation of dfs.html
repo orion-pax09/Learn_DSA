@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFS visualizer — recursive C++ one line at a time</title>
+<style>
+/* ------------------------------------------------------------------
+   Design tokens. Three colours carry meaning everywhere in the page:
+   blue  = comparison (==)     amber = assignment (=)
+   teal  = visited             violet = current call / recursion path
+   coral = returning / backtracking
+------------------------------------------------------------------- */
+:root{
+  --bg:#0e1218; --p1:#161b25; --p2:#1d2331; --ln:#2a3245;
+  --tx:#dbe2ee; --dim:#8793a8; --dim2:#5d687d;
+  --cmp:#5ab4ff; --asg:#ffb347; --vis:#38d39f; --cur:#b18cff; --bad:#ff7b8b;
+  --mono:ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono",Consolas,"Liberation Mono",monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 var(--sans);-webkit-text-size-adjust:100%}
+code,pre,.mono{font-family:var(--mono)}
+code{background:#0c1016;border:1px solid var(--ln);border-radius:4px;padding:0 5px;font-size:.92em}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--cur);outline-offset:2px}
+h1,h2,h3{margin:0}
+
+/* ---------- header + controls ---------- */
+.top{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justify-content:space-between;padding:14px 16px 6px}
+.brand h1{font-size:1.25rem;letter-spacing:.2px}
+.brand p{margin:2px 0 0;color:var(--dim);font-size:.9rem;max-width:62ch}
+.extras{display:flex;flex-wrap:wrap;gap:8px}
+.btn{background:var(--p2);border:1px solid var(--ln);border-radius:8px;padding:7px 12px;line-height:1.2;transition:background .15s,border-color .15s}
+.btn:hover:not(:disabled){background:#252d3f;border-color:#3a4560}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:#3b2f66;border-color:var(--cur)}
+.btn.primary:hover:not(:disabled){background:#4a3b80}
+.btn.warn{border-color:#7a3a45;color:#ffc3cb}
+.btn.on{background:#2b2146;border-color:var(--cur)}
+.controls{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 16px;background:rgba(14,18,24,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--ln)}
+.cgroup{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.progress{flex:1 1 220px;display:flex;gap:10px;align-items:center;min-width:200px}
+.progress input[type=range]{flex:1;accent-color:var(--cur);min-width:80px}
+.counter{font-family:var(--mono);font-size:.9rem;white-space:nowrap;color:var(--tx)}
+.seg{display:inline-flex;border:1px solid var(--ln);border-radius:8px;overflow:hidden}
+.seg button{background:var(--p2);border:0;padding:7px 12px}
+.seg button+button{border-left:1px solid var(--ln)}
+.seg button.on{background:#3b2f66}
+select{background:var(--p2);border:1px solid var(--ln);border-radius:8px;padding:6px 8px}
+.hint{color:var(--dim);font-size:.8rem}
+.banner{margin:10px 16px 0;padding:10px 14px;border:1px solid #7a3a45;background:#2a1519;border-radius:8px;color:#ffd0d6}
+
+/* ---------- layout ---------- */
+.grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1.1fr) minmax(0,.9fr);gap:12px;padding:12px 16px 28px;align-items:start}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+@media (max-width:1100px){
+  .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .col3{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+}
+@media (max-width:720px){
+  .grid{grid-template-columns:minmax(0,1fr);padding:10px}
+  .col3{grid-template-columns:minmax(0,1fr)}
+  .controls{padding:8px 10px}
+  .top{padding:12px 10px 4px}
+}
+.panel{background:var(--p1);border:1px solid var(--ln);border-radius:10px;min-width:0}
+.ph{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--ln)}
+.ph h2{font-size:.98rem;font-weight:650}
+.ph .meta{font-family:var(--mono);font-size:.78rem;color:var(--dim)}
+.pb{padding:10px 12px}
+
+/* ---------- code panel ---------- */
+.code{height:410px;overflow:auto;position:relative;font:13px/1.55 var(--mono);padding:6px 0;background:#0f141c;border-radius:0 0 10px 10px}
+.cl{display:flex;align-items:stretch;border-left:3px solid transparent;cursor:pointer;white-space:pre;min-width:max-content;width:100%}
+.cl:hover{background:#171e2a}
+.cl .no{flex:0 0 40px;text-align:right;padding-right:10px;color:var(--dim2);user-select:none}
+.cl .tx{flex:1;padding-right:10px}
+.cl .ar{flex:0 0 18px;color:var(--cur);text-align:center;user-select:none}
+.cl.done{background:rgba(56,211,159,.07)}
+.cl.cur{background:rgba(177,140,255,.24);border-left-color:var(--cur)}
+.cl.sel{outline:1px dashed var(--dim);outline-offset:-2px}
+.cl.removed .tx{text-decoration:line-through;opacity:.45}
+.cl .tag{margin-left:14px;font:600 11px/1.7 var(--sans);border-radius:4px;padding:0 6px;align-self:center}
+.cl .tag.c{background:var(--cmp);color:#08121c}
+.cl .tag.a{background:var(--asg);color:#201402}
+.cl .tag.r{background:var(--bad);color:#25080c}
+.t-pre{color:#9aa7bd}.t-com{color:#6b7a92;font-style:italic}.t-str{color:#e9c07a}.t-num{color:#f0a06e}
+.t-kw{color:#c792ea}.t-ty{color:#6fd3d8}.t-fn{color:#82aaff}
+.t-cmp{background:var(--cmp);color:#08121c;border-radius:3px;padding:0 4px;font-weight:700}
+.t-asg{background:var(--asg);color:#201402;border-radius:3px;padding:0 4px;font-weight:700}
+.lineinfo{padding:10px 12px;border-top:1px solid var(--ln);font-size:.9rem;min-height:64px}
+.lineinfo .lh{color:var(--dim);font-size:.8rem;margin-bottom:3px}
+
+/* ---------- explanation panel ---------- */
+.exp .kind{display:inline-block;font-size:.76rem;font-weight:650;padding:1px 9px;border-radius:99px;margin-right:8px;border:1px solid}
+.k-cmp{color:var(--cmp);border-color:var(--cmp)}.k-asg{color:var(--asg);border-color:var(--asg)}
+.k-call{color:var(--cur);border-color:var(--cur)}.k-ret{color:var(--bad);border-color:var(--bad)}
+.k-out{color:var(--vis);border-color:var(--vis)}.k-loop{color:#9ad1ff;border-color:#4b6f94}.k-set{color:var(--dim);border-color:var(--dim2)}
+.exp h3{font-size:1.02rem;margin:2px 0 8px}
+.exp .codeline{background:#0c1016;border:1px solid var(--ln);border-radius:6px;padding:7px 10px;font:13px/1.5 var(--mono);margin-bottom:10px;overflow:auto;white-space:pre}
+.exp .codeline .lnno{color:var(--dim);margin-right:8px;font-family:var(--sans);font-size:.8rem}
+.exp .sec{margin:9px 0}
+.exp .sec b.l{display:block;color:var(--dim);font-size:.8rem;font-weight:600;margin-bottom:1px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font:12px/1.6 var(--mono);background:#0c1016;border:1px solid var(--ln);border-radius:5px;padding:0 7px}
+.chip.hot{border-color:var(--asg);color:var(--asg)}
+.chip.on1{border-color:#1f8f6e;color:var(--vis)}
+.chip.dim{color:var(--dim2)}
+.deep{margin-top:8px;padding:10px 12px;border-left:3px solid var(--cur);background:#1a1730;border-radius:0 8px 8px 0;font-size:.92rem}
+.deep ol{margin:6px 0 0;padding-left:20px}
+.deep li{margin:3px 0}
+.row-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.predict{margin-top:10px;padding:10px 12px;border:1px dashed var(--asg);border-radius:8px;background:#1f1a10}
+.predict .opts{display:grid;gap:6px;margin-top:8px}
+.predict .opt{text-align:left;background:var(--p2);border:1px solid var(--ln);border-radius:7px;padding:7px 10px}
+.predict .opt.good{border-color:var(--vis);background:#12302a}
+.predict .opt.bad{border-color:var(--bad);background:#33181d}
+.blur{filter:blur(6px);pointer-events:none;user-select:none}
+
+/* ---------- graph ---------- */
+#graph{width:100%;height:auto;display:block;max-height:380px}
+.edge{stroke:#3b455c;stroke-width:3;stroke-linecap:round}
+.edge.absent{stroke-dasharray:2 8;opacity:.4}
+.edge.tree{stroke:#1f8f6e}
+.edge.path{stroke:var(--cur);stroke-width:5}
+.ov{stroke-width:4;stroke-linecap:round}
+.ov.explore{stroke:#ffe08a;stroke-dasharray:8 6;animation:dash .8s linear infinite}
+.ov.back{stroke:var(--bad);stroke-dasharray:3 5}
+@keyframes dash{to{stroke-dashoffset:-28}}
+.node .body{fill:#232a3a;stroke:#4a5570;stroke-width:3;transition:fill .25s,stroke .25s}
+.node.visited .body{fill:#1a6e57;stroke:var(--vis)}
+.node.active .body{fill:#1f9a77;stroke:var(--cur)}
+.node.current .body{stroke:var(--cur);stroke-width:5}
+.node .ring{fill:none;stroke:var(--cur);stroke-width:3;opacity:0}
+.node.current .ring{opacity:.8;animation:pulse 1.4s ease-in-out infinite}
+.node.target .body{stroke-dasharray:5 4;stroke:#ffe08a}
+@keyframes pulse{50%{opacity:.25;transform:scale(1.08)}}
+.node .ring{transform-box:fill-box;transform-origin:center}
+.node text.lt{fill:#fff;font:700 22px var(--sans);text-anchor:middle}
+.node text.vl{fill:var(--dim);font:12px var(--mono);text-anchor:middle}
+.node text.vl.one{fill:var(--vis)}
+.node .ob{opacity:0}
+.node .ob.show{opacity:1}
+.node .ob circle{fill:var(--asg)}
+.node .ob text{fill:#201402;font:700 12px var(--sans);text-anchor:middle}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:0 12px 10px;font-size:.78rem;color:var(--dim)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-2px;border:2px solid}
+.legend i.ln{border-radius:2px;height:4px;vertical-align:3px;border:0;width:16px}
+.graphnote{padding:0 12px 10px;font-size:.88rem;color:var(--tx)}
+
+/* ---------- visited map (the star) ---------- */
+.mapp{border-top:3px solid var(--asg)}
+table.vt{width:100%;border-collapse:collapse;font-size:.92rem}
+.vt th{text-align:left;font-weight:600;color:var(--dim);font-size:.8rem;padding:4px 8px;border-bottom:1px solid var(--ln)}
+.vt td{padding:6px 8px;border-bottom:1px solid #20283a}
+.vt tr.row td:first-child{font-family:var(--mono)}
+.vt tr.row.cur td:first-child::after{content:" ◀ current";color:var(--cur);font:600 .72rem var(--sans)}
+.tok{display:inline-block;min-width:34px;text-align:center;font:700 16px var(--mono);border-radius:6px;padding:1px 8px;border:2px solid}
+.tok.v0{color:var(--dim);border-color:#3a4358;background:#10151d}
+.tok.v1{color:#05261c;background:var(--vis);border-color:var(--vis)}
+tr.row.changed{background:rgba(255,179,71,.14)}
+tr.row.changed .tok{box-shadow:0 0 0 3px rgba(255,179,71,.55);animation:flip .75s ease}
+tr.row.checked{background:rgba(90,180,255,.10)}
+tr.row.checked .tok{box-shadow:0 0 0 3px rgba(90,180,255,.45)}
+tr.row.absent .tok{opacity:.55;border-style:dashed}
+@keyframes flip{0%{transform:rotateX(90deg) scale(.7)}60%{transform:rotateX(-12deg) scale(1.15)}100%{transform:none}}
+.st{font-size:.82rem;color:var(--dim)}
+.st b{color:var(--tx);font-weight:600}
+.mlegend{display:flex;flex-wrap:wrap;gap:8px 16px;margin:10px 0 4px;font-size:.8rem;color:var(--dim)}
+.mlegend .tok{min-width:0;font-size:12px;padding:0 6px;margin-right:5px}
+.mlegend .hl{display:inline-block;width:14px;height:14px;border-radius:4px;background:rgba(255,179,71,.3);border:2px solid var(--asg);margin-right:5px;vertical-align:-3px}
+.opbox{margin-top:8px;padding:8px 10px;border-radius:8px;background:#10151d;border:1px solid var(--ln);font-size:.88rem}
+.opbox.cmp{border-color:var(--cmp)}.opbox.asg{border-color:var(--asg)}
+.cvsa{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+@media (max-width:560px){.cvsa{grid-template-columns:1fr}}
+.cvsa div{border-radius:8px;padding:8px 10px;font-size:.84rem;border:1px solid}
+.cvsa .c{border-color:var(--cmp);background:rgba(90,180,255,.07)}
+.cvsa .a{border-color:var(--asg);background:rgba(255,179,71,.07)}
+.cvsa code{display:inline-block;margin-bottom:3px}
+.vecnote{margin-top:8px;font-size:.84rem;color:var(--dim)}
+pre.snip{margin:8px 0 0;background:#0c1016;border:1px solid var(--ln);border-radius:6px;padding:8px 10px;font-size:12px;overflow:auto}
+
+/* ---------- stack ---------- */
+.stack{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow:auto;padding:2px}
+.frame{border:1px solid var(--ln);background:var(--p2);border-radius:8px;padding:7px 10px}
+.frame .fn{font:600 13px var(--mono)}
+.frame .fs{font-size:.78rem;color:var(--dim)}
+.frame.top{border-color:var(--cur);background:#2a2150;box-shadow:0 0 0 2px rgba(177,140,255,.3)}
+.frame.top .fs{color:#d6c7ff}
+.frame.ghost{border:1px dashed var(--bad);background:transparent;color:var(--bad);font:12px var(--mono);text-decoration:line-through;animation:fadeout 1.6s ease forwards}
+@keyframes fadeout{from{opacity:1}to{opacity:.55}}
+.stackend{font-size:.76rem;color:var(--dim2);text-align:center;padding:2px}
+.empty{color:var(--dim);font-size:.9rem;padding:8px 2px}
+
+/* ---------- variables ---------- */
+.vr{display:grid;grid-template-columns:118px 1fr;gap:2px 10px;padding:6px 0;border-bottom:1px solid #20283a;align-items:baseline}
+.vr:last-of-type{border-bottom:0}
+.vk{font:12.5px var(--mono);color:var(--dim)}
+.vv{font:13px var(--mono);word-break:break-word}
+.vn{grid-column:2;font:11.5px var(--sans);color:var(--dim)}
+.vnote{margin-top:8px;font-size:.84rem;color:var(--dim);border-top:1px solid var(--ln);padding-top:8px}
+
+/* ---------- console ---------- */
+.console{background:#07090d;border:1px solid var(--ln);border-radius:8px;padding:10px 12px;font:15px/1.6 var(--mono);min-height:62px;word-break:break-all}
+.console .pr{color:var(--dim2)}
+.console .newc{background:var(--vis);color:#04201a;border-radius:3px;padding:0 3px;animation:pop .5s ease}
+@keyframes pop{from{transform:scale(1.8)}to{transform:none}}
+.caret{display:inline-block;width:8px;height:15px;background:var(--tx);vertical-align:-2px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.report{margin-top:10px;white-space:pre-wrap;font:13px/1.55 var(--mono);background:#10211c;border:1px solid #1f8f6e;border-radius:8px;padding:10px 12px}
+.report.bad{background:#2a1519;border-color:#7a3a45}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:100;background:rgba(5,7,10,.78);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow:auto}
+.modal[hidden]{display:none}
+.mbox{background:var(--p1);border:1px solid #3a4560;border-radius:12px;width:min(720px,100%);padding:18px 20px}
+.mbox h2{font-size:1.15rem;margin-bottom:8px}
+.mbox .opt{display:block;width:100%;text-align:left;background:var(--p2);border:1px solid var(--ln);border-radius:8px;padding:9px 12px;margin:7px 0}
+.mbox .opt:hover:not(:disabled){border-color:var(--cur)}
+.mbox .opt.good{border-color:var(--vis);background:#12302a}
+.mbox .opt.bad{border-color:var(--bad);background:#33181d}
+.mbox .res{margin-top:10px;padding:10px 12px;border-radius:8px;background:#10151d;border:1px solid var(--ln)}
+.mbox table{width:100%;border-collapse:collapse;font-size:.9rem;margin:8px 0}
+.mbox th,.mbox td{border:1px solid var(--ln);padding:6px 8px;text-align:left;vertical-align:top}
+.mbox th{background:var(--p2)}
+.bigorder{font:700 1.2rem var(--mono);color:var(--vis);margin:6px 0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <h1>Recursive DFS in C++, one line at a time</h1>
+    <p>Step through the exact program. Watch the highlighted line, the graph, the <code>vis</code> map, the call stack and the output change together.</p>
+  </div>
+  <div class="extras">
+    <button class="btn" id="btnSummary">Traversal summary</button>
+    <button class="btn" id="btnBfs">DFS vs BFS</button>
+    <button class="btn" id="btnQuiz">Final quiz</button>
+    <button class="btn warn" id="btnDemo">Demo: remove the visited check</button>
+  </div>
+</header>
+
+<section class="controls" id="controls" aria-label="Execution controls">
+  <div class="cgroup">
+    <button class="btn" id="btnRestart" title="Restart">⟲ Restart</button>
+    <button class="btn" id="btnPrev" title="Previous step (Left arrow)">◀ Previous step</button>
+    <button class="btn primary" id="btnPlay" title="Play / pause (Space)">▶ Play</button>
+    <button class="btn" id="btnNext" title="Next step (Right arrow)">Next step ▶</button>
+  </div>
+  <div class="cgroup">
+    <label for="speed" class="hint">Speed</label>
+    <select id="speed" aria-label="Playback speed">
+      <option value="2600">0.5×</option>
+      <option value="1600" selected>1×</option>
+      <option value="800">2×</option>
+      <option value="350">4×</option>
+    </select>
+  </div>
+  <div class="progress">
+    <input type="range" id="prog" min="0" max="1" value="0" step="1" aria-label="Progress through the execution">
+    <span class="counter" id="counter">Step 0 / 0</span>
+  </div>
+  <div class="cgroup">
+    <div class="seg" role="group" aria-label="Learning mode">
+      <button id="modeGuided" class="on">Guided</button>
+      <button id="modeChallenge">Challenge</button>
+    </div>
+    <span class="hint">← → step · Space play/pause</span>
+  </div>
+</section>
+
+<div id="banner" class="banner" hidden></div>
+
+<main class="grid">
+  <!-- column 1: code + explanation -->
+  <div class="col col1">
+    <section class="panel" aria-label="C++ code">
+      <div class="ph"><h2>C++ code</h2><span class="meta" id="codeMeta">not started</span></div>
+      <div class="code" id="code" tabindex="0"></div>
+      <div class="lineinfo" id="lineInfo"></div>
+    </section>
+    <section class="panel exp" aria-label="Step explanation">
+      <div class="ph"><h2>What is happening in this step</h2><span class="meta" id="expMeta"></span></div>
+      <div class="pb" id="explain" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <!-- column 2: graph + map + console -->
+  <div class="col col2">
+    <section class="panel" aria-label="Graph">
+      <div class="ph"><h2>Graph</h2><span class="meta">edges: A–B, A–C, B–D, B–E</span></div>
+      <svg id="graph" viewBox="0 0 450 345" role="img" aria-label="Graph with nodes A to E"></svg>
+      <div class="graphnote" id="graphNote"></div>
+      <div class="legend">
+        <span><i style="background:#232a3a;border-color:#4a5570"></i>unvisited</span>
+        <span><i style="background:#1f9a77;border-color:var(--cur)"></i>visited, still on stack</span>
+        <span><i style="background:#1a6e57;border-color:var(--vis)"></i>visited, finished</span>
+        <span><i style="background:transparent;border-color:var(--cur)"></i>current call</span>
+        <span><i class="ln" style="background:var(--cur)"></i>recursive path</span>
+        <span><i class="ln" style="background:#ffe08a"></i>edge being explored</span>
+        <span><i class="ln" style="background:var(--bad)"></i>backtracking</span>
+      </div>
+    </section>
+
+    <section class="panel mapp" aria-label="Visited map">
+      <div class="ph"><h2 id="mapTitle">vis — unordered_map&lt;char, int&gt;</h2>
+        <button class="btn" id="btnVec" style="padding:3px 9px;font-size:.82rem">Show vector&lt;int&gt; version</button></div>
+      <div class="pb">
+        <table class="vt" id="visTable"></table>
+        <div class="mlegend">
+          <span><span class="tok v0">0</span>unvisited</span>
+          <span><span class="tok v1">1</span>visited</span>
+          <span><span class="hl"></span>highlighted entry = just modified</span>
+        </div>
+        <div class="st" id="mapText"></div>
+        <div class="opbox" id="mapOp"></div>
+        <div class="cvsa">
+          <div class="c"><code>vis[current] == 1</code><br><b>Comparison.</b> Asks “is it 1?”. Reads the value, changes nothing.</div>
+          <div class="a"><code>vis[current] = 1</code><br><b>Assignment.</b> Says “store 1 here”. This is the only line that marks a node visited.</div>
+        </div>
+        <div class="vecnote" id="mapNote"></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Output console">
+      <div class="ph"><h2>Output console</h2><span class="meta">cout &lt;&lt; current &lt;&lt; " ";</span></div>
+      <div class="pb">
+        <div class="console" id="console"></div>
+        <div id="finalReport"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- column 3: stack + variables -->
+  <div class="col col3">
+    <section class="panel" aria-label="Call stack">
+      <div class="ph"><h2>Recursive call stack</h2><span class="meta" id="stackMeta"></span></div>
+      <div class="pb"><div class="stack" id="stack"></div></div>
+    </section>
+    <section class="panel" aria-label="Variables and loop">
+      <div class="ph"><h2>Variables and loop</h2><span class="meta">live values</span></div>
+      <div class="pb" id="vars"></div>
+    </section>
+  </div>
+</main>
+
+<div id="modal" class="modal" hidden><div class="mbox" role="dialog" aria-modal="true" id="modalBox"></div></div>
+
+<script>
+/* =====================================================================
+   HOW THIS VISUALIZER WORKS (read this first)
+   ---------------------------------------------------------------------
+   1. buildTimeline() is a tiny "interpreter" that runs the C++ program
+      by hand, in JavaScript, with the same control flow as the C++
+      (recursion included). Every time one meaningful C++ event happens
+      (a call, a condition, an assignment, a print, a loop iteration,
+      a return) it calls emit(), which stores an EVENT.
+   2. Each EVENT contains a full deep-copied SNAPSHOT of the program
+      state: call stack, adj, vis, output, executed lines, tree edges.
+   3. The UI only ever shows timeline[idx]. Next/Previous just change
+      idx, so going backwards truly restores every panel because every
+      panel is redrawn from the stored snapshot - nothing is "undone".
+   4. Play uses the same idx++ as the Next button.
+   ===================================================================== */
+(function(){
+'use strict';
+
+/* ---------- tiny helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const cd = s => '<code>' + esc(s) + '</code>';
+const fl = a => '[' + a.join(', ') + ']';
+const q  = n => "'" + n + "'";
+const own = (o,k) => Object.prototype.hasOwnProperty.call(o,k);
+const ekey = (a,b) => [a,b].sort().join('-');
+
+/* ---------- the exact program being visualised ---------- */
+const CODE_TEXT = `#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+class Graph {
+public:
+    unordered_map<char, vector<char>> adj;
+    unordered_map<char, int> vis;
+
+    void addEdge(char u, char v) {
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    void DFS_search(char current) {
+        if (vis[current] == 1) {
+            return;
+        }
+
+        vis[current] = 1;
+        cout << current << " ";
+
+        for (char neighbour : adj[current]) {
+            DFS_search(neighbour);
+        }
+    }
+
+    void DFS(char start) {
+        vis.clear();
+        DFS_search(start);
+    }
+};
+
+int main() {
+    Graph g;
+
+    g.addEdge('A', 'B');
+    g.addEdge('A', 'C');
+    g.addEdge('B', 'D');
+    g.addEdge('B', 'E');
+
+    g.DFS('A');
+
+    return 0;
+}`;
+const CODE = CODE_TEXT.split('\n');
+
+/* what each line means - shown when you click a line (does not move execution) */
+const LINE_INFO = {
+ 1:"Includes the iostream library, which provides cout for printing.",
+ 2:"Includes vector, a resizable array. Each node's neighbour list is a vector<char>.",
+ 3:"Includes unordered_map, a hash map (key → value). Used for both adj and vis.",
+ 4:"Lets you write cout, vector and unordered_map instead of std::cout, std::vector, ...",
+ 5:"Blank line. It does nothing.",
+ 6:"Starts the Graph class. It bundles the data (adj, vis) with the functions that use it.",
+ 7:"Everything below can be used from outside the class, for example from main().",
+ 8:"adj is the adjacency list: for each node, a vector of its neighbours. Example: adj['A'] = [B, C].",
+ 9:"vis is the visited map: node → 0 (not visited) or 1 (visited). It is DFS's memory, and the reason DFS never loops forever.",
+ 10:"Blank line.",
+ 11:"addEdge(u, v) connects two nodes. The graph is undirected, so both directions are stored.",
+ 12:"adj[u] finds (or creates) u's neighbour list; push_back(v) appends v to its end.",
+ 13:"The same in the other direction: v now also lists u as a neighbour.",
+ 14:"End of addEdge. Reaching this brace returns to the caller.",
+ 15:"Blank line.",
+ 16:"The recursive function. Each call receives its own copy of current - the node this call is working on.",
+ 17:"The visited check. vis[current] reads the value for this node (inserting 0 if the key is missing). == 1 only COMPARES it with 1. True means 'already visited'.",
+ 18:"return; ends this call immediately and goes back to whoever called it. Lines 21 to 26 are skipped.",
+ 19:"End of the if block. If the condition was false, execution jumps past line 18 and continues at line 21.",
+ 20:"Blank line.",
+ 21:"Assignment (single =). Stores 1 in vis for this node. This is the moment the node becomes visited.",
+ 22:"Prints the node followed by a space. It is only reachable when the node was NOT visited before, so each node prints once.",
+ 23:"Blank line.",
+ 24:"Range-based for loop. On every pass, neighbour is a copy of the next element of adj[current], in stored order.",
+ 25:"The recursive call: go and explore neighbour. Note it is called for EVERY neighbour, visited or not. The check inside handles repeats.",
+ 26:"End of the for loop body. Execution goes back to line 24 for the next element.",
+ 27:"End of DFS_search. Reaching it means 'all neighbours done', so the function returns to its caller.",
+ 28:"Blank line.",
+ 29:"DFS is the public entry point. It starts a traversal from start.",
+ 30:"clear() removes every entry from vis, so each fresh DFS starts with nothing visited.",
+ 31:"Starts the recursion at the start node.",
+ 32:"End of DFS. Returns to main().",
+ 33:"End of the class definition.",
+ 34:"Blank line.",
+ 35:"Program entry point. Execution always starts here.",
+ 36:"Creates a Graph object g. Its adj and vis maps start empty.",
+ 37:"Blank line.",
+ 38:"Adds the edge A–B: adj['A'] gets B and adj['B'] gets A.",
+ 39:"Adds the edge A–C.",
+ 40:"Adds the edge B–D.",
+ 41:"Adds the edge B–E.",
+ 42:"Blank line.",
+ 43:"Runs the traversal starting from A. Output appears here.",
+ 44:"Blank line.",
+ 45:"Ends the program successfully.",
+ 46:"End of main."
+};
+
+/* ---------- syntax highlighter (one line at a time) ---------- */
+const KW = new Set(['class','public','void','for','if','return','int','char','using','namespace']);
+const TY = new Set(['vector','unordered_map','Graph','std']);
+const BI = new Set(['cout']);
+function hl(line){
+  if (/^\s*#include/.test(line)) return '<span class="t-pre">' + esc(line) + '</span>';
+  const re = /(\/\/.*$)|('(?:\\.|[^'\\])')|("(?:\\.|[^"\\])*")|(\b\d+\b)|([A-Za-z_]\w*)|(==)|(=)|(\s+)|(.)/g;
+  let out = '', m;
+  while ((m = re.exec(line))) {
+    if (m[1]) out += '<span class="t-com">' + esc(m[1]) + '</span>';
+    else if (m[2] || m[3]) out += '<span class="t-str">' + esc(m[0]) + '</span>';
+    else if (m[4]) out += '<span class="t-num">' + m[4] + '</span>';
+    else if (m[5]) {
+      const w = m[5];
+      if (KW.has(w)) out += '<span class="t-kw">' + w + '</span>';
+      else if (TY.has(w)) out += '<span class="t-ty">' + w + '</span>';
+      else if (BI.has(w) || line[re.lastIndex] === '(') out += '<span class="t-fn">' + w + '</span>';
+      else out += w;
+    }
+    else if (m[6]) out += '<span class="t-cmp">==</span>';
+    else if (m[7]) out += '<span class="t-asg">=</span>';
+    else out += esc(m[0]);
+  }
+  return out;
+}
+
+/* ---------- graph geometry ---------- */
+const NODES = ['A','B','C','D','E'];
+const EDGES = [['A','B'],['A','C'],['B','D'],['B','E']];
+const POS = {A:{x:225,y:55},B:{x:115,y:170},C:{x:335,y:170},D:{x:60,y:285},E:{x:175,y:285}};
+
+/* ---------- names of frames ---------- */
+function fnName(f){
+  if (f.fn === 'main') return 'main()';
+  if (f.fn === 'addEdge') return "addEdge('" + f.args.u + "', '" + f.args.v + "')";
+  if (f.fn === 'DFS') return "DFS('" + f.args.start + "')";
+  return "DFS_search('" + f.args.current + "')";
+}
+
+/* =====================================================================
+   TIMELINE BUILDER - the hand-run interpreter
+   ===================================================================== */
+const P = (c, a, b) => ({correct:c, wrong:[a,b]});
+
+function buildTimeline(noCheck){
+  const S = {stack:[], adj:{}, vis:{}, out:[], executed:new Set(), tree:[], ghost:null};
+  const events = [];
+  const seen = {};           // so each challenge question is attached only once
+  let halted = false;
+  const LIMIT = 9;           // demo only: stop pretending after this recursion depth
+
+  const top = () => S.stack[S.stack.length - 1];
+  const at  = ln => { top().line = ln; };            // "this frame is now on line ln"
+  const depth = () => S.stack.filter(f => f.fn === 'DFS_search').length;
+
+  /* emit(): store one event together with a deep copy of the whole state */
+  function emit(line, kind, o){
+    if (line) S.executed.add(line);
+    const t = top();
+    const flags = Object.assign({}, o.flags || {});
+    // while a new call is arriving or checking itself, the edge it arrived by is "being explored"
+    if (t && t.fn === 'DFS_search' && t.parent && (kind === 'call-search' || kind === 'check'))
+      flags.explore = {from:t.parent, to:t.current};
+    events.push({
+      line, kind, flags,
+      title:o.title, plain:o.plain, why:o.why, next:o.next, deep:o.deep,
+      predict:o.predict, challenge:o.challenge || null,
+      done:!!o.done, overflow:!!o.overflow,
+      state: JSON.parse(JSON.stringify({
+        stack:S.stack, adj:S.adj, vis:S.vis, out:S.out,
+        executed:[...S.executed], tree:S.tree, ghost:S.ghost
+      }))
+    });
+    S.ghost = null;
+  }
+  function popFrame(){
+    const f = S.stack.pop();
+    S.ghost = {name:fnName(f), fn:f.fn, node:f.current || null};
+    return f;
+  }
+
+  /* ----- event 0: nothing has run yet ----- */
+  events.push({
+    line:null, kind:'start', flags:{}, done:false, overflow:false, challenge:null,
+    title:'Ready - nothing has run yet',
+    plain:'Press <b>Next step</b> (or the Right arrow key) to run one meaningful C++ event. The program will start in main(), build the graph with four addEdge calls, then run the DFS.',
+    why:'Nothing is executing yet, so every panel is in its starting state.',
+    next:'main() starts at line 35.',
+    deep:'The visited map below lists A to E with 0 so you can watch each value change. In real C++ the map starts <b>empty</b>: an entry only comes into existence the first time <code>vis[current]</code> touches that key, and operator[] gives it the default value 0.',
+    predict:P('main() starts running (line 35)','DFS_search(\'A\') is called','The program prints A'),
+    state:{stack:[], adj:{}, vis:{}, out:[], executed:[], tree:[], ghost:null}
+  });
+
+  /* ----- main starts ----- */
+  S.stack.push({fn:'main', args:{}, line:35});
+  emit(35,'main',{
+    title:'The program starts in main()',
+    plain:'Every C++ program begins at <code>main()</code>. A frame for main() is pushed onto the call stack. The call stack is simply the pile of functions that are running right now.',
+    why:'main() is the entry point. Nothing else runs until main() asks for it.',
+    next: noCheck ? 'main() calls g.DFS(\'A\') (the graph was built exactly as in the normal run; those steps are skipped in this demo).' : 'Line 36 creates the Graph object g.',
+    deep:'The <b>call stack</b> is how the computer remembers where to continue after a function finishes. Every running function owns a <b>frame</b> holding its parameters and local variables. A frame is added when the function is called and removed when it returns: last in, first out. Recursive DFS relies on exactly this to remember the way back.',
+    predict:P('main() starts running (line 35)','DFS_search(\'A\') is called','The program prints A')
+  });
+
+  if (!noCheck) {
+    at(36);
+    emit(36,'graph',{
+      title:'Create the Graph object g',
+      plain:'<code>Graph g;</code> builds a Graph object. Its two members start empty: <code>adj</code> has no neighbour lists yet and <code>vis</code> has no entries.',
+      why:'We need a Graph before we can add edges or search it.',
+      next:"Line 38 calls g.addEdge('A', 'B').",
+      deep:'A class is a blueprint and <code>Graph g;</code> makes one real object from it. <code>adj</code> is an <b>adjacency list</b>: for each node, the list of nodes it is connected to. <code>vis</code> will remember which nodes the search has already reached.',
+      predict:P('Create the Graph object g (line 36)','Call g.DFS(\'A\')','Print the first vertex')
+    });
+
+    const edgeCalls = [['A','B',38],['A','C',39],['B','D',40],['B','E',41]];
+    edgeCalls.forEach((ec, ei) => {
+      const [u,v,ln] = ec;
+      at(ln);
+      S.stack.push({fn:'addEdge', args:{u:u,v:v}, line:11});
+      emit(ln,'call-addEdge',{
+        title:"Call g.addEdge('" + u + "', '" + v + "')",
+        plain:'main() calls addEdge. The parameters become <code>u = ' + q(u) + '</code> and <code>v = ' + q(v) + '</code>. A new frame for addEdge is pushed on the stack.',
+        why:'Line ' + ln + ' asks the graph to remember the connection ' + u + ' – ' + v + '.',
+        next:'Line 12 appends ' + q(v) + ' to the neighbour list of ' + q(u) + '.',
+        deep:'An undirected edge is a two-way street, so addEdge stores it in <i>both</i> directions (lines 12 and 13). The <b>order</b> in which you call addEdge decides the neighbour order, and that decides the DFS order later.',
+        predict:P("Call g.addEdge('" + u + "', '" + v + "') - push a new frame", 'Print a vertex', 'Mark a node visited')
+      });
+      const created1 = !S.adj[u];
+      S.adj[u] = S.adj[u] || []; S.adj[u].push(v);
+      at(12);
+      emit(12,'push',{
+        title:'adj[' + q(u) + '].push_back(' + q(v) + ')',
+        plain:(created1 ? '<code>adj[' + q(u) + ']</code> does not exist yet, so operator[] first creates an empty list for it. ' : '') + '<code>push_back</code> appends ' + q(v) + '. Now <code>adj[' + q(u) + '] = ' + fl(S.adj[u]) + '</code>.',
+        why:'This stores the direction ' + u + ' → ' + v + '.',
+        next:'Line 13 stores the opposite direction ' + v + ' → ' + u + '.',
+        deep:'<code>adj[u]</code> uses operator[]: if the key is missing the map creates it with an empty vector. <code>push_back</code> then adds to the <b>end</b> of that vector, so neighbours stay in the order they were added.',
+        predict:P('adj[' + q(u) + '].push_back(' + q(v) + ') (line 12)','adj[' + q(v) + '].push_back(' + q(u) + ') (line 13)','Return from addEdge')
+      });
+      const created2 = !S.adj[v];
+      S.adj[v] = S.adj[v] || []; S.adj[v].push(u);
+      at(13);
+      emit(13,'push',{
+        title:'adj[' + q(v) + '].push_back(' + q(u) + ')',
+        plain:(created2 ? '<code>adj[' + q(v) + ']</code> does not exist yet, so operator[] creates an empty list. ' : '') + 'Now ' + q(u) + ' is appended: <code>adj[' + q(v) + '] = ' + fl(S.adj[v]) + '</code>.',
+        why:'The graph is undirected, so the edge must work in both directions.',
+        next:'The closing brace on line 14 returns control to main().',
+        deep:'If we skipped this line the graph would become directed: you could go ' + u + ' → ' + v + ' but not back. That backward step is exactly why a visited check is needed later.',
+        predict:P('adj[' + q(v) + '].push_back(' + q(u) + ') (line 13)','adj[' + q(u) + '].push_back(' + q(v) + ') again','Return from addEdge')
+      });
+      at(14);
+      popFrame();
+      emit(14,'return-addEdge',{
+        title:'addEdge finishes and returns to main()',
+        plain:'The end of addEdge is reached, so its frame is removed from the stack. main() is on top again and continues.',
+        why:'A function returns when execution reaches its closing brace.',
+        next: ei < 3 ? 'Line ' + edgeCalls[ei+1][2] + ' calls addEdge again.' : "Line 43 calls g.DFS('A').",
+        deep:'The stack just <b>shrank</b>. The frame (and its u and v) no longer exist. The data it changed - adj - lives inside the Graph object, so it stays.',
+        predict:P(ei < 3 ? 'Next addEdge call (line ' + edgeCalls[ei+1][2] + ')' : "Call g.DFS('A') (line 43)", 'Print a vertex', 'Mark a node visited')
+      });
+    });
+  } else {
+    // demo: build the graph silently so the focus stays on the missing check
+    [['A','B'],['A','C'],['B','D'],['B','E']].forEach(e => {
+      (S.adj[e[0]] = S.adj[e[0]] || []).push(e[1]);
+      (S.adj[e[1]] = S.adj[e[1]] || []).push(e[0]);
+    });
+  }
+
+  /* ----- g.DFS('A') ----- */
+  at(43);
+  S.stack.push({fn:'DFS', args:{start:'A'}, line:29});
+  emit(43,'call-DFS',{
+    title:"Call g.DFS('A')",
+    plain:'main() calls DFS with <code>start = \'A\'</code>. A frame for DFS is pushed. DFS is a small wrapper: it prepares <code>vis</code> and starts the recursion.',
+    why:'Line 43 starts the traversal from A.',
+    next:'Line 30 clears the visited map.',
+    deep:'Keeping the setup (<code>vis.clear()</code>) in DFS and the recursion in DFS_search means every DFS(start) call begins from a clean state.',
+    predict:P("Call g.DFS('A') (line 43)",'Print A','Call DFS_search(\'B\')')
+  });
+  at(30);
+  S.vis = {};
+  emit(30,'clear',{
+    flags:{clear:true},
+    title:'vis.clear() - start with nothing visited',
+    plain:'<code>vis.clear()</code> removes every entry from the visited map. Right now no node is visited. (Here it was already empty, but clear() makes a second DFS run safe.)',
+    why:'Without it, 1s left over from an old search would make a new search skip nodes.',
+    next:"Line 31 calls DFS_search('A') - the real recursion begins.",
+    deep:'After clear() the map has <b>zero</b> entries, not five entries with 0. The first time <code>vis[current]</code> is evaluated for a node, operator[] will insert that key with value 0.',
+    predict:P('vis.clear() empties the visited map (line 30)','Print A','vis[\'A\'] = 1')
+  });
+  at(31);
+
+  /* ----- the recursion ----- */
+  function resumeText(parent){
+    return parent ? 'DFS_search(' + q(parent) + ') resumes right after line 25 (the line that made the call)' : "DFS('A') resumes right after line 31";
+  }
+
+  function search(node, parent, callLine){
+    S.stack.push({fn:'DFS_search', args:{current:node}, current:node, parent:parent, neighbour:null, idx:-1, loopLen:null, line:16});
+    const revisit = S.vis[node] === 1;
+
+    /* --- the call itself --- */
+    let callPlain;
+    if (!parent) callPlain = "DFS calls <code>DFS_search('" + node + "')</code>. A new frame is pushed with <code>current = " + q(node) + "</code>. The real traversal begins.";
+    else callPlain = 'Line 25 calls <code>DFS_search(neighbour)</code> with <code>neighbour = ' + q(node) + '</code>. A new frame for DFS_search(' + q(node) + ') is pushed on top of the stack.' +
+      (revisit ? ' <b>' + node + ' is already visited</b>, but the loop does not check that. The call still happens.' : ' ' + node + ' has not been visited yet.');
+    const callChallenge = (parent === 'B' && node === 'A' && !seen.c3) ? (seen.c3 = 'c3') : null;
+    emit(callLine,'call-search',{
+      title:'Call ' + fnName(top()),
+      plain:callPlain,
+      why: parent ? 'The for loop in DFS_search(' + q(parent) + ') calls DFS_search on every neighbour, one after another.' : 'DFS hands the start node to the recursive function.',
+      next: noCheck ? 'Line 21 runs straight away: there is no visited check in this demo.' : 'Line 17 checks whether ' + q(node) + ' has been visited.',
+      deep:'Every call gets its <b>own frame</b> with its own <code>current</code>. When a call finishes, its frame is removed and the caller continues exactly where it paused. The loop does not look at <code>vis</code>: the check that makes DFS safe lives <i>inside</i> DFS_search, at the top.',
+      predict:P('Call DFS_search(' + q(node) + ') - push a new stack frame','Print ' + q(node) + ' immediately','Set vis[' + q(node) + '] = 1 right away'),
+      challenge:callChallenge
+    });
+
+    /* demo only: give up politely once the stack is deep enough */
+    if (noCheck && depth() >= LIMIT) {
+      emit(callLine,'overflow',{
+        title:'Stack overflow - the visualizer stops here',
+        plain:'The calls keep stacking up: A → B → A → B → ... B\'s first neighbour is A and A\'s first neighbour is B, so this ping-pong never ends. A real program would keep growing the stack until the operating system kills it with a <b>stack overflow</b> (usually a segmentation fault). The visualizer stops at depth ' + LIMIT + ' to keep your browser safe.',
+        why:'With no visited check nothing ever says "stop, I have been here".',
+        next:'Nothing. Press Restart, or switch back to the normal DFS with the red demo button.',
+        deep:'In an <b>undirected</b> graph every edge can be walked in both directions, so DFS can always step straight back to where it came from. The visited check (lines 17 to 19) is what breaks that cycle.',
+        done:true, overflow:true,
+        predict:P('Nothing - the demo has ended','Print C','Return to main')
+      });
+      halted = true;
+      return;
+    }
+
+    /* --- line 17: the visited check --- */
+    if (!noCheck) {
+      at(17);
+      const existed = own(S.vis, node);
+      if (!existed) S.vis[node] = 0;           // operator[] inserts the default value 0
+      const visited = S.vis[node] === 1;
+      let ch = null;
+      if (!existed && node === 'A' && !seen.c1) ch = seen.c1 = 'c1';
+      else if (visited && node === 'A' && !seen.c2) ch = seen.c2 = 'c2';
+      const plain = visited
+        ? '<code>vis[' + q(node) + ']</code> is already <b>1</b> (it was set on line 21 during an earlier call). <code>1 == 1</code> is <b>true</b>, so the program enters the if-block.'
+        : '<code>vis[' + q(node) + ']</code> is read first. The key ' + q(node) + ' is not in the map yet, so <code>operator[]</code> <b>inserts</b> it with the default value 0 and returns 0. Then <code>0 == 1</code> is <b>false</b>. This line only <i>compares</i>: it does not set anything to 1.';
+      emit(17,'check',{
+        flags:{cmp:{node:node, result:visited}, inserted: existed ? null : node},
+        title:'Check: vis[' + q(node) + '] == 1',
+        plain:plain,
+        why:'Every call to DFS_search starts by asking "have I been here before?". Without this question, a two-way edge would send DFS back and forth forever.',
+        next: visited ? 'The condition is true, so line 18 runs return;.' : 'The condition is false, so the if-block is skipped and line 21 runs vis[' + q(node) + '] = 1.',
+        deep:'<ol>' +
+          '<li><code>vis[current]</code> accesses the visited value for ' + q(node) + '.</li>' +
+          '<li>If the key does not exist, <code>unordered_map::operator[]</code> inserts it with a default <code>int</code> value of <b>0</b>' + (!existed ? ' - <b>that just happened</b> for ' + q(node) + '.' : ' (not needed now: the key already exists).') + '</li>' +
+          '<li><code>== 1</code> <b>compares</b> the value with 1. It does not assign 1.</li>' +
+          '<li>If true, the vertex has already been visited' + (visited ? ' - <b>true here</b>.' : '.') + '</li>' +
+          '<li><code>return</code> would exit this recursive call immediately.</li>' +
+          '<li>If false, execution continues to <code>vis[current] = 1</code>' + (!visited ? ' - <b>false here</b>.' : '.') + '</li></ol>',
+        predict:P('Check whether vis[' + q(node) + '] == 1 (line 17)','Set vis[' + q(node) + '] = 1 (line 21)','Print ' + q(node) + ' (line 22)'),
+        challenge:ch
+      });
+      if (visited) {
+        at(18);
+        popFrame();
+        let ch2 = null;
+        if (parent === 'B' && node === 'A' && !seen.c4) ch2 = seen.c4 = 'c4';
+        else if (parent === 'D' && node === 'B' && !seen.c5) ch2 = seen.c5 = 'c5';
+        emit(18,'return-18',{
+          flags:{backtrack: parent ? {from:node, to:parent} : null},
+          title:'return; - ' + q(node) + ' was already visited',
+          plain:'<code>return;</code> ends this call immediately. The frame DFS_search(' + q(node) + ') is removed from the stack (see the struck-through frame). ' + resumeText(parent) + '. <b>Nothing is printed</b> and vis is not changed.',
+          why:'The check found vis[' + q(node) + '] == 1, so there is nothing new to do here. This is how DFS avoids visiting ' + q(node) + ' twice.',
+          next: parent ? 'Back in DFS_search(' + q(parent) + '), the for loop moves to its next neighbour (or finishes if there is none).' : 'DFS continues.',
+          deep:'<code>return;</code> skips every remaining line of this call: the assignment (21), the print (22) and the loop (24 to 26). That is why ' + q(node) + ' is not printed twice. The call was not wasted: it cost one stack frame and one comparison, and the search is now back where it was before the call - this is the beginning of <b>backtracking</b>.',
+          predict:P('return - the call ends and its caller resumes','Set vis[' + q(node) + '] = 1 again','Print ' + q(node) + ' a second time'),
+          challenge:ch2
+        });
+        return;
+      }
+    }
+
+    /* --- line 21: the assignment --- */
+    at(21);
+    const existed2 = own(S.vis, node);
+    const wasOne = S.vis[node] === 1;
+    S.vis[node] = 1;
+    if (parent) { const k = ekey(parent, node); if (S.tree.indexOf(k) < 0) S.tree.push(k); }
+    let ch3 = null;
+    if (node === 'A' && !wasOne && !seen.c9) ch3 = seen.c9 = 'c9';
+    emit(21,'assign',{
+      flags:{assign:node, reassign:wasOne, inserted: existed2 ? null : node},
+      title: wasOne ? 'vis[' + q(node) + '] = 1 runs AGAIN' : 'Assign: vis[' + q(node) + '] = 1',
+      plain: wasOne
+        ? '<code>vis[' + q(node) + '] = 1</code> runs even though ' + q(node) + ' was already 1. Nothing changes in the map, but this call does not know that it is a repeat: there is no check any more.'
+        : (existed2 ? '' : 'The key ' + q(node) + ' is not in the map, so operator[] inserts it first. ') + '<code>vis[' + q(node) + '] = 1</code> is an <b>assignment</b> (single =). It stores 1 in the map entry for ' + q(node) + ': the value changes <b>0 → 1</b>. Only now does the graph node count as visited.',
+      why: wasOne ? 'Nothing stopped this call from reaching line 21.' : 'The check on line 17 was false, so this really is the first visit to ' + q(node) + '. We record that fact right away, before exploring neighbours.',
+      next:'Line 22 prints ' + q(node) + '.',
+      deep:'<ol><li>Single <code>=</code> means <b>store</b>; double <code>==</code> means <b>compare</b>. Compare <code>vis[current] == 1</code> (line 17, blue) with <code>vis[current] = 1</code> (line 21, amber).</li>' +
+        '<li>We mark the node <b>before</b> looping over its neighbours. If we waited, a neighbour could call back into this node while it is still unmarked.</li>' +
+        '<li>Once a value is 1 it is never set to 1 again in the normal program, because the check returns first.</li></ol>',
+      predict:P('Execute vis[' + q(node) + '] = 1 (assignment)','Print ' + q(node) + ' before marking it','Return from the function'),
+      challenge:ch3
+    });
+
+    /* --- line 22: cout --- */
+    at(22);
+    S.out.push(node);
+    emit(22,'print',{
+      flags:{print:node},
+      title:'Print ' + q(node),
+      plain:'<code>cout &lt;&lt; current &lt;&lt; " ";</code> prints ' + q(node) + ' followed by a space. The console now reads: <b>' + S.out.join(' ') + '</b>' + (S.out.filter(x => x === node).length > 1 ? ' - ' + node + ' appears again because nothing prevented the repeat!' : '.'),
+      why:'This line is only reachable if the node was not visited before, so each vertex is printed once.',
+      next:'Line 24 starts looping over adj[' + q(node) + '] = ' + fl(S.adj[node]) + '.',
+      deep:'The output order is the <b>order of first visits</b> (discovery order). It is not sorted and it is not the order of the letters; it follows the path the recursion takes.',
+      predict:P('Print ' + q(node) + ' to the console (line 22)','Call DFS_search on a neighbour','Return to the caller')
+    });
+
+    /* --- lines 24-26: the for loop --- */
+    const nb = S.adj[node];
+    const fr = top();
+    fr.loopLen = nb.length;
+    for (let i = 0; i < nb.length; i++) {
+      const nbr = nb[i];
+      fr.idx = i; fr.neighbour = nbr;
+      at(24);
+      const ch4 = (node === 'B' && nbr === 'D' && !seen.c6) ? (seen.c6 = 'c6') : null;
+      emit(24,'iter',{
+        flags:{explore:{from:node, to:nbr}},
+        title: i === 0 ? 'The for loop starts over adj[' + q(node) + ']' : 'The for loop moves to the next neighbour',
+        plain:(i === 0 ? 'The range-based for loop walks through <code>adj[' + q(node) + '] = ' + fl(nb) + '</code>. ' : 'The loop resumes after the previous call returned. ') +
+          'On this pass <code>neighbour</code> is a copy of element ' + i + ': <code>neighbour = ' + q(nbr) + '</code>.' +
+          (S.vis[nbr] === 1 && !noCheck ? ' ' + nbr + ' is already visited, but the loop does not look at vis.' : ''),
+        why:'The loop visits every neighbour in the stored order, one at a time.',
+        next:'Line 25 calls DFS_search(' + q(nbr) + ').',
+        deep:'In <code>for (char neighbour : adj[current])</code>, <code>neighbour</code> is simply <b>the current element of adj[current]</b> on each pass. The first pass gives element 0, the next gives element 1, and so on. There is no index variable in the C++ code; the index shown in the Variables panel is just to help you see the position.',
+        predict:P('Loop: neighbour becomes ' + q(nbr) + ' (line 24)','Return to the caller','Clear the visited map'),
+        challenge:ch4
+      });
+      at(25);
+      search(nbr, node, 25);
+      if (halted) return;
+    }
+    /* loop finished */
+    fr.idx = nb.length; fr.neighbour = null;
+    at(24);
+    const ch5 = (node === 'D' && !seen.c7) ? (seen.c7 = 'c7') : null;
+    emit(24,'loop-end',{
+      title:'No more neighbours in adj[' + q(node) + ']',
+      plain:'The loop has used every element of <code>adj[' + q(node) + '] = ' + fl(nb) + '</code>, so it ends. There is nothing left to do inside DFS_search(' + q(node) + ').',
+      why:'A range-based for loop stops after the last element.',
+      next:'Execution reaches the closing brace on line 27, so DFS_search(' + q(node) + ') returns.',
+      deep:'This is the moment when DFS is at a <b>dead end</b> and must backtrack. There is no special backtracking code: simply running off the end of the function is enough, because the previous call is still waiting on the stack.',
+      predict:P('Loop ends - adj[' + q(node) + '] has no more elements','Visit another neighbour of ' + q(node),'Call DFS_search(' + q(node) + ') again'),
+      challenge:ch5
+    });
+    at(27);
+    popFrame();
+    const ch6 = (node === 'D' && !seen.c8) ? (seen.c8 = 'c8') : null;
+    emit(27,'return-end',{
+      flags:{backtrack: parent ? {from:node, to:parent} : null},
+      title:'DFS_search(' + q(node) + ') returns - backtrack' + (parent ? ' to ' + q(parent) : ''),
+      plain:'The end of the function is reached, so DFS_search(' + q(node) + ') finishes and its frame is removed. ' + resumeText(parent) + '.',
+      why:'A function returns when its last line is done. Everything reachable from ' + q(node) + ' has now been explored.',
+      next: parent ? 'DFS_search(' + q(parent) + ') goes to its next loop pass, or ends its loop if it was the last neighbour.' : 'Line 32: DFS ends.',
+      deep:'The stack <b>shrank by one</b>. The frame beneath is exactly the call that was waiting: ' + (parent ? 'DFS_search(' + q(parent) + ')' : 'DFS') + '. This "go back to the most recent unfinished call" is <b>backtracking</b>, and it comes for free from the call stack.',
+      predict:P('DFS_search(' + q(node) + ') returns to its caller','Print ' + q(node) + ' again','Start a new DFS from ' + q(node)),
+      challenge:ch6
+    });
+  }
+
+  search('A', null, 31);
+
+  if (!halted) {
+    at(32);
+    popFrame();
+    emit(32,'return-DFS',{
+      title:'DFS finishes and returns to main()',
+      plain:'DFS_search(\'A\') has returned, so DFS has nothing left to do. Line 32 ends DFS and its frame is removed. main() resumes after line 43.',
+      why:'The recursion is complete: every node reachable from A has been visited.',
+      next:'Line 45 ends the program.',
+      deep:'The whole traversal is done in the <b>one</b> call to DFS_search(\'A\'); everything else was recursion inside it.',
+      predict:P('DFS returns to main() (line 32)','Print another vertex','Clear the visited map')
+    });
+    at(45);
+    popFrame();
+    emit(45,'main-return',{
+      title:'return 0; - the program ends',
+      plain:'<code>return 0;</code> ends main() and the program. The stack is empty. The DFS traversal is complete.',
+      why:'Reaching return in main() means the program finished successfully.',
+      next:'Nothing: this is the last step. Use Previous step to review, or Restart.',
+      deep:'Check the final report in the console panel: five vertices visited, printed in the order A B D E C.',
+      done:true,
+      predict:P('return 0; ends the program (line 45)','DFS_search(\'C\') is called again','A is printed again')
+    });
+  }
+  return events;
+}
+
+const TIMELINES = {normal:buildTimeline(false), demo:buildTimeline(true)};
+
+/* =====================================================================
+   CHALLENGE QUESTIONS (Challenge mode) and FINAL QUIZ
+   ===================================================================== */
+const CH = {
+ c1:{q:"Before A is visited, what value does vis['A'] give when line 17 reads it?",
+     opts:["1, because A is the start node","0 - operator[] inserts the missing key with the default value 0","Nothing: C++ throws an error for a missing key","A random leftover number"],ans:1,
+     exp:"unordered_map::operator[] never fails. If the key is missing it inserts it with a value-initialised int, which is 0. So vis['A'] is 0 and 0 == 1 is false."},
+ c9:{q:"What is the difference between vis[current] = 1 and vis[current] == 1?",
+     opts:["No difference; both mark the node as visited","== stores 1; = compares","= stores 1 (assignment); == only compares with 1 and changes nothing","Both only compare"],ans:2,
+     exp:"A single = is assignment: it writes 1 into the map. A double == is comparison: it reads the value and gives true or false. Mixing them up is a classic C++ bug."},
+ c3:{q:"B is exploring its neighbour A, which is already visited. Why does DFS still call DFS_search('A')?",
+     opts:["Because A was never marked visited","Because the for loop calls every neighbour; the visited check happens inside the called function","Because the graph is directed","Because it is a bug in the code"],ans:1,
+     exp:"The loop on line 24 does not look at vis. It calls DFS_search for every neighbour, and the call itself decides (line 17) whether to continue or to return immediately."},
+ c2:{q:"Now vis['A'] is read again, and A was already visited. What happens at line 17?",
+     opts:["The condition is false and A is printed again","The condition is true, so return; runs and this call ends","The program crashes","vis['A'] is reset to 0"],ans:1,
+     exp:"vis['A'] holds 1, and 1 == 1 is true. The if-block runs and its return; ends the call."},
+ c4:{q:"Why is A not printed a second time?",
+     opts:["cout ignores repeated letters","return; on line 18 ends the call before line 22, the print line, can run","Because A is the first node of the graph","Because vis['A'] is 0"],ans:1,
+     exp:"return; skips everything after it in this call, including vis[current] = 1 and the cout line. Printing only happens for calls that pass the check."},
+ c5:{q:"What does return; do here?",
+     opts:["It stops the whole DFS","It ends only the current call, removes its frame, and lets the caller continue where it paused","It resets vis","It jumps to the start of the same call"],ans:1,
+     exp:"return; leaves just the current function call. The caller (here DFS_search('D')) resumes right after the line that called it."},
+ c6:{q:"adj['B'] = [A, D, E]. Why does DFS visit D before E?",
+     opts:["The map sorts neighbours alphabetically","The loop follows the stored order: D comes before E, and DFS goes completely deep into D before returning to try E","D is closer to the root than E","E is already visited"],ans:1,
+     exp:"The for loop takes elements in order. After A (already visited), D is next. DFS finishes everything reachable through D before the loop moves on to E."},
+ c7:{q:"D's only neighbour is B, and B is visited. What happens when D has no more neighbours to try?",
+     opts:["DFS restarts from A","D is visited a second time","The loop ends and DFS_search('D') reaches its closing brace","The program crashes"],ans:2,
+     exp:"The range-based for loop ends after its last element. Then execution falls to the closing brace of DFS_search, which returns to the caller."},
+ c8:{q:"Why does execution go back to B after D finishes?",
+     opts:["B is the next frame down on the call stack, so when D's frame is removed B resumes after line 25","Because B has the smallest letter","Because C comes next","DFS picks a random node"],ans:0,
+     exp:"B called D, so B's frame sits just beneath D's on the stack. When D returns its frame is popped and B continues its loop. That is backtracking."}
+};
+
+const QUIZ = [
+ {q:"What does vis[current] == 1 do?",opts:["Sets the value to 1","Compares the stored value with 1 and changes nothing","Deletes the entry","Prints current"],ans:1,exp:"== is comparison. Only a single = (line 21) stores a value."},
+ {q:"vis is an unordered_map<char,int>. What does vis['Z'] do if 'Z' has never been used?",opts:["Throws an exception","Returns -1 without changing the map","Inserts 'Z' with the default value 0 and returns it","Crashes the program"],ans:2,exp:"operator[] inserts a missing key with a value-initialised int, which is 0."},
+ {q:"Which data structure does recursive DFS use implicitly?",opts:["A queue","The call stack","A heap","A linked list of edges"],ans:1,exp:"Each recursive call is a frame on the call stack. Returning pops a frame, which is the backtracking step."},
+ {q:"Suppose adj['A'] were [C, B] instead of [B, C] (same edges otherwise). What would the output be?",opts:["A B D E C","A C B D E","A B C D E","A C D E B"],ans:1,exp:"A visits C first (C's only neighbour A is visited), backtracks, then B, then B's neighbours D and E: A C B D E."},
+ {q:"What happens on this undirected graph if you delete the visited check (lines 17 to 19)?",opts:["Nothing, the output is identical","The output is sorted","Infinite recursion until a stack overflow","The program prints each node twice"],ans:2,exp:"A calls B, B calls A, A calls B, and so on forever. Use the red demo button to watch it."},
+ {q:"What is the time complexity of DFS on a graph stored as an adjacency list (V vertices, E edges)?",opts:["O(V)","O(V * E)","O(V + E)","O(E^2)"],ans:2,exp:"Each vertex is expanded once and every edge is looked at a constant number of times (twice in an undirected graph)."},
+ {q:"When DFS_search('D') returns, where does execution continue?",opts:["At line 16 of D again","In DFS_search('B') right after line 25, then its for loop picks E","At main()","At DFS_search('C')"],ans:1,exp:"B called D, so B resumes after the call, moves on to its next neighbour E."},
+ {q:"Which traversal visits nodes level by level using a queue?",opts:["DFS","BFS","Both","Neither"],ans:1,exp:"BFS uses a queue and visits all nodes at distance 1, then distance 2, and so on. From A it prints A B C D E."}
+];
+
+/* =====================================================================
+   UI STATE
+   ===================================================================== */
+let mode = 'guided';            // guided | challenge
+let demoOn = false;             // which timeline
+let TL = TIMELINES.normal;
+let idx = 0;
+let playing = false, timer = null, speed = 1600;
+let vecMode = false;
+let selectedLine = null;
+let deepOpen = true;
+let predictOpen = false, predictPick = null;
+let answered = new Set();       // challenge ids already handled
+let pendingChallenge = null, resumeAfterChallenge = false;
+let lastLine = -1;
+
+const N = () => TL.length - 1;
+
+/* ---------- build static pieces once ---------- */
+function buildCode(){
+  const box = $('#code');
+  box.innerHTML = CODE.map((t, i) => {
+    const n = i + 1;
+    let tag = '';
+    if (n === 17) tag = '<span class="tag c">compare</span>';
+    if (n === 21) tag = '<span class="tag a">assign</span>';
+    if (n === 18) tag = '<span class="tag r">return</span>';
+    return '<div class="cl" data-n="' + n + '"><span class="ar"></span><span class="no">' + n + '</span><span class="tx">' + (t ? hl(t) : ' ') + '</span>' + tag + '</div>';
+  }).join('');
+  box.addEventListener('click', e => {
+    const row = e.target.closest('.cl'); if (!row) return;
+    selectedLine = +row.dataset.n;      // only changes what is explained, never the execution state
+    renderLineInfo(); renderCode(false);
+  });
+}
+
+function buildGraph(){
+  let h = '<defs>' +
+    '<marker id="mkE" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ffe08a"/></marker>' +
+    '<marker id="mkB" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff7b8b"/></marker></defs>';
+  EDGES.forEach(([a,b]) => {
+    h += '<line class="edge" id="e-' + ekey(a,b) + '" x1="' + POS[a].x + '" y1="' + POS[a].y + '" x2="' + POS[b].x + '" y2="' + POS[b].y + '"/>';
+  });
+  h += '<line class="ov explore" id="ovE" marker-end="url(#mkE)" visibility="hidden"/>';
+  h += '<line class="ov back" id="ovB" marker-end="url(#mkB)" visibility="hidden"/>';
+  NODES.forEach(n => {
+    h += '<g class="node" id="n-' + n + '" transform="translate(' + POS[n].x + ',' + POS[n].y + ')">' +
+      '<circle class="ring" r="35"/><circle class="body" r="27"/>' +
+      '<text class="lt" y="8">' + n + '</text><text class="vl" y="48">vis=0</text>' +
+      '<g class="ob"><circle cx="24" cy="-24" r="11"/><text x="24" y="-20">1</text></g></g>';
+  });
+  $('#graph').innerHTML = h;
+}
+
+/* =====================================================================
+   RENDERING - everything below reads ONLY from TL[idx]
+   ===================================================================== */
+function topSearchFrame(st){
+  const t = st.stack[st.stack.length - 1];
+  return t && t.fn === 'DFS_search' ? t : null;
+}
+
+function render(){
+  const ev = TL[idx], st = ev.state;
+  renderControls();
+  renderCode(true);
+  renderLineInfo();
+  renderGraph(ev, st);
+  renderMap(ev, st);
+  renderStack(st);
+  renderVars(ev, st);
+  renderConsole(ev, st);
+  renderExplain(ev, st);
+  renderBanner();
+}
+
+function renderControls(){
+  $('#prog').max = N();
+  $('#prog').value = idx;
+  $('#counter').textContent = 'Step ' + idx + ' / ' + N();
+  $('#btnPrev').disabled = idx === 0;
+  $('#btnNext').disabled = idx === N();
+  $('#btnPlay').textContent = playing ? '❚❚ Pause' : (idx === N() ? '▶ Replay' : '▶ Play');
+  $('#modeGuided').classList.toggle('on', mode === 'guided');
+  $('#modeChallenge').classList.toggle('on', mode === 'challenge');
+  $('#btnDemo').textContent = demoOn ? 'Back to the normal DFS' : 'Demo: remove the visited check';
+  $('#btnDemo').classList.toggle('on', demoOn);
+}
+
+function renderBanner(){
+  const b = $('#banner');
+  if (demoOn) {
+    b.hidden = false;
+    b.innerHTML = '<b>Warning - demo mode.</b> Lines 17 to 19 (the visited check) are removed. On an undirected graph DFS_search(\'A\') and DFS_search(\'B\') will call each other forever, which in a real program ends in a stack overflow. This demo stops at recursion depth 9. Press the red button again to return to the correct program.';
+  } else b.hidden = true;
+}
+
+function renderCode(scroll){
+  const ev = TL[idx], st = ev.state;
+  const done = new Set(st.executed);
+  document.querySelectorAll('#code .cl').forEach(row => {
+    const n = +row.dataset.n;
+    row.classList.toggle('cur', n === ev.line);
+    row.classList.toggle('done', n !== ev.line && done.has(n));
+    row.classList.toggle('sel', n === selectedLine);
+    row.classList.toggle('removed', demoOn && n >= 17 && n <= 19);
+    row.querySelector('.ar').textContent = n === ev.line ? '▶' : '';
+  });
+  const t = st.stack[st.stack.length - 1];
+  $('#codeMeta').textContent = ev.line ? (fnName(t || {fn:'main',args:{}}) + ' · line ' + ev.line) : 'not started';
+  if (scroll && ev.line && ev.line !== lastLine) {
+    const box = $('#code'), el = box.querySelector('[data-n="' + ev.line + '"]');
+    if (el) box.scrollTo({top: Math.max(0, el.offsetTop - box.clientHeight / 2 + 12), behavior:'smooth'});
+  }
+  lastLine = ev.line || -1;
+}
+
+function renderLineInfo(){
+  const ev = TL[idx];
+  if (!selectedLine) {
+    $('#lineInfo').innerHTML = '<div class="lh">Click any line of code</div>Read what it does. This does not move the execution.';
+    return;
+  }
+  const running = ev.line === selectedLine;
+  $('#lineInfo').innerHTML = '<div class="lh">Line ' + selectedLine + (running ? ' · executing now' : ' · not executing now (explanation only)') + '</div>' +
+    '<code>' + hl(CODE[selectedLine - 1].trim() || '(blank)') + '</code><div style="margin-top:6px">' + esc(LINE_INFO[selectedLine]) + '</div>';
+}
+
+function setArrow(el, from, to, off){
+  const a = POS[from], b = POS[to];
+  const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+  el.setAttribute('x1', a.x + ux * 33 + nx * off); el.setAttribute('y1', a.y + uy * 33 + ny * off);
+  el.setAttribute('x2', b.x - ux * 36 + nx * off); el.setAttribute('y2', b.y - uy * 36 + ny * off);
+  el.setAttribute('visibility', 'visible');
+}
+
+function renderGraph(ev, st){
+  const frames = st.stack.filter(f => f.fn === 'DFS_search');
+  const pathNodes = frames.map(f => f.current);
+  const sf = topSearchFrame(st);
+  const cur = sf ? sf.current : null;
+  const pathKeys = new Set();
+  for (let i = 0; i + 1 < pathNodes.length; i++) pathKeys.add(ekey(pathNodes[i], pathNodes[i+1]));
+  EDGES.forEach(([a,b]) => {
+    const k = ekey(a,b), el = $('#e-' + k);
+    const present = (st.adj[a] && st.adj[a].indexOf(b) >= 0) || (st.adj[b] && st.adj[b].indexOf(a) >= 0);
+    let c = 'edge';
+    if (!present) c += ' absent';
+    else { if (st.tree.indexOf(k) >= 0) c += ' tree'; if (pathKeys.has(k)) c += ' path'; }
+    el.setAttribute('class', c);
+  });
+  const f = ev.flags;
+  if (f.explore) setArrow($('#ovE'), f.explore.from, f.explore.to, 9); else $('#ovE').setAttribute('visibility','hidden');
+  if (f.backtrack) setArrow($('#ovB'), f.backtrack.from, f.backtrack.to, 9); else $('#ovB').setAttribute('visibility','hidden');
+  NODES.forEach(n => {
+    const g = $('#n-' + n);
+    const visited = st.vis[n] === 1;
+    const onStack = pathNodes.indexOf(n) >= 0;
+    let c = 'node';
+    if (visited) c += onStack ? ' visited active' : ' visited';
+    if (n === cur) c += ' current';
+    if (f.explore && f.explore.to === n && f.explore.to !== cur) c += ' target';
+    g.setAttribute('class', c);
+    const vl = g.querySelector('.vl'); vl.textContent = 'vis=' + (visited ? 1 : 0); vl.setAttribute('class', 'vl' + (visited ? ' one' : ''));
+    const oi = st.out.indexOf(n), ob = g.querySelector('.ob');
+    ob.setAttribute('class', 'ob' + (oi >= 0 ? ' show' : ''));
+    if (oi >= 0) ob.querySelector('text').textContent = oi + 1;
+  });
+  let note;
+  if (!ev.line) note = 'All nodes are unvisited. The dotted lines are edges that addEdge has not added yet.';
+  else if (f.assign) note = 'Node <b>' + f.assign + '</b> just turned visited, right after <code>vis[' + q(f.assign) + '] = 1</code> ran.';
+  else if (f.backtrack) note = 'Backtracking: control goes back from <b>' + f.backtrack.from + '</b> to <b>' + f.backtrack.to + '</b> (red arrow).';
+  else if (f.explore && ev.kind === 'iter') note = 'Exploring the edge <b>' + f.explore.from + ' → ' + f.explore.to + '</b> (yellow dashed arrow).';
+  else if (f.explore) note = 'Arrived at <b>' + f.explore.to + '</b> from <b>' + f.explore.from + '</b>; its call is checking whether it was visited.';
+  else if (cur) note = 'Current call: <b>' + cur + '</b>. Recursive path: <b>' + pathNodes.join(' → ') + '</b>.';
+  else note = 'No DFS_search call is running right now.';
+  $('#graphNote').innerHTML = note;
+}
+
+function renderMap(ev, st){
+  const f = ev.flags, sf = topSearchFrame(st), cur = sf ? sf.current : null;
+  $('#mapTitle').innerHTML = vecMode ? 'vis — vector&lt;int&gt; vis(5, 0)' : 'vis — unordered_map&lt;char, int&gt;';
+  $('#btnVec').textContent = vecMode ? 'Show unordered_map version' : 'Show vector<int> version';
+  let h = '<tr><th>' + (vecMode ? 'Node → index' : 'Node (key)') + '</th><th>Visited value</th><th>Status</th></tr>';
+  NODES.forEach((n, i) => {
+    const has = own(st.vis, n), val = has ? st.vis[n] : 0;
+    let cls = 'row', stt;
+    if (f.assign === n) cls += ' changed';
+    if ((f.cmp && f.cmp.node === n) || (!f.assign && f.inserted === n)) cls += ' checked';
+    if (n === cur) cls += ' cur';
+    if (!vecMode && !has) cls += ' absent';
+    if (vecMode) stt = val === 1 ? 'visited' : 'unvisited';
+    else stt = !has ? 'not in the map yet' : (val === 1 ? 'visited' : 'in the map, unvisited (0)');
+    if (f.assign === n) stt = f.reassign ? '<b>re-assigned</b> 1 (was already 1)' : '<b>just changed 0 → 1</b>';
+    else if (f.cmp && f.cmp.node === n) stt += ' · compared with 1 → <b>' + f.cmp.result + '</b>' + (f.inserted === n && !vecMode ? ' · inserted with 0' : '');
+    h += '<tr class="' + cls + '"><td>' + (vecMode ? q(n) + ' → vis[' + i + ']' : q(n)) + '</td><td><span class="tok v' + val + '">' + val + '</span></td><td class="st">' + stt + '</td></tr>';
+  });
+  $('#visTable').innerHTML = h;
+
+  const keys = Object.keys(st.vis).sort();
+  $('#mapText').innerHTML = vecMode
+    ? '<b>vis</b> = [' + NODES.map(n => own(st.vis, n) ? st.vis[n] : 0).join(', ') + ']  (index 0 = A, 1 = B, ...)'
+    : '<b>Complete map right now:</b> <span class="mono">vis = { ' + (keys.length ? keys.map(k => q(k) + ': ' + st.vis[k]).join(', ') : '') + ' }</span> · ' + keys.length + ' of 5 keys exist';
+
+  let op, oc = 'opbox';
+  if (f.clear) op = '<b>vis.clear()</b> just emptied the map: nothing is visited.';
+  else if (f.assign) { op = '<b>Assignment</b> <code>vis[' + q(f.assign) + '] = 1</code> ' + (f.reassign ? 'ran again: the value stayed 1.' : 'changed the map: ' + q(f.assign) + ' went <b>0 → 1</b>.'); oc += ' asg'; }
+  else if (f.cmp) { op = '<b>Comparison</b> <code>vis[' + q(f.cmp.node) + '] == 1</code> → <b>' + f.cmp.result + '</b>. ' + (f.inserted && !vecMode ? 'operator[] had to insert ' + q(f.inserted) + ' with 0 first; the value is unchanged.' : 'The map was not changed.'); oc += ' cmp'; }
+  else op = 'This step does not touch <code>vis</code>.';
+  const ob = $('#mapOp'); ob.className = oc; ob.innerHTML = '<b>Latest operation:</b> ' + op;
+
+  $('#mapNote').innerHTML = vecMode
+    ? 'A <code>vector&lt;int&gt;</code> exists in full from the start (all zeros), so <code>vis[idx]</code> never inserts anything. You convert the letter to an index with <code>current - \'A\'</code>. Reset it with <code>vis.assign(5, 0)</code> instead of clear().' +
+      '<pre class="snip">vector&lt;int&gt; vis(5, 0);          // index 0..4 = A..E\nif (vis[current - \'A\'] == 1) return;   // compare\nvis[current - \'A\'] = 1;                // assign</pre>The traversal itself is identical.'
+    : 'In C++, <code>vis[current]</code> on a missing key <b>inserts</b> it with the default value 0. All five nodes are listed here with 0 so you can watch them change; a row marked “not in the map yet” really does not exist until the first <code>vis[...]</code> touches it. <b>1 = visited, 0 = unvisited.</b>';
+}
+
+function renderStack(st){
+  const frames = st.stack;
+  let h = '';
+  if (st.ghost) h += '<div class="frame ghost">↩ removed from stack: ' + esc(st.ghost.name) + '</div>';
+  if (!frames.length) h += '<div class="empty">' + (st.executed.length ? 'The stack is empty: the program has finished.' : 'The stack is empty: the program has not started.') + '</div>';
+  for (let i = frames.length - 1; i >= 0; i--) {
+    const f = frames[i], isTop = i === frames.length - 1, nxt = frames[i+1];
+    let sub;
+    if (isTop) {
+      if (st.ghost) sub = 'resumed - continues after line ' + f.line;
+      else if (f.line === 16 || f.line === 11 || f.line === 29) sub = 'just called - about to start';
+      else sub = 'running line ' + f.line;
+    } else sub = 'paused at line ' + f.line + ' - waiting for ' + fnName(nxt) + ' to return';
+    h += '<div class="frame' + (isTop ? ' top' : '') + '" style="margin-left:' + Math.min(i, 12) * 8 + 'px"><div class="fn">' + esc(fnName(f)) + (isTop ? '  ← active' : '') + '</div><div class="fs">' + esc(sub) + '</div></div>';
+  }
+  if (frames.length) h += '<div class="stackend">bottom of the stack</div>';
+  $('#stack').innerHTML = h;
+  const d = frames.filter(f => f.fn === 'DFS_search').length;
+  $('#stackMeta').textContent = frames.length + ' frame' + (frames.length === 1 ? '' : 's') + ' · recursion depth ' + d;
+}
+
+function renderVars(ev, st){
+  const t = st.stack[st.stack.length - 1], sf = topSearchFrame(st);
+  const dfsF = st.stack.find(f => f.fn === 'DFS');
+  const depthN = st.stack.filter(f => f.fn === 'DFS_search').length;
+  const row = (k, v, n) => '<div class="vr"><span class="vk">' + k + '</span><span class="vv">' + v + '</span>' + (n ? '<span class="vn">' + n + '</span>' : '') + '</div>';
+  let h = '';
+  // start
+  if (t && t.fn === 'DFS') h += row('start', q(t.args.start), 'parameter of DFS');
+  else if (dfsF) h += row('start', '<span style="color:var(--dim2)">' + q(dfsF.args.start) + '</span>', 'belongs to DFS, not visible inside DFS_search');
+  else h += row('start', '—', 'only exists while DFS is running');
+  // current
+  h += row('current', sf ? q(sf.current) : '—', sf ? 'parameter of this DFS_search call' : 'only exists inside DFS_search');
+  // neighbour
+  let nbv = '—', nbn = 'loop variable, exists only inside the for loop';
+  if (sf) {
+    if (sf.idx < 0) { nbv = '<span style="color:var(--dim2)">(loop not started)</span>'; }
+    else if (sf.neighbour) { nbv = '<b style="color:var(--asg)">' + q(sf.neighbour) + '</b>'; nbn = 'a copy of element ' + sf.idx + ' of adj[current]'; }
+    else { nbv = '<span style="color:var(--dim2)">(loop finished)</span>'; nbn = 'no element left to copy'; }
+  }
+  h += row('neighbour', nbv, nbn);
+  // adj[current]
+  if (sf) {
+    const arr = st.adj[sf.current] || [];
+    h += row('adj[current]', '<span class="chips">' + arr.map((x, i) => '<span class="chip' + (i === sf.idx ? ' hot' : '') + '">' + x + '</span>').join('') + '</span>', 'adj[' + q(sf.current) + '] = ' + fl(arr));
+  } else h += row('adj[current]', '—', '');
+  // index
+  let ix = '—';
+  if (sf) ix = sf.idx < 0 ? '— (not started)' : (sf.idx >= sf.loopLen ? sf.idx + ' (past the end)' : sf.idx + ' of ' + (sf.loopLen - 1));
+  h += row('neighbour index', ix, 'hidden position of the for loop');
+  // vis[current]
+  if (sf) {
+    const has = own(st.vis, sf.current);
+    h += row('vis[current]', has ? '<span class="tok v' + st.vis[sf.current] + '" style="font-size:12px;min-width:0;padding:0 7px">' + st.vis[sf.current] + '</span>' : '0 <span style="color:var(--dim2)">(key missing)</span>',
+      has ? 'value stored in the map' : 'reading it would insert the key with 0');
+  } else h += row('vis[current]', '—', '');
+  h += row('current function', t ? esc(fnName(t)) : '—', t ? 'line ' + (ev.line || '—') : '');
+  h += row('recursion depth', depthN, 'number of DFS_search frames on the stack');
+  h += '<div class="vnote"><b>neighbour</b> is the current element of <code>adj[current]</code> during each pass of <code>for (char neighbour : adj[current])</code>. The highlighted chip above shows which element it holds.</div>';
+  $('#vars').innerHTML = h;
+}
+
+function renderConsole(ev, st){
+  const out = st.out;
+  let h = '<span class="pr">$ ./dfs</span><br>';
+  h += out.map((c, i) => (i === out.length - 1 && ev.flags.print === c) ? '<span class="newc">' + c + '</span>' : c).join(' ');
+  if (out.length) h += ' ';
+  h += '<span class="caret"></span>';
+  $('#console').innerHTML = h;
+  let rep = '';
+  if (ev.done) {
+    const keys = Object.keys(st.vis).sort();
+    const uniq = keys.filter(k => st.vis[k] === 1).length;
+    if (ev.overflow) rep = '<div class="report bad">DFS output so far: ' + out.join(' ') + ' ...\n\nWithout the visited check the output repeats A B A B ... forever.\nStatus: crashed (stack overflow, simulated)</div>';
+    else rep = '<div class="report">DFS Output: ' + out.join(' ') + '\n\nFinal visited map:\n' + keys.map(k => k + ' = ' + st.vis[k]).join('\n') + '\n\nTotal unique vertices visited: ' + uniq + '\nStatus: DFS completed</div>';
+  }
+  $('#finalReport').innerHTML = rep;
+}
+
+const KIND = {
+  start:['setup','k-set'], main:['setup','k-set'], graph:['setup','k-set'], 'call-addEdge':['call','k-call'], push:['setup','k-set'],
+  'return-addEdge':['return','k-ret'], 'call-DFS':['call','k-call'], clear:['setup','k-set'], 'call-search':['call','k-call'],
+  check:['comparison ==','k-cmp'], 'return-18':['return','k-ret'], assign:['assignment =','k-asg'], print:['output','k-out'],
+  iter:['loop','k-loop'], 'loop-end':['loop','k-loop'], 'return-end':['return','k-ret'], 'return-DFS':['return','k-ret'],
+  'main-return':['return','k-ret'], overflow:['crash','k-ret']
+};
+
+function compactMap(st){
+  return NODES.map(n => {
+    const has = own(st.vis, n);
+    return '<span class="chip' + (has && st.vis[n] === 1 ? ' on1' : (has ? '' : ' dim')) + '">' + n + '=' + (has ? st.vis[n] : '–') + '</span>';
+  }).join('');
+}
+
+function renderExplain(ev, st){
+  const sf = topSearchFrame(st);
+  const k = KIND[ev.kind] || ['step','k-set'];
+  const blur = pendingChallenge ? ' blur' : '';
+  let h = '<div class="' + blur.trim() + '">';
+  h += '<div><span class="kind ' + k[1] + '">' + k[0] + '</span></div><h3>' + esc(ev.title) + '</h3>';
+  if (ev.line) h += '<div class="codeline"><span class="lnno">Line ' + ev.line + '</span>' + hl(CODE[ev.line - 1].trim()) + '</div>';
+  h += '<div class="sec"><b class="l">In plain English</b>' + ev.plain + '</div>';
+  // current values
+  let vals = [];
+  if (sf) {
+    vals.push('<span class="chip">current=' + q(sf.current) + '</span>');
+    vals.push('<span class="chip' + (sf.neighbour ? ' hot' : '') + '">neighbour=' + (sf.neighbour ? q(sf.neighbour) : '—') + '</span>');
+    vals.push('<span class="chip">vis[current]=' + (own(st.vis, sf.current) ? st.vis[sf.current] : '0 (missing)') + '</span>');
+  } else vals.push('<span class="chip dim">no DFS_search call is active</span>');
+  vals.push('<span class="chip">depth=' + st.stack.filter(f => f.fn === 'DFS_search').length + '</span>');
+  h += '<div class="sec"><b class="l">Variable values now</b><div class="chips">' + vals.join('') + '</div></div>';
+  h += '<div class="sec"><b class="l">Visited map now (– = key not in map yet)</b><div class="chips">' + compactMap(st) + '</div></div>';
+  h += '<div class="sec"><b class="l">Recursion stack now (top first)</b><span class="mono" style="font-size:12.5px">' +
+    (st.stack.length ? st.stack.slice().reverse().map(f => esc(fnName(f))).join(' ← ') : '(empty)') + '</span></div>';
+  h += '<div class="sec"><b class="l">Why is this line executing?</b>' + ev.why + '</div>';
+  h += '<div class="sec"><b class="l">What happens next</b>' + ev.next + '</div>';
+  h += '<div class="row-btns"><button class="btn" id="btnWhy">' + (deepOpen ? 'Hide the deeper explanation' : 'Why did this happen?') + '</button>' +
+       '<button class="btn" id="btnPredict"' + (idx === N() ? ' disabled' : '') + '>' + (predictOpen ? 'Close prediction' : 'Predict the next step') + '</button></div>';
+  if (deepOpen) h += '<div class="deep"><b>Why did this happen?</b><div style="margin-top:4px">' + ev.deep + '</div></div>';
+  if (predictOpen && idx < N()) {
+    const nx = TL[idx + 1].predict;
+    const arr = [nx.correct, nx.wrong[0], nx.wrong[1]];
+    const rot = (idx + 1) % 3, opts = arr.map((_, i) => arr[(i + rot) % 3]);
+    h += '<div class="predict"><b>Before you press Next: what will the next step do?</b><div class="opts">';
+    opts.forEach(o => {
+      let c = 'opt';
+      if (predictPick !== null) { if (o === nx.correct) c += ' good'; else if (o === predictPick) c += ' bad'; }
+      h += '<button class="' + c + '" data-pick="' + esc(o) + '"' + (predictPick !== null ? ' disabled' : '') + '>' + esc(o) + '</button>';
+    });
+    h += '</div>';
+    if (predictPick !== null) h += '<div style="margin-top:8px">' + (predictPick === nx.correct ? '✔ Correct.' : '✘ Not quite. The correct answer is highlighted green.') + ' Press <b>Next step</b> to see it happen.</div>';
+    h += '</div>';
+  }
+  h += '</div>';
+  $('#explain').innerHTML = h;
+  $('#expMeta').textContent = 'step ' + idx + ' of ' + N();
+  $('#btnWhy').onclick = () => { deepOpen = !deepOpen; renderExplain(TL[idx], TL[idx].state); };
+  $('#btnPredict').onclick = () => { predictOpen = !predictOpen; predictPick = null; renderExplain(TL[idx], TL[idx].state); };
+  document.querySelectorAll('#explain .opt').forEach(b => b.onclick = () => { predictPick = b.dataset.pick; renderExplain(TL[idx], TL[idx].state); });
+}
+
+/* =====================================================================
+   NAVIGATION - the only thing that changes is idx
+   ===================================================================== */
+function resetPerStep(){
+  predictOpen = false; predictPick = null;
+  deepOpen = (mode === 'guided');
+}
+function goTo(i){            // used by the progress bar: jump without triggering challenges
+  idx = Math.max(0, Math.min(N(), i));
+  resetPerStep(); render();
+}
+function stepNext(){
+  if (idx >= N()) { stopPlay(); render(); return; }
+  idx++;
+  resetPerStep(); render();
+  maybeChallenge();
+}
+function stepPrev(){
+  if (idx <= 0) return;
+  idx--;
+  resetPerStep(); render();
+}
+function stopPlay(){ playing = false; clearTimeout(timer); timer = null; }
+function tick(){
+  if (!playing) return;
+  if (idx >= N()) { stopPlay(); render(); return; }
+  stepNext();
+  if (playing && !pendingChallenge) timer = setTimeout(tick, speed);
+  else if (idx >= N()) { stopPlay(); render(); }
+}
+function togglePlay(){
+  if (isModalOpen()) return;
+  if (playing) { stopPlay(); render(); return; }
+  if (idx >= N()) { idx = 0; answered.clear(); resetPerStep(); }
+  playing = true; render();
+  timer = setTimeout(tick, Math.min(speed, 500));
+}
+function restart(){
+  stopPlay(); idx = 0; answered.clear(); pendingChallenge = null; lastLine = -1;
+  resetPerStep(); closeModal(true); render();
+  $('#code').scrollTop = 0;
+}
+
+/* =====================================================================
+   MODALS: challenge, quiz, summary, BFS comparison
+   ===================================================================== */
+function isModalOpen(){ return !$('#modal').hidden; }
+function openModal(html){ $('#modalBox').innerHTML = html; $('#modal').hidden = false; $('#modal').scrollTop = 0; }
+function closeModal(silent){
+  $('#modal').hidden = true; $('#modalBox').innerHTML = '';
+  if (pendingChallenge && !silent) { answered.add(pendingChallenge); pendingChallenge = null; renderExplain(TL[idx], TL[idx].state); }
+  pendingChallenge = null;
+}
+
+function maybeChallenge(){
+  if (mode !== 'challenge') return;
+  const id = TL[idx].challenge;
+  if (!id || answered.has(id)) return;
+  resumeAfterChallenge = playing; stopPlay();
+  pendingChallenge = id;
+  const c = CH[id];
+  renderExplain(TL[idx], TL[idx].state);
+  openModal('<h2>Challenge: pause and think</h2><p>' + esc(c.q) + '</p>' +
+    c.opts.map((o, i) => '<button class="opt" data-i="' + i + '">' + String.fromCharCode(65 + i) + '. ' + esc(o) + '</button>').join('') +
+    '<div id="chRes"></div><div class="row-btns"><button class="btn" id="chSkip">Skip this question</button></div>');
+  document.querySelectorAll('#modalBox .opt').forEach(b => b.onclick = () => answerChallenge(id, +b.dataset.i));
+  $('#chSkip').onclick = () => finishChallenge(id);
+}
+function answerChallenge(id, i){
+  const c = CH[id];
+  document.querySelectorAll('#modalBox .opt').forEach((b, j) => {
+    b.disabled = true;
+    if (j === c.ans) b.classList.add('good'); else if (j === i) b.classList.add('bad');
+  });
+  $('#chRes').innerHTML = '<div class="res"><b>' + (i === c.ans ? '✔ Correct.' : '✘ Not quite.') + '</b> ' + esc(c.exp) + '</div>';
+  $('#chSkip').textContent = 'Resume execution';
+  $('#chSkip').classList.add('primary');
+  $('#chSkip').onclick = () => finishChallenge(id);
+}
+function finishChallenge(id){
+  answered.add(id); pendingChallenge = null;
+  $('#modal').hidden = true; $('#modalBox').innerHTML = '';
+  renderExplain(TL[idx], TL[idx].state);
+  if (resumeAfterChallenge) { resumeAfterChallenge = false; playing = true; render(); timer = setTimeout(tick, speed); }
+}
+
+/* ----- final quiz ----- */
+let qz = {i:0, score:0, picked:null};
+function openQuiz(){ qz = {i:0, score:0, picked:null}; stopPlay(); render(); drawQuiz(); }
+function drawQuiz(){
+  if (qz.i >= QUIZ.length) {
+    const pct = Math.round(100 * qz.score / QUIZ.length);
+    openModal('<h2>Quiz finished</h2><p class="bigorder">' + qz.score + ' / ' + QUIZ.length + ' (' + pct + '%)</p><p>' +
+      (pct === 100 ? 'Perfect. You can write this DFS from memory.' : pct >= 60 ? 'Good. Re-run the steps for the questions you missed, especially lines 17 and 21.' : 'Step through the trace once more in Guided mode, then retry.') +
+      '</p><div class="row-btns"><button class="btn primary" id="qzAgain">Retake the quiz</button><button class="btn" id="qzClose">Close</button></div>');
+    $('#qzAgain').onclick = openQuiz; $('#qzClose').onclick = () => closeModal(true);
+    return;
+  }
+  const c = QUIZ[qz.i];
+  openModal('<h2>Quiz · question ' + (qz.i + 1) + ' of ' + QUIZ.length + '</h2><p>' + esc(c.q) + '</p>' +
+    c.opts.map((o, i) => '<button class="opt" data-i="' + i + '">' + String.fromCharCode(65 + i) + '. ' + esc(o) + '</button>').join('') +
+    '<div id="qzRes"></div><div class="row-btns"><button class="btn" id="qzClose">Close quiz</button></div>');
+  $('#qzClose').onclick = () => closeModal(true);
+  document.querySelectorAll('#modalBox .opt').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i;
+    document.querySelectorAll('#modalBox .opt').forEach((x, j) => { x.disabled = true; if (j === c.ans) x.classList.add('good'); else if (j === i) x.classList.add('bad'); });
+    if (i === c.ans) qz.score++;
+    $('#qzRes').innerHTML = '<div class="res"><b>' + (i === c.ans ? '✔ Correct.' : '✘ Not quite.') + '</b> ' + esc(c.exp) + '</div>' +
+      '<div class="row-btns"><button class="btn primary" id="qzNext">' + (qz.i === QUIZ.length - 1 ? 'See my score' : 'Next question') + '</button></div>';
+    $('#qzNext').onclick = () => { qz.i++; drawQuiz(); };
+  });
+}
+
+/* ----- summary of traversal ----- */
+function openSummary(){
+  stopPlay(); render();
+  const tl = TIMELINES.normal;
+  const finish = tl.filter(e => e.kind === 'return-end').map(e => e.state.ghost.node);
+  openModal('<h2>Summary of the traversal</h2>' +
+    '<p>Visit order (what gets printed):</p><div class="bigorder">A → B → D → E → C</div>' +
+    '<p>Finish order (when each call returns):</p><div class="bigorder" style="color:var(--bad)">' + finish.join(' → ') + '</div>' +
+    '<table><tr><th>Moment</th><th>What DFS does</th></tr>' +
+    '<tr><td>Start</td><td>A is marked and printed. Its first neighbour is B, so we go deeper.</td></tr>' +
+    '<tr><td>Go deep</td><td>B is marked and printed. B tries A (already visited, returns at once), then D.</td></tr>' +
+    '<tr><td>Dead end</td><td>D has only the neighbour B (visited). D returns: <b>backtrack to B</b>.</td></tr>' +
+    '<tr><td>Next branch</td><td>B moves on to E. E is marked and printed, its neighbour B is visited, E returns.</td></tr>' +
+    '<tr><td>Backtrack twice</td><td>B has no more neighbours and returns to A.</td></tr>' +
+    '<tr><td>Last branch</td><td>A moves on to C. C is printed, its neighbour A is visited, C returns, A finishes.</td></tr></table>' +
+    '<p><b>Final visited map:</b> A = 1, B = 1, C = 1, D = 1, E = 1 &nbsp;·&nbsp; <b>5</b> unique vertices &nbsp;·&nbsp; <b>9</b> calls to DFS_search in total: 5 real visits and 4 that return immediately (one call per edge direction, plus the first call).</p>' +
+    '<p>Exam checklist: (1) check <code>vis[current] == 1</code> first, (2) assign <code>vis[current] = 1</code> before the loop, (3) loop over every neighbour and recurse, (4) clear <code>vis</code> before each fresh DFS.</p>' +
+    '<div class="row-btns"><button class="btn" id="smClose">Close</button></div>');
+  $('#smClose').onclick = () => closeModal(true);
+}
+
+/* ----- DFS vs BFS ----- */
+function openBfs(){
+  stopPlay(); render();
+  openModal('<h2>DFS vs BFS on this graph</h2>' +
+    '<table><tr><th></th><th>DFS (this program)</th><th>BFS</th></tr>' +
+    '<tr><td>Idea</td><td>Go as deep as possible, then backtrack</td><td>Visit everything 1 step away, then 2 steps, ...</td></tr>' +
+    '<tr><td>Remembers the way with</td><td>Call stack (recursion) or an explicit stack</td><td>A queue</td></tr>' +
+    '<tr><td>Output from A</td><td class="mono">A B D E C</td><td class="mono">A B C D E</td></tr>' +
+    '<tr><td>Time</td><td>O(V + E)</td><td>O(V + E)</td></tr>' +
+    '<tr><td>Good for</td><td>Cycle detection, connected components, topological sort, exploring all paths</td><td>Shortest path in an unweighted graph</td></tr>' +
+    '<tr><td>Visited check</td><td>At the top of each call</td><td>When pushing onto the queue</td></tr></table>' +
+    '<p>BFS version for comparison:</p><pre class="snip">void BFS(char start) {\n    queue&lt;char&gt; qu;\n    vis.clear();\n    vis[start] = 1;\n    qu.push(start);\n    while (!qu.empty()) {\n        char current = qu.front(); qu.pop();\n        cout &lt;&lt; current &lt;&lt; " ";\n        for (char neighbour : adj[current])\n            if (vis[neighbour] == 0) {\n                vis[neighbour] = 1;\n                qu.push(neighbour);\n            }\n    }\n}</pre>' +
+    '<div class="row-btns"><button class="btn" id="bfClose">Close</button></div>');
+  $('#bfClose').onclick = () => closeModal(true);
+}
+
+/* =====================================================================
+   WIRING
+   ===================================================================== */
+function switchTimeline(toDemo){
+  stopPlay(); demoOn = toDemo; TL = toDemo ? TIMELINES.demo : TIMELINES.normal;
+  idx = 0; answered.clear(); pendingChallenge = null; lastLine = -1; resetPerStep(); render();
+  $('#code').scrollTop = 0;
+}
+
+function init(){
+  buildCode(); buildGraph();
+  $('#btnNext').onclick = () => { stopPlay(); stepNext(); };
+  $('#btnPrev').onclick = () => { stopPlay(); stepPrev(); };
+  $('#btnPlay').onclick = togglePlay;
+  $('#btnRestart').onclick = restart;
+  $('#speed').onchange = e => { speed = +e.target.value; };
+  $('#prog').oninput = e => goTo(+e.target.value);
+  $('#modeGuided').onclick = () => { mode = 'guided'; resetPerStep(); render(); };
+  $('#modeChallenge').onclick = () => { mode = 'challenge'; resetPerStep(); render(); };
+  $('#btnVec').onclick = () => { vecMode = !vecMode; render(); };
+  $('#btnDemo').onclick = () => switchTimeline(!demoOn);
+  $('#btnSummary').onclick = openSummary;
+  $('#btnBfs').onclick = openBfs;
+  $('#btnQuiz').onclick = openQuiz;
+  $('#modal').addEventListener('click', e => { if (e.target.id === 'modal' && !pendingChallenge) closeModal(true); });
+
+  document.addEventListener('keydown', e => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (e.key === 'Escape' && isModalOpen() && !pendingChallenge) { closeModal(true); return; }
+    if (isModalOpen() || tag === 'select' || tag === 'textarea' || (tag === 'input' && e.target.type !== 'range' && e.target.type !== 'checkbox')) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); stopPlay(); stepNext(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); stopPlay(); stepPrev(); }
+    else if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  });
+  // stop a focused button from also "clicking" when Space is released
+  document.addEventListener('keyup', e => { if ((e.key === ' ' || e.code === 'Space') && !isModalOpen() && (e.target.tagName || '').toLowerCase() === 'button') e.preventDefault(); });
+
+  resetPerStep(); render();
+}
+init();
+})();
+</script>
+</body>
+</html>
