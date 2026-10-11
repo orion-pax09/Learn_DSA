@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Number of Islands · BFS Visualizer</title>
+<style>
+:root{--bg:#0d1117;--p:#161b22;--b:#30363d;--t:#e6edf3;--m:#8b949e;--land:#6e7681;--water:#1f6feb;--vis:#238636;--cur:#facc15;--ex:#f0883e;--bad:#f85149;--acc:#a371f7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px/1.45 system-ui,Segoe UI,sans-serif}
+header{padding:10px 14px;border-bottom:1px solid var(--b);display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:var(--bg);z-index:5}
+h1{font-size:16px;margin:0 10px 0 0}
+button,select,textarea{background:#21262d;color:var(--t);border:1px solid var(--b);border-radius:6px;padding:6px 10px;font:inherit}
+button{cursor:pointer}button:hover{background:#30363d}.pri{background:#238636;border-color:#2ea043}
+#cnt{font-weight:600;margin:0 6px}
+main{display:grid;grid-template-columns:minmax(380px,1.1fr) minmax(340px,1fr) minmax(320px,.9fr);gap:12px;padding:12px}
+.p{background:var(--p);border:1px solid var(--b);border-radius:8px;padding:10px;margin-bottom:12px}
+.p h2{margin:0 0 8px;font-size:13px;color:var(--m);font-weight:600}
+#code{max-height:78vh;overflow:auto;font:12.5px/1.55 ui-monospace,Consolas,monospace;padding:4px 0}
+.ln{white-space:pre;opacity:.4;padding:0 8px;border-left:3px solid transparent}.ln b{display:inline-block;width:26px;color:var(--m);font-weight:400}
+.ln.on{opacity:1;background:#3a2f0b;border-left-color:var(--cur)}
+.note{white-space:normal;font:italic 12px system-ui;color:var(--cur);padding:2px 0 4px 26px}
+.k{color:#ff7b72}.t{color:#79c0ff}.n{color:#a5d6ff}
+#ctx{display:inline-block;padding:2px 8px;border-radius:10px;background:#2d1f5e;color:#d2a8ff;font-size:12px;margin-bottom:6px}
+.grids{display:flex;gap:16px;flex-wrap:wrap}table{border-collapse:separate;border-spacing:3px}
+th{color:var(--m);font:11px ui-monospace,monospace;width:18px}
+td{width:46px;height:46px;text-align:center;border-radius:6px;font:600 16px ui-monospace,monospace;position:relative;border:2px solid transparent;transition:background .3s}
+td small{display:block;font:9px system-ui;font-weight:400;opacity:.8}
+td.land{background:var(--land)}td.water{background:var(--water)}td.vis{background:var(--vis)}
+td.inq{border-style:dashed;border-color:#9be9a8}td.scan{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+td.cur{border-color:var(--cur);box-shadow:0 0 0 3px var(--cur)}td.ex{background:var(--ex)}
+td.newc{background:var(--vis);animation:pop .7s}td.v0{background:#21262d;color:var(--m)}
+.ob0{box-shadow:0 0 0 3px var(--cur),inset 0 6px var(--bad)}.ob1{box-shadow:0 0 0 3px var(--cur),inset 0 -6px var(--bad)}
+.ob2{box-shadow:0 0 0 3px var(--cur),inset 6px 0 var(--bad)}.ob3{box-shadow:0 0 0 3px var(--cur),inset -6px 0 var(--bad)}
+@keyframes pop{0%{transform:scale(1.3);background:var(--cur)}100%{transform:scale(1)}}
+.lg{font-size:11px;color:var(--m);margin-top:6px}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 3px 0 8px;vertical-align:middle}
+#queue{display:flex;gap:6px;flex-wrap:wrap;min-height:48px;align-items:center}
+.qc{border:1px solid var(--b);background:#21262d;border-radius:6px;padding:4px 8px;font:13px ui-monospace,monospace;text-align:center}.qc small{display:block;color:var(--m);font:10px system-ui}
+.qc.fr{border-color:var(--cur)}.qc.in{animation:inq .6s;border-color:#3fb950}.qc.out{order:-1;opacity:.5;border-style:dashed;animation:outq .8s;color:var(--bad)}
+@keyframes inq{from{transform:translateX(30px);opacity:0}}@keyframes outq{from{transform:translateX(0);opacity:1}to{transform:translateX(-20px);opacity:.3}}
+.cmp{display:grid;grid-template-columns:repeat(3,92px);gap:4px;text-align:center;font:11px ui-monospace,monospace}.cmp div{padding:5px 2px;border-radius:6px;background:#21262d;border:1px solid var(--b)}.cmp .a{border-color:var(--cur);background:#3a2f0b}
+.ck div{font:12.5px ui-monospace,monospace;padding:1px 0}.y{color:#3fb950}.nn{color:var(--bad)}.sk{color:var(--m)}
+#vars{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font:12px ui-monospace,monospace}#vars div{display:flex;justify-content:space-between;padding:2px 6px;border-radius:4px;background:#0d1117}#vars .ch{background:#3a2f0b;outline:1px solid var(--cur)}#vars span:first-child{color:var(--m)}
+.bd{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;margin-bottom:6px}.scn{background:#2d1f5e;color:#d2a8ff}.isl{background:#0f3d1c;color:#56d364}
+.ex h3{margin:8px 0 2px;font-size:12px;color:var(--cur)}.ex p{margin:0}
+.sm{border-color:#2ea043}.sm li{margin:2px 0}.err{color:var(--bad)}
+textarea{width:120px;height:90px;font:13px ui-monospace,monospace}
+@media(max-width:1100px){main{grid-template-columns:1fr}}
+</style></head><body>
+<header><h1>Number of Islands · BFS</h1>
+<button id="prev">◀ Previous</button><button id="next" class="pri">Next Step ▶</button><button id="play">▶ Play</button><button id="skip">⏭ Next island</button><button id="reset">⟲ Reset</button>
+<select id="speed"><option value="1500">Slow</option><option value="800" selected>Normal</option><option value="250">Fast</option></select>
+<span id="cnt"></span></header>
+<main>
+<section><div class="p"><h2>C++ source</h2><span id="ctx"></span><div id="code"></div></div></section>
+<section>
+<div class="p"><h2>Grid (left) and visited matrix vis (right)</h2><div class="grids"><div id="g"></div><div id="v"></div></div>
+<div class="lg"><i style="background:var(--land)"></i>land<i style="background:var(--water)"></i>water<i style="background:var(--vis)"></i>visited<i style="background:var(--ex)"></i>examining<i style="background:var(--cur)"></i>current<i style="background:var(--acc)"></i>outer-loop scan<i style="border:1px dashed #9be9a8"></i>in queue · click a cell at step 1 to flip it</div><div id="vnote" class="lg"></div></div>
+<div class="p"><h2>Queue Q (front on the left, FIFO)</h2><div id="queue"></div></div>
+<div class="p"><h2>Direction check</h2><div class="grids"><div class="cmp" id="cmp"></div><div class="ck" id="ck" style="flex:1;min-width:230px"></div></div></div>
+<div class="p"><h2>Input editor</h2><div class="grids" style="align-items:flex-start"><textarea id="inp" spellcheck="false"></textarea>
+<div><select id="pre"></select><br><br><button id="apply" class="pri">Apply grid</button><br><br><label><input type="checkbox" id="bug"> What if we forget to mark visited?</label><div id="msg" class="err"></div><div class="lg">One row per line, cells separated by spaces, only 0 and 1, up to 12×12. Clear the box to test an empty grid.</div></div></div></div>
+</section>
+<section>
+<div class="p"><h2>Live variables</h2><div id="vars"></div></div>
+<div class="p ex"><h2>Explanation</h2><div id="ex"></div></div>
+<div class="p sm" id="sum" hidden></div>
+</section></main>
+<script>
+const code=`class Solution {
+public:
+    void BFS(int r, int c,
+             vector<vector<int>>& vis,
+             vector<vector<char>>& grid) {
+
+        int n = grid.size();
+        int m = grid[0].size();
+
+        vector<int> dr = {-1, 1, 0, 0};
+        vector<int> dc = {0, 0, -1, 1};
+
+        queue<pair<int, int>> Q;
+        Q.push({r, c});
+        vis[r][c] = 1;
+
+        while (!Q.empty()) {
+            int rows = Q.front().first;
+            int cols = Q.front().second;
+            Q.pop();
+
+            for (int i = 0; i < 4; i++) {
+                int nrows = rows + dr[i];
+                int ncols = cols + dc[i];
+
+                if (nrows >= 0 && nrows < n &&
+                    ncols >= 0 && ncols < m &&
+                    !vis[nrows][ncols] &&
+                    grid[nrows][ncols] == '1') {
+
+                    vis[nrows][ncols] = 1;
+                    Q.push({nrows, ncols});
+                }
+            }
+        }
+    }
+
+    int numIslands(vector<vector<char>>& grid) {
+        if (grid.empty() || grid[0].empty())
+            return 0;
+
+        int n = grid.size();
+        int m = grid[0].size();
+
+        vector<vector<int>> vis(n, vector<int>(m, 0));
+        int cnt = 0;
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] == '1' && vis[i][j] == 0) {
+                    cnt++;
+                    BFS(i, j, vis, grid);
+                }
+            }
+        }
+
+        return cnt;
+    }
+};`.split('\n');
+const f=(s,from=0)=>code.findIndex((x,k)=>k>=from&&x.includes(s));
+const L={bfs:f('void BFS'),bn:f('int n = grid'),bm:f('int m = grid'),dr:f('vector<int> dr'),dc:f('vector<int> dc'),q:f('queue<pair'),p0:f('Q.push({r, c})'),v0:f('vis[r][c] = 1'),w:f('while ('),fr:f('Q.front().first'),co:f('Q.front().second'),pop:f('Q.pop()'),for:f('for (int i = 0; i < 4'),nr:f('int nrows'),nc:f('int ncols'),c1:f('if (nrows >= 0'),v1:f('vis[nrows][ncols] = 1'),p1:f('Q.push({nrows'),ni:f('int numIslands'),em:f('grid.empty()'),vd:f('vector<vector<int>> vis('),c0:f('int cnt = 0'),fi:f('for (int i = 0; i < n'),fj:f('for (int j'),if:f('if (grid[i][j]'),cnt:f('cnt++'),call:f('BFS(i, j'),ret:f('return cnt')};
+L.N=f('int n = grid',L.ni);L.M=f('int m = grid',L.ni);
+const DN=['UP','DOWN','LEFT','RIGHT'],DR=[-1,1,0,0],DC=[0,0,-1,1];
+const qs=Q=>Q.length?'['+Q.map(p=>'('+p+')').join(', ')+']':'[ ]';
+
+function simulate(grid,bug){
+ const N=grid.length,M=N?grid[0].length:0,steps=[];
+ const S={ctx:'numIslands',oi:null,oj:null,r:null,c:null,rows:null,cols:null,nr:null,nc:null,n:null,m:null,d:null,hd:0,hq:0,cond:null,vis:null,Q:[],cnt:null,scan:null,cur:null,cand:null,st:{bfs:0,enq:0,deq:0}};
+ let sv=null;
+ const P=(line,m,x)=>{if(steps.length>2500)throw 1;steps.push(Object.assign(JSON.parse(JSON.stringify(S)),{line:[].concat(line),m},x||{}))};
+ const BFS=(r,c)=>{
+  S.st.bfs++;S.ctx='BFS';S.r=r;S.c=c;sv=[S.n,S.m];S.n=S.m=null;
+  P(L.bfs,[`BFS(${r}, ${c}) starts. Parameters r=${r}, c=${c} receive the values of i and j.`,'Plain values are copied (i→r, j→c). vis and grid use &, so BFS edits the caller\'s real vis matrix, not a copy.','Pass by reference (&) lets a function change the caller\'s data.'],{ev:'enter'});
+  S.n=N;P(L.bn,[`n = grid.size() = ${N} (number of rows).`,'BFS needs its own n and m to check that neighbors stay inside the grid.','Variables declared inside a function live only there.']);
+  S.m=M;P(L.bm,[`m = grid[0].size() = ${M} (number of columns).`,'Together n and m give the grid\'s edges.','rows = size(), columns = [0].size().']);
+  S.hd=1;P(L.dr,['dr = {-1, 1, 0, 0}: the row change for UP, DOWN, LEFT, RIGHT.','Looping over offset arrays avoids writing four nearly identical blocks.','Direction arrays are a classic grid trick.']);
+  S.hd=2;P(L.dc,['dc = {0, 0, -1, 1}: the column change for UP, DOWN, LEFT, RIGHT.','dr[i] and dc[i] together give one move, e.g. i=0 → (-1, 0) = up.','Same index i picks one row and one column offset.']);
+  S.hq=1;P(L.q,['Q is created: an empty queue that will hold (row, col) pairs.','A queue is first-in-first-out (FIFO), like a line at a shop: whoever joined first leaves first.','BFS = a queue + a visited marker.']);
+  S.Q.push([r,c]);S.st.enq++;P(L.p0,[`Q.push({${r}, ${c}}) puts the start cell in the queue. Q = ${qs(S.Q)}.`,'Its neighbors must be explored, so it waits in line.','push adds to the BACK of the queue.'],{ev:'push'});
+  if(!bug)S.vis[r][c]=1;
+  P(L.v0,[bug?'BUG MODE: this line is deleted, so the start cell stays unvisited.':`vis[${r}][${c}] = 1: the start cell is marked visited.`,'If the start were not marked, a neighbor would later see it as unvisited land and push it again, giving duplicates. Marking happens at push time, before the cell is popped.','Mark visited when you push, not when you pop.'],{ev:'mark',newc:[r,c]});
+  for(;;){
+   S.rows=S.cols=S.nr=S.nc=S.d=S.cond=null;S.cur=null;
+   if(bug&&(S.Q.length>14||steps.length>900)){P(L.w,[`Stopped by the safety cap: the queue grew to ${S.Q.length} entries and would never empty.`,'Without vis marks every neighbor looks "new" each time, so cells are pushed again and again forever.','No visited marking = duplicate queue entries = endless loop.'],{done:'capped'});throw 0}
+   const e=!S.Q.length;
+   P(L.w,e?['!Q.empty() is false: the queue is empty, so the loop ends.','No cell is waiting, so every land cell connected to the start has been found. This island is finished.','Empty queue = the island is fully explored.']:[`!Q.empty() is true: Q has ${S.Q.length} cell(s), so run the loop body.`,'Cells in the queue still have unexplored neighbors.','BFS runs until the queue is empty.']);
+   if(e)break;
+   S.rows=S.Q[0][0];P(L.fr,[`Q.front().first → rows = ${S.rows}. front() only looks at the oldest item; it removes nothing.`,'FIFO: the oldest cell is processed first, so cells are explored in the order they were discovered.','front() peeks, pop() removes.'],{ev:'front'});
+   S.cols=S.Q[0][1];S.cur=[S.rows,S.cols];P(L.co,[`Q.front().second → cols = ${S.cols}. Current cell = (${S.rows}, ${S.cols}).`,'We now have both coordinates of the cell to expand.','A pair has .first and .second.'],{ev:'front'});
+   const pp=S.Q.shift();S.st.deq++;P(L.pop,[`Q.pop() removes (${pp}) from the front. Q = ${qs(S.Q)}.`,'The coordinates are saved in rows/cols, so the queue entry is no longer needed.','front() + pop() = take the next item.'],{ev:'pop',popped:pp});
+   const rows=S.rows,cols=S.cols;
+   S.d=0;S.cond=true;P(L.for,['for init: i = 0, and i < 4 is true. We check UP, DOWN, LEFT, RIGHT in that order.','Every land cell can have up to four neighbors.','The directions are visited in a fixed order: up, down, left, right.'],{ev:'dir'});
+   for(let d=0;d<4;d++){
+    S.d=d;S.cond=true;S.nr=S.nc=null;
+    S.nr=rows+DR[d];P(L.nr,[`nrows = rows + dr[i] = ${rows} + (${DR[d]}) = ${S.nr}  (${DN[d]}).`,'Adding the row offset gives the neighbor\'s row.','Neighbor = current cell + direction offset.'],{ev:'dir'});
+    S.nc=cols+DC[d];const nr=S.nr,nc=S.nc;P(L.nc,[`ncols = cols + dc[i] = ${cols} + (${DC[d]}) = ${nc}. Candidate neighbor = (${nr}, ${nc}).`,'The candidate may be off the grid. We must check before using it.','A candidate is only a guess until the checks pass.'],{ev:'dir',cand:[nr,nc]});
+    const T=[['nrows >= 0',()=>nr>=0],['nrows < n',()=>nr<N],['ncols >= 0',()=>nc>=0],['ncols < m',()=>nc<M],['!vis[nrows][ncols]',()=>!S.vis[nr][nc]],["grid[nrows][ncols] == '1'",()=>grid[nr][nc]===1]];
+    let fail=-1;const ck=[];
+    for(let k=0;k<6;k++){if(fail>=0){ck.push({t:T[k][0],ok:null});continue}const o=T[k][1]();ck.push({t:T[k][0],ok:o});if(!o)fail=k}
+    const last=fail<0?5:fail,ln=L.c1+[0,0,1,1,2,3][last],res=fail<0?'push':fail<4?'oob':fail===4?'vis':'water';
+    const mm={push:['All six checks are true: in bounds, not visited, and land. Enqueue it.','This is new land connected to the island.','Valid + unvisited + land = enqueue.'],
+     oob:[`(${nr}, ${nc}) is outside the ${N}×${M} grid. "${fail>=0?T[fail][0]:''}" is false, so && stops here (short-circuit).`,'C++ never reads vis or grid for this cell. Reading outside a vector is undefined behavior, so bounds are checked first.','Always check bounds before indexing.'],
+     vis:[`In bounds, but vis[${nr}][${nc}] = 1: already discovered, so !vis is false. Rejected.`,'Skipping visited cells stops the same cell entering the queue twice and prevents endless loops.','vis is what keeps BFS finite.'],
+     water:[`In bounds and unvisited, but grid[${nr}][${nc}] = '0' is water. Rejected.`,'Only land can belong to an island.','Water is a wall for BFS.']}[res];
+    P([...Array(ln-L.c1+1)].map((_,k)=>L.c1+k),mm,{ev:'check',res,checks:ck,cand:[nr,nc]});
+    if(res==='push'){
+     if(!bug)S.vis[nr][nc]=1;
+     P(L.v1,[bug?'BUG MODE: this line is deleted, so vis is not updated.':`vis[${nr}][${nc}] = 1: marked visited now.`,'Marking before the cell is processed means no other neighbor can add it again while it waits in the queue.','Mark at push time.'],{ev:'mark',newc:[nr,nc],cand:[nr,nc],res:'push'});
+     S.Q.push([nr,nc]);S.st.enq++;
+     P(L.p1,[`Q.push({${nr}, ${nc}}) adds it to the back. Q = ${qs(S.Q)}.`,'It will be expanded after everything already in the queue, which makes BFS spread layer by layer.','New cells join the back, so closer cells are handled first.'],{ev:'push',newc:[nr,nc],cand:[nr,nc],res:'push'});
+    }
+    S.d=d+1;S.nr=S.nc=null;S.cond=d+1<4;
+    P(L.for,[`i++ → i = ${d+1}; i < 4 is ${d+1<4}. ${d+1<4?'Check the next direction ('+DN[d+1]+').':'All four directions done; back to the while check.'}`,'nrows/ncols only exist inside the loop body, so they go out of scope.','Finish all four directions before taking the next queue cell.'],{ev:'dir'});
+   }
+  }
+  S.ctx='numIslands';S.n=sv[0];S.m=sv[1];S.r=S.c=S.rows=S.cols=S.nr=S.nc=S.d=S.cond=null;S.cur=null;S.hd=0;S.hq=0;S.Q=[];
+  P(L.call,['BFS returns. Its locals (r, c, Q, rows, cols, …) are gone; vis keeps the marks.','Every land cell connected to this start is now marked, so no later scan can count this island again.','BFS marks the whole island, so cnt++ runs once per island.'],{ev:'return'});
+ };
+ try{
+  P(L.ni,[`numIslands(grid) is called. The grid has ${N} row(s) and ${M} column(s).`,'It scans every cell and counts islands: groups of land cells connected up, down, left or right (not diagonally).','Island = connected land.'],{ev:'enter'});
+  const em=!N||!M;
+  P(L.em,[`grid.empty() || grid[0].empty() is ${em}.`,'Guards against indexing grid[0] on an empty grid, which would be invalid memory access.','Handle empty input first.']);
+  if(em){P(L.em+1,['return 0: no cells means no islands.','Nothing to scan.','Check edge cases first.'],{done:'ok',result:0});return steps}
+  S.n=N;P(L.N,[`n = grid.size() = ${N}: the number of rows.`,'n and m set the loop limits.','size() = rows.']);
+  S.m=M;P(L.M,[`m = grid[0].size() = ${M}: the number of columns.`,'Used by the inner loop.','[0].size() = columns.']);
+  S.vis=grid.map(r=>r.map(()=>0));P(L.vd,[`vis is an ${N}×${M} matrix filled with 0 (0 = not visited).`,'It remembers which land cells BFS has reached, so no island is counted twice.','vis is the algorithm\'s memory.']);
+  S.cnt=0;P(L.c0,['cnt = 0: islands found so far.','Counter that grows once per island.','Count islands, not land cells.']);
+  S.oi=0;S.cond=null;P(L.fi,['Outer loop: i = 0 and i < n is true.','i walks the rows and j the columns, row by row (row-major order).','Order: left→right, top→bottom.'],{ev:'dir'});
+  for(let i=0;i<N;i++){
+   S.oj=0;P(L.fj,[`Inner loop: j = 0 and j < m is true. Scanning row ${i}.`,'j walks across the columns of row i.','One row at a time.']);
+   for(let j=0;j<M;j++){
+    S.scan=[i,j];const land=grid[i][j]===1,unv=S.vis[i][j]===0,nw=land&&unv;
+    P(L.if,nw?[`Scanning (${i}, ${j}): grid is '1' AND vis is 0 → a NEW island starts here!`,'Land alone is not enough: land with vis=1 belongs to an island already counted. Both conditions must hold.','Scanning is not discovering; only unvisited land starts an island.']
+      :!land?[`Scanning (${i}, ${j}): grid is '0' (water). && short-circuits, so vis[${i}][${j}] is not even read.`,'Water cannot be part of an island.','Water is skipped.']
+      :[`Scanning (${i}, ${j}): it is land, but vis = 1, so BFS already marked it.`,'It belongs to an island that was already counted. Skipping it prevents counting twice.','vis stops double counting.'],
+     {kind:nw?'island':'scan',checks:[{t:"grid[i][j] == '1'",ok:land},{t:'vis[i][j] == 0',ok:land?unv:null}]});
+    if(nw){S.cnt++;P(L.cnt,[`cnt++ → cnt = ${S.cnt}.`,'A brand-new island was found, so count it now, once; BFS then marks all its other cells.','One island = one cnt++.'],{kind:'island',ev:'island'});
+     P(L.call,[`Calling BFS(i, j, vis, grid) with i=${i}, j=${j}.`,'BFS will visit every land cell connected to (i, j) and mark it visited.','BFS floods outward from the start, layer by layer.'],{ev:'call'});
+     BFS(i,j);S.scan=[i,j]}
+    S.oj=j+1;if(j+1===M)S.scan=null;
+    P(L.fj,[`j++ → j = ${j+1}; j < m is ${j+1<M}. ${j+1<M?'Scan the next cell.':'Row finished.'}`,'Moves the scan one cell to the right.','Scan order never changes.']);
+   }
+   S.oj=null;S.oi=i+1;
+   P(L.fi,[`i++ → i = ${i+1}; i < n is ${i+1<N}. ${i+1<N?'Next row.':'All rows scanned.'}`,'j is out of scope once the inner loop ends.','Outer loop = rows.']);
+  }
+  P(L.ret,[`return cnt → ${S.cnt}. Every cell was scanned.`,'cnt holds exactly the number of BFS traversals started, one per island.','Answer = number of times BFS was started.'],{done:'ok',result:S.cnt});
+ }catch(e){if(e!==0){console.error(e)}}
+ return steps;
+}
+
+const $=id=>document.getElementById(id);
+const PRE={'Supplied grid (1 island)':'1 1 1 1 0\n1 1 0 1 0\n1 1 0 0 0\n0 0 0 0 0','Three islands':'1 1 0 0 0\n1 1 0 0 0\n0 0 1 0 0\n0 0 0 1 1','Only water (0)':'0 0 0 0\n0 0 0 0\n0 0 0 0','Only land (1)':'1 1 1 1\n1 1 1 1\n1 1 1 1','Single cell 1':'1','Single cell 0':'0','Empty grid':''};
+let grid=[],steps=[],idx=0,timer=null,bug=false;
+const hl=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\b(class|public|void|int|char|for|while|if|return)\b|\b(vector|queue|pair)\b|\b(\d+)\b/g,(m,a,b)=>`<span class="${a?'k':b?'t':'n'}">${m}</span>`);
+$('code').innerHTML=code.map((l,k)=>`<div class="ln"><b>${k+1}</b>${hl(l)}</div>`).join('');
+$('pre').innerHTML=Object.keys(PRE).map(k=>`<option>${k}</option>`).join('');
+$('pre').onchange=()=>{$('inp').value=PRE[$('pre').value];apply()};
+function stop(){clearTimeout(timer);timer=null;$('play').textContent='▶ Play'}
+function rebuild(){stop();steps=simulate(grid,bug);idx=0;render()}
+function apply(){
+ const t=$('inp').value.trim(),rows=t?t.split(/\n+/).map(l=>l.trim().split(/[\s,]+/)):[];let e='';
+ if(rows.length>12||rows.some(r=>r.length>12))e='Maximum size is 12×12.';
+ else if(rows.some(r=>r.length!==rows[0].length))e='Every row needs the same number of columns.';
+ else if(rows.some(r=>r.some(v=>v!=='0'&&v!=='1')))e='Only 0 and 1 are allowed.';
+ $('msg').textContent=e;if(e)return;
+ grid=rows.map(r=>r.map(Number));bug=$('bug').checked;rebuild();
+}
+$('apply').onclick=apply;$('bug').onchange=apply;
+$('next').onclick=()=>{stop();go(idx+1)};$('prev').onclick=()=>{stop();go(idx-1)};
+function go(k){idx=Math.max(0,Math.min(steps.length-1,k));render()}
+$('reset').onclick=()=>{stop();go(0)};
+$('skip').onclick=()=>{stop();let k=steps.findIndex((s,i)=>i>idx&&s.ev==='island');go(k<0?steps.length-1:k)};
+$('play').onclick=()=>{if(timer){stop();return}if(idx>=steps.length-1)idx=0;$('play').textContent='⏸ Pause';
+ const tick=()=>{if(idx<steps.length-1){idx++;render();timer=setTimeout(tick,+$('speed').value)}else stop()};timer=setTimeout(tick,200)};
+
+const fmt=v=>v==null?'—':String(v);
+function V(s){const N=grid.length,M=N?grid[0].length:0;
+ const inB=s.nr!=null&&s.nc!=null&&s.nr>=0&&s.nr<N&&s.nc>=0&&s.nc<M;
+ const dd=s.d!=null&&s.d<4;
+ return[['i (outer)',s.oi],['j (outer)',s.oj],['r',s.r],['c',s.c],['rows',s.rows],['cols',s.cols],['nrows',s.nr],['ncols',s.nc],['n',s.n],['m',s.m],['i (direction)',s.d],['dr[i]',dd&&s.hd>=1?DR[s.d]:null],['dc[i]',dd&&s.hd>=2?DC[s.d]:null],['vis[nrows][ncols]',inB?s.vis[s.nr][s.nc]:null],['grid[nrows][ncols]',inB?"'"+grid[s.nr][s.nc]+"'":null],['cnt',s.cnt],['Q',s.hq?qs(s.Q):null],['i < 4',s.cond]];
+}
+function render(){
+ const s=steps[idx],p=steps[idx-1],N=grid.length,M=N?grid[0].length:0,eq=(a,i,j)=>a&&a[0]===i&&a[1]===j;
+ $('cnt').textContent=`Step ${idx+1} / ${steps.length}`;
+ const last=s.line[s.line.length-1];
+ [...$('code').children].forEach((d,k)=>{const on=s.line.includes(k);d.className='ln'+(on?' on':'');const o=d.querySelector('.note');if(o)o.remove();
+  if(k===last){const n=document.createElement('div');n.className='note';n.textContent='▶ '+s.m[0];d.appendChild(n);d.scrollIntoView({block:'nearest'})}});
+ $('ctx').textContent=(s.ctx==='BFS'?`Inside: numIslands() → BFS(r=${s.r}, c=${s.c})`:'Inside: numIslands()')+({enter:'  · function entered',call:'  · calling BFS',return:'  · BFS returned'}[s.ev]||'');
+ const tbl=(fn)=>{if(!N)return'<i class="lg">(empty grid)</i>';let h='<table><tr><th></th>'+[...Array(M)].map((_,j)=>`<th>${j}</th>`).join('')+'</tr>';
+  for(let i=0;i<N;i++){h+=`<tr><th>${i}</th>`;for(let j=0;j<M;j++){const[c,t]=fn(i,j);h+=`<td class="${c}" data-i="${i}" data-j="${j}">${t}</td>`}h+='</tr>'}return h+'</table>'};
+ $('g').innerHTML=tbl((i,j)=>{let c=grid[i][j]?'land':'water',t=grid[i][j]+`<small>(${i},${j})</small>`;
+  if(grid[i][j]&&s.vis&&s.vis[i][j])c+=' vis';if(s.hq&&s.Q.some(q=>q[0]===i&&q[1]===j))c+=' inq';
+  if(eq(s.scan,i,j))c+=' scan';if(eq(s.cur,i,j)){c+=' cur';if(s.res==='oob')c+=' ob'+s.d}
+  if(eq(s.cand,i,j)&&s.ev!=='return'){c+=eq(s.newc,i,j)?' newc':' ex';if(s.res)t+=`<small>${{push:'✓ enqueue',vis:'✗ visited',water:'✗ water'}[s.res]||''}</small>`}
+  return[c,t]});
+ $('v').innerHTML=tbl((i,j)=>{const on=s.vis&&s.vis[i][j];return['v0'+(on?' vis':'')+(on&&eq(s.newc,i,j)&&(s.ev==='mark'||s.ev==='push')?' newc':''),(s.vis?s.vis[i][j]:0)+`<small>vis[${i}][${j}]</small>`]});
+ $('vnote').textContent=s.newc&&s.ev==='mark'&&s.vis&&s.vis[s.newc[0]][s.newc[1]]?`vis[${s.newc[0]}][${s.newc[1]}] ↔ grid cell (${s.newc[0]}, ${s.newc[1]}) was just marked 1.`:(s.res==='oob'?`Candidate (${s.cand}) is OUT OF BOUNDS — rejected without reading grid or vis.`:'');
+ $('queue').innerHTML=(s.hq?(s.Q.length?s.Q.map((q,k)=>`<div class="qc${k===0?' fr':''}${k===s.Q.length-1&&s.ev==='push'?' in':''}">(${q})<small>${k===0?'front':''}${k===s.Q.length-1?(k?' · ':'')+'back':''}</small></div>`).join(''):'<span class="lg">Queue is empty'+(s.ev==='pop'||s.line[0]===L.w?' — the current island is fully explored.':'.')+'</span>'):'<span class="lg">Q does not exist yet (it is created inside BFS).</span>')+(s.ev==='pop'?`<div class="qc out">(${s.popped})<small>popped</small></div>`:'');
+ const act=s.d!=null&&s.d<4&&s.cur;
+ $('cmp').innerHTML=[['','UP',''],['LEFT','','RIGHT'],['','DOWN','']].map(r=>r.map(x=>x?`<div class="${act&&DN[s.d]===x?'a':''}">${x}<br>(${DR[DN.indexOf(x)]}, ${DC[DN.indexOf(x)]})</div>`:'<span></span>').join('')).join('');
+ let ck='';
+ if(s.checks&&s.ev==='check'){ck=`<div>Current (${s.cur}) · ${DN[s.d]} · dr=${DR[s.d]}, dc=${DC[s.d]}</div><div>Candidate (${s.cand})</div>`+s.checks.map(c=>`<div class="${c.ok==null?'sk':c.ok?'y':'nn'}">${c.ok==null?'… skipped':c.ok?'✓':'✗'} ${c.t}</div>`).join('')+`<div><b>${s.res==='push'?'Decision: ENQUEUE':'Decision: REJECT'}</b></div>`}
+ else if(s.checks){ck=s.checks.map(c=>`<div class="${c.ok==null?'sk':c.ok?'y':'nn'}">${c.ok==null?'… skipped':c.ok?'✓':'✗'} ${c.t}</div>`).join('')}
+ else if(act)ck=`<div>Current (${s.cur}) · ${DN[s.d]} · dr=${DR[s.d]}, dc=${DC[s.d]}</div>${s.nr!=null?`<div>nrows = ${s.rows} + (${DR[s.d]}) = ${s.nr}</div>`:''}${s.nc!=null?`<div>ncols = ${s.cols} + (${DC[s.d]}) = ${s.nc}</div>`:''}`;
+ $('ck').innerHTML=ck||'<span class="lg">No neighbor is being checked at this step.</span>';
+ const cur=V(s),prev=p?V(p):[];
+ $('vars').innerHTML=cur.map(([k,v],i)=>`<div class="${p&&fmt(v)!==fmt(prev[i][1])?'ch':''}"><span>${k}</span><span>${fmt(v)}</span></div>`).join('');
+ const chg=cur.map(([k,v],i)=>p&&fmt(v)!==fmt(prev[i][1])?`<div><code>${k}</code>: ${fmt(prev[i][1])} → <b>${fmt(v)}</b></div>`:'').join('')||'<div>No variable changed; the program only evaluated a condition.</div>';
+ const nx=steps[idx+1];
+ $('ex').innerHTML=(s.kind?`<span class="bd ${s.kind==='island'?'isl':'scn'}">${s.kind==='island'?'NEW ISLAND DISCOVERED':'Scanning a cell (not counted yet)'}</span>`:'')+`<h3>What happened?</h3><p>${s.m[0]}</p><h3>Why?</h3><p>${s.m[1]}</p><h3>Variable changes</h3>${chg}<h3>Remember this</h3><p>${s.m[2]}</p><h3>Next action</h3><p>${nx?`Line ${nx.line[0]+1}: <code>${code[nx.line[0]].trim()}</code>`:'The algorithm has finished.'}</p>`;
+ const sm=$('sum');sm.hidden=!s.done;
+ if(s.done)sm.innerHTML=`<h2>${s.done==='capped'?'Stopped (bug mode)':'Finished'}</h2><ul><li>Islands: <b>${s.done==='capped'?'not reliable (bug mode)':s.result}</b></li><li>Steps: ${steps.length}</li><li>BFS traversals started: ${s.st.bfs}</li><li>Cells enqueued: ${s.st.enq} · dequeued: ${s.st.deq}</li><li>Final vis:<pre>${s.vis?s.vis.map(r=>r.join(' ')).join('\n'):'—'}</pre></li></ul><p>Recap: scan every cell; each unvisited land cell starts a new island (cnt++); BFS uses a queue and the vis matrix to mark every connected land cell, so the island is never counted again.</p><button id="rp" class="pri">⟲ Replay from start</button>`;
+ if($('rp'))$('rp').onclick=()=>{go(0)};
+}
+$('g').onclick=e=>{const t=e.target.closest('td');if(!t||idx!==0||!grid.length)return;const i=+t.dataset.i,j=+t.dataset.j;grid[i][j]^=1;$('inp').value=grid.map(r=>r.join(' ')).join('\n');rebuild()};
+$('inp').value=PRE['Supplied grid (1 island)'];apply();
+</script></body></html>

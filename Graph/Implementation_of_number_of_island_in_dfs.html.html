@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Number of Islands – DFS Visualizer (C++)</title>
+<style>
+:root{--bg:#0d1117;--p:#161b22;--b:#30363d;--t:#e6edf3;--mu:#8b949e;--w:#1c2b44;--l:#2e8b57;--v:#1d4a35;--cur:#facc15;--ac:#58a6ff;--bad:#f85149;--ok:#3fb950}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px/1.5 system-ui,sans-serif;padding:12px;max-width:1400px;margin:auto}
+h1{font-size:1.4rem;margin:4px 0}h2{font-size:1rem;margin:0 0 8px;color:var(--ac)}.mu{color:var(--mu)}
+.card{background:var(--p);border:1px solid var(--b);border-radius:10px;padding:12px;margin-bottom:12px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select{background:#21262d;color:var(--t);border:1px solid var(--b);border-radius:6px;padding:8px 12px;font:inherit;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--ac)}button:disabled{opacity:.4;cursor:not-allowed}button:focus-visible,select:focus-visible{outline:2px solid var(--ac)}
+.pri{background:#238636;border-color:#2ea043}
+.main{display:grid;grid-template-columns:1.1fr 1fr .9fr;gap:12px}@media(max-width:1100px){.main{grid-template-columns:1fr 1fr}}@media(max-width:760px){.main{grid-template-columns:1fr}}
+.grids{display:flex;flex-wrap:wrap;gap:14px}.gw{flex:1;min-width:210px}
+.g{display:grid;grid-template-columns:repeat(var(--m),1fr);gap:4px}
+.cell{position:relative;aspect-ratio:1;padding:2px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;font-size:10px;border-radius:6px;border:2px solid #0006;min-width:0;transition:background .3s,transform .2s}
+.cell b{font-size:16px}.cell em{font-style:normal;font-size:9px}.cell small{opacity:.8}
+.water{background:var(--w);color:#9db7e0;border-style:dotted;border-color:#3b5a8f}
+.land{background:var(--l);color:#fff;border-style:solid;border-color:#7ee2a8}
+.vis{background:var(--v);color:#a8d5bb;border-style:double;border-color:#5aa17e}
+.cur{background:var(--cur)!important;color:#111!important;border:3px solid #fff;transform:scale(1.07)}
+.scan{outline:3px dashed var(--ac);outline-offset:1px}.tgt{outline:3px dashed #ff9f43;outline-offset:1px}
+.ar{position:absolute;top:-4px;right:-2px;background:#ff9f43;color:#000;border-radius:8px;padding:0 4px;font-size:14px;font-weight:700}
+.vm{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:6px;border:2px solid var(--b);font:700 18px monospace;background:#0b1320;transition:background .3s}
+.vm.one{background:var(--v);border-color:#5aa17e;color:#8fe0b3}.vm.pop{animation:pop .6s}@keyframes pop{0%{transform:scale(1.6);background:var(--cur);color:#000}100%{transform:scale(1)}}
+.warn{min-height:26px;margin-top:8px;color:#ffb4ad;font-weight:600}.leg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;margin-top:8px}.leg span{padding:2px 8px;border-radius:6px}
+pre{margin:0;font:12.5px/1.45 ui-monospace,Consolas,monospace;overflow-x:auto}
+.code div{white-space:pre;padding:0 8px;border-left:4px solid transparent}.code .on{background:#4d4200;border-color:var(--cur)}.code .on.call{background:#12365a;border-color:var(--ac)}.code .on.ret{background:#4a1d2b;border-color:#ff7b9c}.code .on.back{background:#143d2a;border-color:var(--ok)}
+.msg{margin-top:8px;padding:8px;border-radius:6px;background:#0b1320;border:1px solid var(--b);min-height:64px}
+table{border-collapse:collapse;width:100%}td{border-bottom:1px solid var(--b);padding:3px 6px;font:13px monospace}td:first-child{color:var(--mu)}
+.fr{border:1px solid var(--b);border-left:5px solid var(--ac);border-radius:6px;padding:4px 8px;margin:4px 0;font:12px monospace;background:#0b1320}.fr:first-child{border-left-color:var(--cur)}
+details{border-top:1px solid var(--b);padding:6px 0}summary{cursor:pointer;font-weight:600}.bug{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:700px){.bug{grid-template-columns:1fr}}
+.bad{border-left:4px solid var(--bad);padding-left:6px}.good{border-left:4px solid var(--ok);padding-left:6px}
+.q button{display:block;width:100%;text-align:left;margin:4px 0}.qb{border:2px solid var(--ac);padding:8px;border-radius:8px;margin-top:8px}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;background:#12301c;color:var(--ok);font-size:12px}
+</style></head><body>
+<h1>🏝️ LeetCode 200 – Number of Islands with DFS (C++)</h1>
+<p class="mu">Beginner-friendly visualizer. Nothing autoplays — you control every step. <span class="badge" id="self"></span></p>
+
+<div class="card"><h2>1 · The problem</h2>
+<p><code>'1'</code> = land, <code>'0'</code> = water. An <b>island</b> is land cells connected <b>up, down, left or right</b>. Diagonals do <b>not</b> connect. Count the separate islands.</p>
+<div class="grids"><div class="gw"><div class="g" id="ov"></div></div>
+<div class="gw"><p id="ovtxt"></p><label>Grid: <select id="gsel"><option value="s">Your sample grid</option><option value="v">Variant: (2,2) turned to water</option></select></label>
+<p class="mu">Watch cell (1,1) and (2,2): they only touch at a corner, so they are <b>different</b> islands.</p></div></div></div>
+
+<div class="card"><div class="bar">
+<button class="pri" id="bStart">Start</button><button id="bPrev">⏮ Previous Step</button><button id="bNext">Next Step ⏭</button><button id="bPlay">▶ Play</button><button id="bReset">Reset</button>
+<label>Speed <select id="spd"><option value="1400">Slow</option><option value="700" selected>Medium</option><option value="250">Fast</option></select></label>
+<label>Mode <select id="mode"><option value="A">A · Watch full algorithm</option><option value="B">B · One DFS call (click a land cell)</option><option value="C">C · Practice, no hints</option></select></label>
+<span class="mu" id="stepno"></span></div></div>
+
+<div class="main">
+<div>
+<div class="card"><h2>2 · Grid &amp; visited matrix</h2><div class="grids">
+<div class="gw"><b>grid (never modified)</b><div class="g" id="gg"></div></div>
+<div class="gw"><b>vis (starts all 0)</b><div class="g" id="vv"></div></div></div>
+<div class="warn" id="warn" role="status"></div>
+<div class="leg"><span class="water">Water ≈ dotted</span><span class="land">Unvisited land</span><span class="cur">▶ NOW (current DFS cell)</span><span class="vis">Visited ✓</span><span style="outline:2px dashed var(--ac)">blue dash = outer-loop (i,j)</span><span style="outline:2px dashed #ff9f43">orange = neighbor being tried (arrow)</span></div></div>
+<div class="card"><h2>3 · Variable watch</h2><table id="watch"></table><p class="mu" style="font-size:13px"><b>i, j</b> scan the whole grid (outer loops). <b>r, c</b> follow the DFS path. They are different variables!</p></div>
+</div>
+<div class="card"><h2>4 · C++ code (synced)</h2><div class="code" id="code"></div><div class="msg" id="msg"></div><div id="qbox"></div>
+<p class="mu" style="font-size:12px">Colors: yellow = executing · blue = recursive call · pink = return · green = back in caller.</p></div>
+<div>
+<div class="card"><h2>5 · Recursion call stack (top = running)</h2><div id="stack"></div>
+<div id="chk" class="mu" style="font-size:13px"></div></div>
+<div class="card"><h2>6 · Counter</h2><div style="font-size:2rem" id="cnt"></div><div class="mu" id="cntx"></div></div>
+</div></div>
+
+<div class="card"><h2>7 · Key ideas</h2><div id="lessons"></div></div>
+<div class="card"><h2>8 · Common mistakes (open each)</h2><div id="bugs"></div></div>
+<div class="card q"><h2>9 · Mini-quiz</h2><div id="quiz"></div><div id="qscore" class="mu"></div></div>
+
+<script>
+const CODE=`class Solution {
+public:
+    void dfs(int r, int c,
+             vector<vector<int>>& vis,
+             vector<vector<char>>& grid) {
+
+        int n = grid.size();
+        int m = grid[0].size();
+
+        if (r < 0 || r >= n || c < 0 || c >= m) {
+            return;
+        }
+
+        if (vis[r][c] == 1 || grid[r][c] == '0') {
+            return;
+        }
+
+        vis[r][c] = 1;
+
+        dfs(r + 1, c, vis, grid);
+        dfs(r - 1, c, vis, grid);
+        dfs(r, c + 1, vis, grid);
+        dfs(r, c - 1, vis, grid);
+    }
+
+    int numIslands(vector<vector<char>>& grid) {
+        if (grid.empty()) return 0;
+
+        int n = grid.size();
+        int m = grid[0].size();
+
+        vector<vector<int>> vis(n, vector<int>(m, 0));
+
+        int cnt = 0;
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] == '1' && vis[i][j] == 0) {
+                    cnt++;
+                    dfs(i, j, vis, grid);
+                }
+            }
+        }
+
+        return cnt;
+    }
+};`.split('\n');
+const SAMPLE=["11000","11001","00101","00000","10011"].map(s=>s.split(''));
+const VARIANT=SAMPLE.map(r=>r.slice());VARIANT[2][2]='0';
+const DIRS=[['Down',1,0,'↓',19],['Up',-1,0,'↑',20],['Right',0,1,'→',21],['Left',0,-1,'←',22]];
+const $=id=>document.getElementById(id);
+function ref(G){const n=G.length,m=G[0].length,v=G.map(r=>r.map(()=>0)),L=G.map(r=>r.map(()=>-1));let c=0;
+ const d=(r,q)=>{if(r<0||r>=n||q<0||q>=m||v[r][q]||G[r][q]==='0')return;v[r][q]=1;L[r][q]=c-1;d(r+1,q);d(r-1,q);d(r,q+1);d(r,q-1)};
+ for(let i=0;i<n;i++)for(let j=0;j<m;j++)if(G[i][j]==='1'&&!v[i][j]){c++;d(i,j)}return{c,L}}
+
+function gen(G,start){
+ const n=G.length,m=G[0].length,S=[],vis=G.map(r=>r.map(()=>0));
+ let cnt=0,i=null,j=null,ni=false,stack=[],scan=null;
+ const snap=o=>S.push({vis:vis.map(r=>r.slice()),cnt,i,j,ni,scan,stack:stack.map(f=>({...f})),line:-1,kind:'',msg:'',cur:null,arrow:null,warn:'',chk:null,chg:null,q:null,...o});
+ function dfs(r,c,d,pr,pc,cl){
+  stack.push({r,c,d:-1,b:null,note:'just called'});
+  const f=()=>stack[stack.length-1],inb=r>=0&&r<n&&c>=0&&c<m;
+  const ar=d===null?null:{fr:pr,fc:pc,d,tr:r,tc:c,inb};
+  const ret=(ln,why)=>{snap({line:ln,kind:'ret',cur:inb?[r,c]:null,msg:`<b>return;</b> ${why} This call is finished; its frame will be popped off the stack.`});
+   stack.pop();const t=stack.length?stack[stack.length-1]:null;
+   snap({line:cl,kind:'back',cur:t?[t.r,t.c]:null,msg:`Back in the caller. dfs(${r}, ${c}) was popped. ${t?`dfs(${t.r}, ${t.c}) continues on the next line.`:'We are back in the outer loops.'}`})};
+  snap({line:cl,kind:'call',cur:inb?[r,c]:null,arrow:ar,
+   msg:d===null?`<b>dfs(${r}, ${c}, vis, grid)</b> is called. A new frame is pushed on the stack.`:`Try <b>${DIRS[d][0]}</b>: <b>dfs(${r}, ${c}, vis, grid)</b> from (${pr}, ${pc}). New frame pushed.`,
+   q:d===null?null:{t:'Which neighbor will DFS try next?',o:DIRS.map(x=>x[0]),a:DIRS[d][0],e:'Order in the code is always Down, Up, Right, Left. Each earlier direction must fully finish first.'}});
+  f().b=inb;f().note=inb?'inside grid':'OUT of grid';
+  snap({line:9,cur:inb?[r,c]:null,arrow:ar,chk:{b:inb},warn:inb?'':`⚠ (${r}, ${c}) is outside the ${n}×${m} grid`,
+   msg:`Boundary check: r&lt;0 ${r<0}, r&gt;=n ${r>=n}, c&lt;0 ${c<0}, c&gt;=m ${c>=m} → ${inb?'<b>inside</b>, keep going. (Checked BEFORE touching grid[r][c].)':'<b>outside</b>, so we must return.'}`});
+  if(!inb){ret(10,'Out of bounds, so we never touch grid[r][c].');return}
+  const w=G[r][c]==='0',s=vis[r][c]===1;
+  f().note=w?'water → stop':s?'already visited → stop':'land, unvisited → go';
+  snap({line:13,cur:[r,c],chk:{b:true,w,v:s},msg:`grid[${r}][${c}] = '${G[r][c]}' (${w?'water':'land'}), vis[${r}][${c}] = ${vis[r][c]}. ${w||s?`<b>${w?'Water':'Already visited'}</b> → return.`:'Land and unvisited → continue.'}`,
+   q:{t:'Will dfs continue or return?',o:['Continue','Return'],a:w||s?'Return':'Continue',e:'Return if the cell is water OR already visited. Only unvisited land continues.'}});
+  if(w||s){ret(14,w?'Water ends an island.':'Visited cells are not explored twice (prevents infinite recursion).');return}
+  vis[r][c]=1;f().note='marked visited';
+  snap({line:17,cur:[r,c],chg:[r,c],msg:`<b>vis[${r}][${c}] = 1</b>. Marked BEFORE the 4 calls, so neighbors that come back here will stop at the visited check.`,
+   q:{t:`What will vis[${r}][${c}] become?`,o:['0','1'],a:'1',e:'We are visiting this land cell now, so it becomes 1.'}});
+  for(let k=0;k<4;k++){f().d=k;dfs(r+DIRS[k][1],c+DIRS[k][2],k,r,c,DIRS[k][4])}
+  f().d=4;f().note='all 4 directions done';
+  snap({line:23,kind:'ret',cur:[r,c],msg:`All four directions of (${r}, ${c}) are done. The function ends and returns.`});
+  stack.pop();const t=stack.length?stack[stack.length-1]:null;
+  snap({line:cl,kind:'back',cur:t?[t.r,t.c]:null,msg:`dfs(${r}, ${c}) popped. ${t?`Back in dfs(${t.r}, ${t.c}); it moves to its next direction.`:'DFS for this island is complete. Back to the outer loops.'}`});
+ }
+ snap({line:25,msg:start?'Mode B: click a land cell to choose where DFS starts.':'numIslands(grid) is called. Press <b>Next Step</b>.'});
+ if(start){ni=true;i=start[0];j=start[1];cnt=1;scan=[i,j];
+  snap({line:39,msg:`Pretend the outer loops just found land at (${i}, ${j}) and did cnt++. Now watch one DFS call explore its whole island.`});
+  dfs(i,j,null,0,0,39);scan=null;snap({line:44,msg:'DFS finished. Every cell of this island now has vis = 1.'});return S}
+ ni=true;snap({line:[28,29],msg:`n = ${n} rows, m = ${m} columns.`});
+ snap({line:31,msg:`<b>vector&lt;vector&lt;int&gt;&gt; vis(n, vector&lt;int&gt;(m, 0))</b>: a 2D vector with n rows, each row m ints, all starting at 0 (unvisited).`});
+ snap({line:33,msg:'cnt = 0: no islands counted yet.'});
+ for(i=0;i<n;i++)for(j=0;j<m;j++){
+  scan=[i,j];const land=G[i][j]==='1',seen=vis[i][j]===1;
+  snap({line:j===0?[35,36]:36,msg:`Outer loops: i = ${i}, j = ${j}. Inspect cell (${i}, ${j}): it is <b>${land?'land':'water'}</b>${land&&seen?' (already visited)':''}.`,
+   q:{t:`Is grid[${i}][${j}] land or water?`,o:['Land','Water'],a:land?'Land':'Water',e:"'1' is land, '0' is water."}});
+  const nw=land&&!seen;
+  snap({line:37,msg:`grid[i][j]=='1' is ${land}, vis[i][j]==0 is ${!seen} → ${nw?'<b>new island found!</b>':'skip (nothing new here).'}`,
+   q:{t:'Will cnt increase here?',o:['Yes','No'],a:nw?'Yes':'No',e:'cnt increases only for land that has NOT been visited, once per island, not per land cell.'}});
+  if(nw){cnt++;snap({line:38,msg:`<b>cnt++</b> → cnt = ${cnt}. Counted ONCE for the whole island, before DFS.`});dfs(i,j,null,0,0,39)}
+ }
+ i=null;j=null;scan=null;snap({line:44,msg:`Loops finished. <b>return cnt;</b> → ${cnt} islands.`});return S}
+
+let G=SAMPLE,S=[],k=0,mode='A',start=null,timer=null,started=false,answered=new Set(),score=[0,0];
+const n=()=>G.length,m=()=>G[0].length;
+function build(){stopPlay();S=gen(G,mode==='B'?start:null);k=0;started=false;answered=new Set();$('qbox').innerHTML='';render()}
+function render(){
+ const s=S[k],N=n(),M=m(),p=S[k-1],top=s.stack[s.stack.length-1];
+ document.querySelectorAll('.g').forEach(e=>e.style.setProperty('--m',M));
+ let h='';for(let r=0;r<N;r++)for(let c=0;c<M;c++){
+  const cur=s.cur&&s.cur[0]===r&&s.cur[1]===c,wat=G[r][c]==='0',vs=s.vis[r][c]===1;
+  const cls=cur?'cur':wat?'water':vs?'vis':'land',st=cur?'▶ NOW':wat?'water':vs?'visited ✓':'unvisited';
+  const sc=s.scan&&s.scan[0]===r&&s.scan[1]===c?' scan':'',tg=s.arrow&&s.arrow.inb&&s.arrow.tr===r&&s.arrow.tc===c?' tgt':'';
+  const ar=s.arrow&&s.arrow.fr===r&&s.arrow.fc===c?`<span class="ar" title="${DIRS[s.arrow.d][0]}">${DIRS[s.arrow.d][3]}</span>`:'';
+  h+=`<button class="cell ${cls}${sc}${tg}" data-r="${r}" data-c="${c}" aria-label="row ${r} col ${c}, ${wat?'water':'land'}, ${st}" ${mode==='B'&&!wat?'':'tabindex="-1"'}><small>${r},${c}</small><b>${wat?'0 ~':'1 ▲'}</b><em>${st}</em>${ar}</button>`}
+ $('gg').innerHTML=h;
+ let v='';for(let r=0;r<N;r++)for(let c=0;c<M;c++){const one=s.vis[r][c]===1,ch=p&&p.vis[r][c]!==s.vis[r][c];v+=`<div class="vm${one?' one':''}${ch?' pop':''}">${s.vis[r][c]}</div>`}
+ $('vv').innerHTML=v;
+ $('warn').textContent=s.warn;
+ $('code').innerHTML=CODE.map((t,x)=>{const on=Array.isArray(s.line)?s.line.includes(x):s.line===x;return`<div class="${on?'on '+s.kind:''}">${t.replace(/&/g,'&amp;').replace(/</g,'&lt;')||' '}</div>`}).join('');
+ const ol=$('code').querySelector('.on');if(ol&&started){const bx=$('code').getBoundingClientRect();}
+ $('msg').innerHTML=s.msg||'Press <b>Start</b> or <b>Next Step</b>.';
+ const inb=top&&top.b===true,dash='—';
+ const rows=[['n',s.ni?N:dash],['m',s.ni?M:dash],['i',s.i??dash],['j',s.j??dash],['r',top?top.r:dash],['c',top?top.c:dash],['cnt',s.ni?s.cnt:dash],
+  ['grid[r][c]',inb?`'${G[top.r][top.c]}'`:top&&top.b===false?'out of range!':dash],['vis[r][c]',inb?s.vis[top.r][top.c]:top&&top.b===false?'out of range!':dash]];
+ $('watch').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+ $('stack').innerHTML=s.stack.length?s.stack.slice().reverse().map(f=>`<div class="fr">dfs(${f.r}, ${f.c}, vis, grid)<br>${f.d>=0&&f.d<4?'trying: '+DIRS[f.d][0]+' '+DIRS[f.d][3]+'<br>':''}${f.note}</div>`).join(''):'<span class="mu">(empty — only the outer loops are running)</span>';
+ $('chk').innerHTML=s.chk?`Boundary check: <b>${s.chk.b?'pass':'FAIL → return'}</b>`+(s.chk.w!==undefined?`<br>Water check: <b>${s.chk.w?'water → return':'land'}</b><br>Visited check: <b>${s.chk.v?'visited → return':'not visited'}</b>`:''):'';
+ $('cnt').textContent='cnt = '+(s.ni?s.cnt:0);$('cntx').textContent='cnt++ happens once per new island, not per land cell.';
+ $('stepno').textContent=`Step ${k} / ${S.length-1}`;
+ $('bPrev').disabled=k===0;$('bNext').disabled=k>=S.length-1;$('bPlay').disabled=mode==='C'||S.length<2;
+ $('bStart').textContent=started?'Restart':'Start';
+}
+function next(){if(k>=S.length-1){stopPlay();return}
+ const q=S[k+1].q;started=true;
+ if(mode==='C'&&q&&!answered.has(k+1)){ask(k+1);return}
+ k++;render()}
+function ask(x){const q=S[x].q;$('qbox').innerHTML=`<div class="qb q"><b>Predict:</b> ${q.t}${q.o.map((o,ix)=>`<button data-o="${ix}">${o}</button>`).join('')}</div>`;
+ $('qbox').querySelectorAll('button').forEach(b=>b.onclick=()=>{const ok=q.o[b.dataset.o]===q.a;score[1]++;if(ok)score[0]++;answered.add(x);
+  k=x;render();$('qbox').innerHTML=`<div class="qb" style="border-color:${ok?'var(--ok)':'#ff9f43'}">${ok?'✅ Correct!':'🤔 Not quite — the answer was <b>'+q.a+'</b>.'} ${q.e}<br><span class="mu">Score: ${score[0]}/${score[1]}</span></div>`})}
+function prev(){if(k>0){k--;$('qbox').innerHTML='';render()}}
+function stopPlay(){clearInterval(timer);timer=null;$('bPlay').textContent='▶ Play'}
+function play(){if(timer){stopPlay();return}if(k>=S.length-1)return;$('bPlay').textContent='⏸ Pause';started=true;timer=setInterval(()=>{next();if(k>=S.length-1)stopPlay()},+$('spd').value)}
+$('bNext').onclick=()=>{stopPlay();next()};$('bPrev').onclick=()=>{stopPlay();prev()};$('bPlay').onclick=play;
+$('bStart').onclick=()=>{build();started=true;if(mode!=='B'||start){if(S.length>1){k=1;render()}}};
+$('bReset').onclick=()=>{score=[0,0];if(mode==='B')start=null;build()};
+$('spd').onchange=()=>{if(timer){stopPlay();play()}};
+$('mode').onchange=e=>{mode=e.target.value;start=null;build()};
+$('gg').onclick=e=>{const b=e.target.closest('.cell');if(mode!=='B'||!b)return;const r=+b.dataset.r,c=+b.dataset.c;if(G[r][c]==='0'){$('msg').textContent='That is water. Pick a land cell.';return}start=[r,c];build();started=true;k=1;render()};
+$('gsel').onchange=e=>{G=e.target.value==='s'?SAMPLE:VARIANT;start=null;overview();build()};
+
+function overview(){const R=ref(G),M=m();let h='';const col=['#2e8b57','#c77dff','#ff9f43','#4dabf7','#f06595'];
+ for(let r=0;r<n();r++)for(let c=0;c<M;c++){const l=R.L[r][c],w=G[r][c]==='0';h+=`<div class="cell ${w?'water':''}" style="${w?'':'background:'+col[l]+';color:#000;border-color:#fff'};min-height:44px"><small>${r},${c}</small><b>${w?'0':'ABCDE'[l]}</b></div>`}
+ $('ov').style.setProperty('--m',M);$('ov').innerHTML=h;
+ $('ovtxt').innerHTML=`Letters mark each island (<b>A–${'ABCDE'[R.c-1]}</b>). This grid has <b>${R.c} islands</b>.`+(G===SAMPLE?` <br><span style="color:#ffb4ad">Note: your sample really has <b>5</b> islands (not 4): the lone 1 at (2,2) and the lone 1 at (4,0) are each their own island. Choose the variant to see an answer of 4.</span>`:'')}
+
+const LES=[['2D vector','vector&lt;vector&lt;char&gt;&gt; grid is a list of rows; grid[r][c] means row r, column c. Row 0 is the top, column 0 is the left.'],
+['vis[r][c]','Your notebook of cells already explored. 0 = not yet, 1 = visited. Without it DFS would bounce between neighbors forever.'],
+['Recursion &amp; base case','A function that calls itself on a smaller piece of work. The base case (the two early returns) stops it.'],
+['Call stack','Each dfs call is a frame stacked on the previous one. A finished call is popped and the caller resumes where it left off.'],
+['Why one island fully visits','From a land cell, DFS tries 4 neighbors, and each of those tries its own. Like exploring rooms in a maze: go deep, come back, try the next door.'],
+['Boundary check first','Valid rows are 0..n-1. Index n is one past the end (invalid). Check bounds BEFORE reading grid[r][c] or vis[r][c], or you read memory that does not exist.'],
+['Water / visited check',"Water ends an island. Visited ends repeated work. grid holds chars ('0','1') so compare with quotes; vis holds ints so compare with 0/1."],
+['Mark before recursing','vis[r][c]=1 comes before the 4 calls, so a neighbor that calls back into this cell sees it as visited and returns.'],
+['Count before DFS','cnt++ runs once when the loops find an unvisited land cell; DFS then marks the rest of that island so the loops skip it.'],
+['4 directions, not 8','The problem says only up/down/left/right connect. Diagonals would merge islands that should stay separate.'],
+['Complexity','Time O(n·m): each cell is visited a constant number of times. Space O(n·m): vis matrix, plus worst-case recursion depth of n·m (one giant snake-shaped island).']];
+$('lessons').innerHTML=LES.map(l=>`<details><summary>${l[0]}</summary><p>${l[1]}</p></details>`).join('');
+const BUGS=[['r > n instead of r >= n','if (r < 0 || r > n || ...)','r == n passes, then grid[n][c] reads past the end (crash / garbage).','r >= n'],
+['c > m instead of c >= m','c > m','Same off-by-one on columns.','c >= m'],
+['Boundary check after access','if (grid[r][c]==\'0\') return;\nif (r<0 || ...) return;','Negative or too-large index is read before it is rejected → undefined behavior.','Do the boundary check first.'],
+['Forgetting vis[r][c] = 1','// no marking\ndfs(r+1,...); dfs(r-1,...);','(r,c) calls (r+1,c), which calls (r,c) again... infinite recursion → stack overflow.','vis[r][c] = 1; before the 4 calls'],
+['Counting every land cell','if (grid[i][j]==\'1\') cnt++;','Each cell of one island is counted: the sample gives many more than 5.','Also require vis[i][j]==0, and only then cnt++ and dfs.'],
+['grid[i][j] != \'1\' as land test','if (grid[i][j] != \'1\' ...) dfs(...)','Inverted logic: DFS starts on water.','grid[i][j] == \'1\''],
+["Comparing vis with '0'","vis[r][c] == '0'","'0' is the char code 48, not the integer 0, so the test is never true.","vis[r][c] == 0   (vis holds ints)"],
+['Eight directions','dfs(r+1,c+1,...) etc.','Diagonal land joins: (1,1) and (2,2) merge, so the count is wrong.','Only the 4 calls: down, up, right, left.'],
+['Mixing i,j with r,c','dfs(r, c, ...) inside numIslands','r, c do not exist in numIslands (compile error); and inside dfs, using i, j fails too.','numIslands: dfs(i, j, vis, grid). dfs uses its parameters r, c.']];
+$('bugs').innerHTML=BUGS.map((b,x)=>`<details><summary>${x+1}. ${b[0]}</summary><div class="bug"><div class="bad"><b>Broken</b><pre>${b[1]}</pre><p>💥 ${b[2]}</p></div><div class="good"><b>Fixed</b><pre>${b[3]}</pre></div></div></details>`).join('');
+const QZ=[['Why does dfs check boundaries before grid[r][c]?',['Speed','Reading outside the grid is invalid','To count islands'],1],
+['When does cnt++ run?',['For every land cell','For every unvisited land cell found by the loops','Inside dfs'],1],
+['Why set vis[r][c]=1 before the recursive calls?',['So neighbors do not revisit it forever','It is just style','To change the grid'],0],
+['Is (1,1) connected to (2,2)?',['Yes, diagonal','No, only 4 directions count','Only if both are land and visited'],1],
+['Time complexity?',['O(n+m)','O(n·m)','O(2^(n·m))'],1]];
+let qs=0;$('quiz').innerHTML=QZ.map((q,x)=>`<p><b>${x+1}. ${q[0]}</b></p>`+q[1].map((o,y)=>`<button data-q="${x}" data-o="${y}">${o}</button>`).join('')+`<div id="f${x}" class="mu"></div>`).join('');
+$('quiz').onclick=e=>{const b=e.target.closest('button');if(!b||b.dataset.done)return;const x=+b.dataset.q,ok=QZ[x][2]===+b.dataset.o;
+ document.querySelectorAll(`[data-q="${x}"]`).forEach(z=>{z.dataset.done=1;z.disabled=true});if(ok)qs++;
+ $('f'+x).textContent=ok?'✅ Correct!':'Not quite. Answer: '+QZ[x][1][QZ[x][2]]+'. Re-read the matching idea above and try the step view again.';$('qscore').textContent=`Score: ${qs}/${QZ.length}`};
+
+// self-test: reference DFS vs. recorded trace, and grid must stay unmodified
+(function(){const a=ref(SAMPLE).c,t=gen(SAMPLE,null),f=t[t.length-1],c4=gen(VARIANT,null).pop().cnt;
+ const same=JSON.stringify(SAMPLE)===JSON.stringify(["11000","11001","00101","00000","10011"].map(s=>s.split('')));
+ $('self').textContent=`Self-test: sample → ${f.cnt} islands (reference ${a}), variant → ${c4}, grid unmodified: ${same}`;})();
+overview();build();
+</script></body></html>
