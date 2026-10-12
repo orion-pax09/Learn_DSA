@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LeetCode 402 · Remove K Digits · Visual Lab</title>
+<style>
+:root{--bg:#1e1e1e;--p:#252526;--p2:#2d2d30;--b:#3c3c3c;--t:#d4d4d4;--mu:#858585;--bl:#569cd6;--gr:#4ec9b0;--am:#e5c07b;--rd:#f48771;--pu:#c586c0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px/1.45 system-ui,Segoe UI,sans-serif}
+code,.mono{font-family:Consolas,"Cascadia Code",monospace}code{background:#333;padding:0 4px;border-radius:3px;color:var(--am)}
+header{padding:10px 16px;border-bottom:1px solid var(--b);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+h1{font-size:17px;margin:0;font-weight:600}h2{font-size:13px;margin:0 0 8px;color:var(--bl);font-weight:600}
+#badge{margin-left:auto;font-size:12px;padding:2px 8px;border-radius:10px;background:#333}
+main{padding:12px;display:grid;gap:12px;max-width:1300px;margin:auto}
+.pn{background:var(--p);border:1px solid var(--b);border-radius:6px;padding:10px 12px;min-width:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.g3{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+input,select{background:#3c3c3c;color:var(--t);border:1px solid var(--b);border-radius:4px;padding:6px 8px;font:inherit}
+input{width:220px}input#k{width:70px}
+button{background:#0e639c;color:#fff;border:0;border-radius:4px;padding:6px 11px;font:inherit;cursor:pointer}
+button:hover{background:#1177bb}button.s{background:#3a3d41}button.s:hover{background:#4a4d51}
+button:disabled{opacity:.4;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--am)}
+button.on{background:var(--gr);color:#111}
+#err{color:var(--rd);min-height:18px;margin-top:6px}
+.chips button{background:#333;font-size:12px;padding:4px 8px;font-family:Consolas,monospace}.chips button:hover{background:#444}
+.dg{display:flex;flex-wrap:wrap;gap:6px}
+.d{width:38px;height:46px;border:2px solid var(--b);border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Consolas,monospace;transition:.2s}
+.d b{font-size:20px}.d small{font-size:10px;color:var(--mu)}
+.s0{opacity:.55}.s1{background:#5a4a1a;border-color:var(--am)}.s2{background:#16413a;border-color:var(--gr)}
+.s3{background:#4a2420;border-color:var(--rd);opacity:.6;text-decoration:line-through}.s4{background:#173b5c;border-color:var(--bl)}
+.d.cur{box-shadow:0 0 0 2px #fff}
+.lg{font-size:11px;color:var(--mu);margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}.lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:3px}
+#stk{position:relative;min-height:190px;padding-top:26px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.it{width:80px;text-align:center;border:2px solid var(--gr);background:#16413a;border-radius:4px;font:20px Consolas,monospace;padding:2px}
+.it.top::after{content:"← TOP";position:absolute;margin-left:50px;color:var(--am);font:700 12px Consolas}
+.pushIn{animation:pi .4s}.ghost{position:absolute;top:0;width:80px;text-align:center;border:2px solid var(--rd);background:#4a2420;border-radius:4px;font:20px Consolas;animation:po .7s forwards}
+@keyframes pi{from{transform:translateY(-28px);opacity:0}}@keyframes po{to{transform:translateY(-26px);opacity:0}}
+.base{width:100px;border-top:3px solid var(--mu);margin-top:2px}
+.stt{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-family:Consolas,monospace}.stt span:nth-child(odd){color:var(--mu)}
+#phase{display:inline-block;padding:2px 8px;border-radius:10px;background:#0e639c;color:#fff}
+#code{font:12.5px/1.5 Consolas,monospace;max-height:520px;overflow:auto;position:relative;background:#1b1b1b;border-radius:4px}
+.ln{display:flex;white-space:pre;padding-right:8px;border-left:3px solid transparent}.ln i{width:30px;text-align:right;color:#666;padding-right:10px;font-style:normal;flex:none}
+.ln.done{background:#1f2d24;border-left-color:#3a7;}.ln.act{background:#264f78;border-left-color:var(--bl)}.ln.act.dec{background:#5b4b1a;border-left-color:var(--am)}
+#msg{min-height:130px}#msg ul{margin:4px 0;padding-left:18px}#msg p{margin:6px 0}.why{color:var(--gr)}.y{color:var(--gr)}.n{color:var(--rd)}
+.big{font:700 26px Consolas;color:var(--gr);margin:4px 0}
+.note{background:#333;border-left:3px solid var(--pu);padding:4px 8px;margin-top:6px;font-size:12.5px}
+.q{background:#2a2d3e;border:1px solid var(--pu);border-radius:6px;padding:8px 10px;margin-top:8px}.q .row{margin-top:6px}
+.fb{margin-top:8px;padding:6px 10px;border-radius:6px;background:#16413a}.fb.bad{background:#4a2420}
+#vec{display:flex;gap:6px;flex-wrap:wrap;min-height:44px;align-items:flex-end}
+.vb{width:36px;text-align:center;border:2px solid var(--pu);border-radius:4px;font:18px Consolas;padding:2px}.vb small{display:block;font-size:9px;color:var(--mu)}.vb.bk{border-color:var(--am)}
+details summary{cursor:pointer;color:var(--bl);font-weight:600}details ul{margin:6px 0;padding-left:18px}
+@media(max-width:600px){input{width:100%}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<header><h1>LeetCode 402 · Remove K Digits</h1><span style="color:var(--mu)">Step through the exact C++ stack algorithm</span><span id="badge">self-test…</span></header>
+<main>
+<section class="pn"><h2>Input</h2>
+<div class="row"><label>num <input id="num" class="mono" value="1432219" maxlength="30" aria-label="number string"></label>
+<label>k <input id="k" class="mono" value="3" aria-label="digits to remove"></label>
+<button id="run">Run Simulation</button><button class="s" id="reset">Reset</button><button class="s" id="ex">Load Example</button><button class="s" id="rnd">Random Test</button></div>
+<div id="err" role="alert"></div><div class="row chips" id="pre" style="margin-top:6px"></div></section>
+
+<section class="pn"><div class="row">
+<button class="s" id="prev">◀ Previous Step</button><button id="next">Next Step ▶</button><button id="play">▶ Play</button><button class="s" id="pause">❚❚ Pause</button><button class="s" id="restart">⟲ Restart</button><button class="s" id="end">⏭ Jump to End</button>
+<select id="spd" aria-label="speed"><option value="1500">Slow</option><option value="800" selected>Normal</option><option value="350">Fast</option></select>
+<span style="margin-left:auto" class="row"><button id="mW" class="on">Watch Mode</button><button id="mP" class="s">Practice Mode</button></span></div></section>
+
+<div class="g3">
+<section class="pn"><h2>Original number</h2><div class="dg" id="orig"></div>
+<div class="lg"><span><i style="background:#555"></i>not processed</span><span><i style="background:var(--am)"></i>current</span><span><i style="background:var(--gr)"></i>kept in stack</span><span><i style="background:var(--rd)"></i>removed</span><span><i style="background:var(--bl)"></i>remaining</span></div></section>
+<section class="pn"><h2>C++ stack&lt;char&gt; st</h2><div id="stk"></div></section>
+<section class="pn"><h2>Algorithm state</h2><div class="stt" id="stt"></div></section></div>
+
+<div class="g2">
+<section class="pn"><h2>C++ code</h2><div id="code"></div></section>
+<div style="display:grid;gap:12px;align-content:start">
+<section class="pn"><h2>What's happening</h2><div id="msg"></div><div id="quiz"></div></section>
+<section class="pn"><h2>vector&lt;char&gt; temp &nbsp;<span style="color:var(--mu);font-weight:400">(stack pops in reverse; <code>back()</code> is the right end)</span></h2><div id="vec"></div>
+<div style="margin-top:8px">res = <code id="res">""</code></div></section></div></div>
+
+<section class="pn"><details><summary>Algorithm summary</summary><ul>
+<li><b>Greedy rule:</b> while the stack is not empty, <code>st.top() &gt; num[i]</code> and <code>k &gt; 0</code>, pop. A smaller digit in an earlier (more significant) place makes a smaller number.</li>
+<li><b>Strict &gt;:</b> equal digits are never popped. <b>No larger digit before a smaller one</b> (increasing digits): leftover <code>k</code> removes from the end.</li>
+<li><b>Edge cases:</b> k = 0 (nothing removed) · k = length (everything removed → "0") · increasing digits · repeated digits · leading zeros · remaining removals after the scan.</li>
+<li><b>Complexity:</b> time O(n), auxiliary space O(n). Each digit is pushed and popped at most once.</li></ul></details></section>
+</main>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const PRE=[["1432219",3,"1219"],["10200",1,"200"],["10",2,"0"],["112",1,"11"],["12345",2,"123"],["321",1,"21"],["10001",1,"1"],["9",0,"9"],["1111",2,"11"],["120",1,"10"]];
+const CODE=`class Solution {
+public:
+    string removeKdigits(string num, int k) {
+        stack<char> st;
+        string res = "";
+        int n = num.size();
+
+        for (int i = 0; i < n; i++) {
+            while (!st.empty() &&
+                   st.top() > num[i] && k > 0) {
+                st.pop();
+                k--;
+            }
+
+            st.push(num[i]);
+        }
+
+        while (k > 0 && !st.empty()) {
+            st.pop();
+            k--;
+        }
+
+        vector<char> temp;
+
+        while (!st.empty()) {
+            temp.push_back(st.top());
+            st.pop();
+        }
+
+        while (!temp.empty() && temp.back() == '0') {
+            temp.pop_back();
+        }
+
+        reverse(temp.begin(), temp.end());
+
+        for (int i = 0; i < temp.size(); i++) {
+            res += temp[i];
+        }
+
+        return res.empty() ? "0" : res;
+    }
+};`.split("\n");
+
+/* Independent reference: brute force over every way to keep n-k digits, pick the numerically smallest. */
+function ref(num,k){const n=num.length,keep=n-k;let best=null;
+ for(let m=0;m<(1<<n);m++){let c=0,s="";for(let j=0;j<n;j++)if(m>>j&1){c++;s+=num[j]}
+  if(c!==keep)continue;s=s.replace(/^0+/,"")||"0";
+  if(best===null||s.length<best.length||(s.length===best.length&&s<best))best=s}
+ return best}
+
+/* ---------- EVENT HISTORY ----------
+   build() runs the C++ algorithm once, line by line, and pushes a full SNAPSHOT
+   (line, k, i, stack, temp, res, per-digit status, explanation) after every operation.
+   The UI only reads snapshots, so Previous/Next simply change an index: no state is recomputed,
+   and the stack can never disagree with the code. */
+function build(num,k0){
+ const n=num.length,ev=[];let k=k0,st=[],tmp=[],res="",ci=-1;
+ const status=Array(n).fill(0);            // 0 untouched,1 current,2 kept,3 removed
+ const S=a=>a.map(x=>x.c).join("")||"∅";
+ const P=(line,phase,msg,o={})=>ev.push({line,phase,i:ci,k,rem:k0-k,st:st.slice(),tmp:tmp.slice(),res,status:status.slice(),msg,...o});
+ const kq=old=>({text:`k is ${old}. After <code>k--</code>, what is k?`,opts:[...new Set([old-1,old,old+1])].filter(x=>x>=0).sort().map(String),ans:String(old-1),expl:`k-- lowers it by one: ${old} → ${old-1}.`});
+ P(3,"Setup",`Declare empty stack <code>st</code>, <code>res = ""</code>, <code>n = ${n}</code>. We must remove <b>k = ${k}</b> digits.`);
+ for(let i=0;i<n;i++){const c=num[i];ci=i;status[i]=1;
+  P(7,"Comparing digits",`Loop: <code>i = ${i}</code>, <code>num[i] = '${c}'</code>. Compare it with the stack top.`);
+  for(;;){
+   if(!st.length){P(8,"Comparing digits",`<code>!st.empty()</code> is <b class="n">false</b> (stack is empty), so the while loop ends. Nothing to compare — push <code>'${c}'</code>.`);break}
+   const t=st[st.length-1],gt=t.c>c,ok=gt&&k>0;
+   let why=ok?"A larger digit in front of a smaller one makes the number bigger. Removing it lets the smaller digit take that more significant place.":
+    !gt&&t.c===c?"Digits are equal. The strict <code>&gt;</code> never removes an equal digit, so stop popping and push.":
+    !gt?"The top is smaller than the current digit, so the digits are increasing here. Removing the top would make the number larger. Stop popping and push.":
+    "k is 0: no removals left, so the first loop cannot pop any more. Just push.";
+   P(9,"Comparing digits",`<b>Question:</b> Should we remove <code>'${t.c}'</code>?<ul><li>Stack top: <code>'${t.c}'</code></li><li>Current digit: <code>'${c}'</code></li><li>Is ${t.c} &gt; ${c}? <b class="${gt?"y":"n"}">${gt?"Yes":"No"}</b></li><li>${gt?`Is k &gt; 0? (k = ${k}) <b class="${k>0?"y":"n"}">${k>0?"Yes":"No"}</b>`:"<code>k &gt; 0</code> is not checked (&amp;&amp; short-circuits)"}</li></ul><b>Decision:</b> ${ok?`Remove <code>'${t.c}'</code>, then decrease k from ${k} to ${k-1}.`:"Don't pop; leave the while loop."}<p class="why">${why}</p>`,
+    {dec:1,q:{text:`Stack top <code>'${t.c}'</code>, current digit <code>'${c}'</code>, k = ${k}. What happens next?`,opts:["Pop the top",`Push '${c}'`],ans:ok?"Pop the top":`Push '${c}'`,expl:why}});
+   if(!ok)break;
+   st.pop();status[t.idx]=3;
+   P(10,"Popping larger digit",`<code>st.pop()</code> removes <code>'${t.c}'</code>. Stack: <code>${S(st)}</code>`,{act:"pop",ghost:t.c});
+   k--;P(11,"Popping larger digit",`<code>k--</code>: k goes ${k+1} → <b>${k}</b>. Removed so far: ${k0-k}.`,{q:kq(k+1)});
+  }
+  const prev=st.length?st[st.length-1].c:null;st.push({c,idx:i});status[i]=2;
+  const o=[...new Set([c,prev,String((+c+3)%10)].filter(x=>x!==null))].sort();
+  P(14,"Pushing current digit",`<code>st.push('${c}')</code>. Stack: <code>${S(st)}</code> (top = '${c}').`,{act:"push",q:{text:`After pushing <code>'${c}'</code>, what is on top of the stack?`,opts:o,ans:c,expl:"push always places the new digit on top."}});
+ }
+ ci=n;
+ for(;;){const ok=k>0&&st.length>0;
+  P(17,"Removing remaining digits",ok?`<code>k &gt; 0 &amp;&amp; !st.empty()</code> → true (k = ${k}).<p class="why">No larger digit came before a smaller one, so remove from the end: the last digits are the least significant.</p>`:k===0?`k is 0 → condition false. No remaining removals.`:`Stack is empty → condition false.`);
+  if(!ok)break;
+  const t=st.pop();status[t.idx]=3;
+  P(18,"Removing remaining digits",`<code>st.pop()</code> removes <code>'${t.c}'</code>. Stack: <code>${S(st)}</code>`,{act:"pop",ghost:t.c});
+  k--;P(19,"Removing remaining digits",`<code>k--</code>: k goes ${k+1} → <b>${k}</b>.`,{q:kq(k+1)});
+ }
+ P(22,"Building result",`Declare empty <code>vector&lt;char&gt; temp</code>. Next, pour the stack into it.`);
+ for(;;){
+  if(!st.length){P(24,"Building result",`Stack is empty → loop ends. <code>temp</code> holds the digits <b>reversed</b>.`);break}
+  P(24,"Building result",`Stack not empty → true.`);
+  const t=st[st.length-1];tmp.push(t);
+  P(25,"Building result",`<code>temp.push_back(st.top())</code> copies <code>'${t.c}'</code> into temp.`,{act:"copy"});
+  st.pop();P(26,"Building result",`<code>st.pop()</code> removes <code>'${t.c}'</code> from the stack (LIFO: last in, first out).`,{act:"pop",ghost:t.c});
+ }
+ for(;;){const b=tmp[tmp.length-1],ok=tmp.length>0&&b.c==="0";
+  P(29,"Removing leading zeros",tmp.length?`<code>temp.back()</code> is <code>'${b.c}'</code>. Is it <code>'0'</code>? <b class="${ok?"y":"n"}">${ok?"Yes → remove":"No → stop"}</b>`:"temp is empty → stop.",
+   {note:`<code>'0'</code> is the <b>character</b> zero (ASCII 48). Plain <code>0</code> is the <b>integer</b> 0 (the NUL char, ASCII 0). Digit characters are never NUL, so <code>== 0</code> would never match. <code>temp</code> is reversed, so <code>back()</code> is the <i>front</i> of the number: leading zeros.`});
+  if(!ok)break;
+  tmp.pop();status[b.idx]=3;P(30,"Removing leading zeros",`<code>temp.pop_back()</code> drops the leading zero. temp: <code>${tmp.map(x=>x.c).join("")||"∅"}</code>`);
+ }
+ tmp.reverse();P(33,"Building result",`<code>reverse(temp.begin(), temp.end())</code> restores the left-to-right order: <code>${tmp.map(x=>x.c).join("")||"∅"}</code>`);
+ for(let j=0;j<tmp.length;j++){res+=tmp[j].c;P(36,"Building result",`<code>res += temp[${j}]</code> → <code>"${res}"</code>`)}
+ const out=res||"0";res=out;
+ const chk=n<=16?(ref(num,k0)===out?` <span class="y">✓ Matches brute-force reference.</span>`:` <span class="n">✗ Differs from reference!</span>`):"";
+ let c=[...new Set([out,(num.slice(0,n-k0).replace(/^0+/,"")||"0"),(num.slice(k0).replace(/^0+/,"")||"0"),"0",num])];
+ c=[out,...c.filter(x=>x!==out)].slice(0,3).sort();
+ P(39,"Complete",`<code>res.empty() ? "0" : res</code> → <b>"${out}"</b>.<div class="big">${num} → ${out}</div><p class="why">Every pop removed a digit that was larger than its right neighbour — the earliest spot where lowering a digit helps. Leftover removals came off the end, and leading zeros were stripped. That gives the smallest number after removing exactly ${k0} digit${k0===1?"":"s"}.${chk}</p>`,
+  {q:{text:`What is the final answer for num = "${num}", k = ${k0}?`,opts:c,ans:out,expl:`The stack/temp pipeline produced "${out}".`}});
+ return {ev,out};
+}
+
+/* ---------- UI state ---------- */
+let NUM="",K0=0,ev=[],idx=0,timer=null,mode="watch",pendingQ=null,fb="";const passed=new Set();
+const stopPlay=()=>{clearInterval(timer);timer=null};
+function load(num,k){NUM=num;K0=k;({ev}=build(num,k));idx=0;passed.clear();pendingQ=null;fb="";stopPlay();render()}
+function validate(){const n=$("num").value.trim(),ks=$("k").value.trim();
+ if(!/^\d+$/.test(n))return"num must contain digits 0-9 only (at least one).";
+ if(n.length>30)return"Use at most 30 digits to keep the trace readable.";
+ if(!/^\d+$/.test(ks))return"k must be a whole number ≥ 0.";
+ if(+ks>n.length)return`k must be between 0 and ${n.length} (the length of num).`;return""}
+function run(){const e=validate();$("err").textContent=e;if(!e)load($("num").value.trim(),+$("k").value.trim())}
+function setIn(n,k){$("num").value=n;$("k").value=k;run()}
+
+/* Next: in practice mode an event with a question is gated until answered. */
+function next(){if(idx>=ev.length-1)return false;const t=idx+1;
+ if(mode==="practice"&&ev[t].q&&!passed.has(t)){pendingQ=t;fb="";render();return false}
+ pendingQ=null;fb="";idx=t;render();return true}
+function prev(){if(idx>0){stopPlay();pendingQ=null;fb="";idx--;render()}}
+function answer(t,val){const q=ev[t].q;
+ if(val===q.ans){passed.add(t);pendingQ=null;fb=`<div class="fb">✓ Correct. ${q.expl}</div>`;idx=t;render()}
+ else{$("quiz").insertAdjacentHTML("beforeend",`<div class="fb bad">✗ Not quite — try again. Hint: look at the code line and current values.</div>`)}}
+
+function render(){
+ const e=ev[idx];
+ $("orig").innerHTML=[...NUM].map((c,j)=>{let s=e.status[j];if(s===2&&e.line>=33)s=4;return`<div class="d s${s}${j===e.i?" cur":""}"><b>${c}</b><small>${j}</small></div>`}).join("");
+ const items=e.st.slice().reverse();
+ $("stk").innerHTML=(e.act==="pop"&&e.ghost?`<div class="ghost">${e.ghost}</div>`:"")+(items.length?items.map((x,j)=>`<div class="it${j===0?" top":""}${j===0&&e.act==="push"?" pushIn":""}">${x.c}</div>`).join(""):`<div style="color:var(--mu)">(empty)</div>`)+`<div class="base"></div>`;
+ const cd=e.i>=0&&e.i<NUM.length?`'${NUM[e.i]}'`:"—";
+ $("stt").innerHTML=`<span>i</span><span>${e.i<0?"—":e.i}</span><span>num[i]</span><span>${cd}</span><span>k</span><span>${e.k}</span><span>removed so far</span><span>${e.rem}</span><span>stack (bottom→top)</span><span>${e.st.map(x=>x.c).join("")||"∅"}</span><span>phase</span><span><b id="phase">${e.phase}</b></span><span>step</span><span>${idx+1} / ${ev.length}</span>`;
+ const done=new Set();for(let j=0;j<=idx;j++)done.add(ev[j].line);
+ document.querySelectorAll(".ln").forEach((d,j)=>{d.className="ln"+(j===e.line?" act"+(e.dec||e.line===8?" dec":""):done.has(j)?" done":"")});
+ const a=$("L"+e.line),box=$("code");box.scrollTop=a.offsetTop-box.clientHeight/2;
+ $("msg").innerHTML=e.msg+(e.note?`<div class="note">${e.note}</div>`:"");
+ $("vec").innerHTML=e.tmp.map((x,j)=>`<div class="vb${j===e.tmp.length-1&&e.line<33?" bk":""}${e.act==="copy"&&j===e.tmp.length-1?" pushIn":""}">${x.c}<small>[${j}]</small></div>`).join("")||`<span style="color:var(--mu)">(empty)</span>`;
+ $("res").textContent=`"${e.res}"`;
+ if(pendingQ!==null){const q=ev[pendingQ].q;$("quiz").innerHTML=`<div class="q"><b>Predict:</b> ${q.text}<div class="row">${q.opts.map(o=>`<button class="s" data-v="${o.replace(/"/g,"&quot;")}">${o}</button>`).join("")}</div></div>`;
+  $("quiz").querySelectorAll("button").forEach(b=>b.onclick=()=>answer(pendingQ,b.dataset.v))}
+ else $("quiz").innerHTML=fb;
+ $("prev").disabled=idx===0;$("next").disabled=idx===ev.length-1;
+}
+
+/* ---------- wiring ---------- */
+CODE.forEach((t,j)=>{const d=document.createElement("div");d.className="ln";d.id="L"+j;const i=document.createElement("i");i.textContent=j+1;const s=document.createElement("span");s.textContent=t||" ";d.append(i,s);$("code").append(d)});
+PRE.forEach(([n,k,a],j)=>{const b=document.createElement("button");b.textContent=`"${n}", ${k} → ${a}`;b.title="expected "+a;b.onclick=()=>setIn(n,k);$("pre").append(b)});
+$("run").onclick=run;$("reset").onclick=()=>setIn("1432219",3);$("ex").onclick=()=>setIn("1432219",3);
+$("rnd").onclick=()=>{const L=2+Math.floor(Math.random()*8);let s="";for(let j=0;j<L;j++)s+=(j>0&&Math.random()<.25)?"0":String(1+Math.floor(Math.random()*9));setIn(s,Math.floor(Math.random()*(L+1)))};
+$("next").onclick=()=>{stopPlay();next()};$("prev").onclick=prev;
+$("play").onclick=()=>{if(timer)return;if(idx>=ev.length-1)idx=0;render();timer=setInterval(()=>{if(!next())stopPlay()},+$("spd").value)};
+$("pause").onclick=stopPlay;$("restart").onclick=()=>{stopPlay();idx=0;pendingQ=null;fb="";render()};
+$("end").onclick=()=>{stopPlay();pendingQ=null;fb="";idx=ev.length-1;render()};
+$("spd").onchange=()=>{if(timer){stopPlay();$("play").onclick()}};
+function setMode(m){mode=m;pendingQ=null;fb="";$("mW").className=m==="watch"?"on":"s";$("mP").className=m==="practice"?"on":"s";render()}
+$("mW").onclick=()=>setMode("watch");$("mP").onclick=()=>setMode("practice");
+["num","k"].forEach(i=>$(i).addEventListener("keydown",e=>{if(e.key==="Enter")run()}));
+
+/* Self-test: every preset through the event-history engine vs. brute force and the expected answer. */
+let ok=0;PRE.forEach(([n,k,a])=>{const o=build(n,k).out;if(o===a&&ref(n,k)===a)ok++;else console.error("FAIL",n,k,o,a)});
+$("badge").textContent=`Self-test: ${ok}/${PRE.length} presets match`;$("badge").style.color=ok===PRE.length?"var(--gr)":"var(--rd)";
+load("1432219",3);
+</script></body></html>
