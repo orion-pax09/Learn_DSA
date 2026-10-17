@@ -1,0 +1,212 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Rotting Oranges – Visual BFS Lab</title><style>
+:root{color-scheme:dark;--bg:#0d1117;--p:#161b22;--b:#30363d;--t:#e6edf3;--mu:#8b949e;--ac:#58a6ff;--fr:#3fb950;--ro:#f0883e;--nb:#d29922;--cu:#a371f7;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:12px}
+h1{font-size:1.3rem;margin:4px 0}h2{font-size:1.05rem;margin:0 0 8px}p{margin:6px 0}
+.card{background:var(--p);border:1px solid var(--b);border-radius:10px;padding:12px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.main{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:850px){.main{grid-template-columns:1fr}}
+button,select{background:#21262d;color:var(--t);border:1px solid var(--b);border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer}
+button:hover{border-color:var(--ac)}button.on{background:#1f6feb;border-color:#1f6feb}
+code,pre,.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+pre{background:#0b0f14;padding:8px;border-radius:6px;overflow-x:auto;margin:6px 0;font-size:.85rem}
+#code{overflow-x:auto;font-size:.82rem;max-height:420px;overflow-y:auto}
+.ln{white-space:pre;padding:0 6px;cursor:pointer;border-left:3px solid transparent}.ln:hover{background:#1c2330}
+.ln span.n{color:var(--mu);display:inline-block;width:2.2em;user-select:none}
+.ln.cur{background:#1f3a5f;border-left-color:var(--ac)}.ln.sel{background:#3a2f12;border-left-color:var(--nb)}
+.hl{background:var(--nb);color:#000;border-radius:3px;padding:0 2px}
+#grid{display:grid;gap:6px;max-width:330px;margin:auto}
+.c{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid transparent;transition:.2s}
+.c b{font-size:1.3rem}.c i{font-size:.65rem;opacity:.8;font-style:normal}
+.v0{background:#21262d;color:var(--mu)}.v1{background:#1e5c2c}.v2{background:#a84a0e}
+.c.cur{border-color:var(--cu);box-shadow:0 0 0 3px #a371f766}.c.nb{border-color:var(--nb);box-shadow:0 0 0 3px #d2992266}
+.c.inf{animation:inf .9s}@keyframes inf{from{background:#1e5c2c;transform:scale(1.15)}to{background:#a84a0e;transform:scale(1)}}
+.edit .c{cursor:pointer;outline:1px dashed var(--ac)}
+.lg{display:flex;gap:10px;flex-wrap:wrap;font-size:.75rem;margin-top:8px}.lg s{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px;text-decoration:none}
+#q{display:flex;gap:6px;flex-wrap:wrap;min-height:58px;padding-top:16px}
+.qi{background:#21262d;border:1px solid var(--ac);border-radius:6px;padding:3px 7px;position:relative;font-size:.8rem}
+.qi.f::before,.qi.k::after{position:absolute;top:-15px;font-size:.6rem;color:var(--ac)}.qi.f::before{content:"FRONT";left:0}.qi.k::after{content:"BACK";right:0}
+.qi.new{animation:pop .6s}.qi.out{border-color:var(--ro);animation:out .8s forwards}
+@keyframes pop{from{transform:scale(.3);background:var(--fr)}}@keyframes out{to{opacity:.2;transform:translateY(12px)}}
+#vars{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+.vr{background:#0b0f14;border-radius:6px;padding:4px 8px;font-size:.85rem}.vr.ch{background:var(--nb);color:#000}
+.ok{color:var(--fr)}.no{color:#f85149}.sk{color:var(--mu)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{padding:3px 10px;border-radius:99px;border:1px solid var(--b);cursor:pointer;font-size:.8rem}
+.chip.on{background:#1f6feb;border-color:#1f6feb}.chip.dn::after{content:" ✓";color:var(--fr)}
+.bar{height:8px;background:#21262d;border-radius:4px;overflow:hidden}.bar div{height:100%;background:var(--fr);transition:.3s}
+.opt{display:block;width:100%;text-align:left;margin:4px 0}.opt.good{border-color:var(--fr)}.opt.bad{border-color:#f85149}
+details{margin:6px 0}summary{cursor:pointer;color:var(--ac)}table{border-collapse:collapse;font-size:.85rem}td,th{border:1px solid var(--b);padding:3px 8px}
+</style></head><body>
+<h1>🍊 LeetCode 994 – Rotting Oranges: Visual BFS Lab</h1>
+<div class="card"><div class="row"><span>Progress</span><div class="bar" style="flex:1;min-width:120px"><div id="pb"></div></div><span id="pt" class="mono"></span></div>
+<div class="chips" id="chips" style="margin-top:8px"></div></div>
+
+<div class="card"><div class="row">
+<label>Test <select id="ts"></select></label><button id="ed">✏️ Edit grid</button>
+<label>Rows <select id="er"></select></label><label>Cols <select id="ec"></select></label>
+<span id="exp" class="mono"></span></div></div>
+
+<div class="card"><div class="row">
+<button id="pv">⏮ Previous</button><button id="nx">Next ⏭</button><button id="pl">▶ Play</button><button id="pa">⏸ Pause</button><button id="rs">↺ Restart</button>
+<label>Speed <select id="sp"><option value="1400">Slow</option><option value="800" selected>Normal</option><option value="300">Fast</option></select></label>
+<label>Jump to line <select id="jl"></select></label><span id="sc" class="mono"></span></div></div>
+
+<div class="main"><div>
+<div class="card"><h2>C++ code <small style="color:var(--mu)">(click any line)</small></h2><div id="code"></div></div>
+<div class="card" id="ex"></div></div>
+<div>
+<div class="card"><h2>Grid</h2><div id="grid"></div>
+<div class="lg"><span><s style="background:#21262d"></s>0 empty</span><span><s style="background:#1e5c2c"></s>1 fresh</span><span><s style="background:#a84a0e"></s>2 rotten</span><span><s style="border:2px solid var(--cu)"></s>being processed</span><span><s style="border:2px solid var(--nb)"></s>neighbor checked</span><span>cell label = value, (row, col)</span></div></div>
+<div class="card"><h2>Queue <small style="color:var(--mu)">{{row,col},time}</small></h2><div id="q"></div></div>
+<div class="card"><h2>Variables</h2><div id="vars"></div></div>
+<div class="card"><h2>Loop &amp; condition</h2><div id="cond" class="mono" style="font-size:.85rem"></div></div></div></div>
+
+<div class="card" id="stage"></div>
+<div class="card" id="done" style="display:none;border-color:var(--fr)"><h2>🎉 Course complete</h2><p>You answered every knowledge check. BFS recipe: <b>seed the queue with all sources → pop one → check 4 neighbors with bounds first → mark visited immediately → push with time+1 → verify nothing is left unreached.</b></p></div>
+
+<div class="card"><h2>Common Bugs to Avoid</h2><div id="bugs"></div></div>
+<div class="card"><h2>Complexity</h2><p><b>Time O(n × m).</b> Every cell is pushed at most once (it turns rotten the moment it is pushed, so it can never be 1 again). Each popped cell does exactly 4 neighbor checks, so the work is about 4·n·m plus the initial n·m scan.</p><p><b>Space O(n × m).</b> In the worst case (for example a grid full of rotten oranges) the queue holds every cell. The grid itself is modified in place, so no extra visited array is needed.</p></div>
+
+<script>
+const CODE=`class Solution {
+public:
+    int orangesRotting(vector<vector<int>>& grid) {
+        queue<pair<pair<int , int> , int>>Q;
+        int n = grid.size();
+        int m = grid[0].size();
+        int maxTime = 0;
+        int fresh = 0;
+        for (int i = 0 ; i < grid.size() ; i++){
+            for (int j = 0 ; j < grid[0].size() ; j++){
+                if (grid[i][j]==2){
+                    Q.push({{i,j} , 0});
+                }
+                else if (grid[i][j]==1){
+                    fresh++;
+                }
+            }
+        }
+        vector<int>rs={1,-1,0,0};
+        vector<int>cs={0,0,-1,1};
+        while(!Q.empty()){
+            int rows = Q.front().first.first;
+            int cols = Q.front().first.second;
+            int t = Q.front().second;
+            Q.pop();
+            maxTime = max(maxTime , t);
+            for (int i = 0 ; i < 4 ; i++){
+                int nc = cs[i] + cols;
+                int nr = rs[i] + rows;
+                if (nc >=0 &&nc<grid[0].size()&&nr>=0&&nr<grid.size()&&grid[nr][nc]==1){
+                    grid[nr][nc]=2;
+                    fresh--;
+                    Q.push({{nr,nc} , t+1});
+                }
+            }
+        }
+        if (fresh>0){
+            return -1;
+        }
+        return maxTime;
+    }
+};`.split("\n");
+const I={4:["Creates the queue. Each item is {{row,col},time}.","BFS needs a first-in-first-out line so oranges rot in the order they were reached."],
+5:["n = number of rows.","We need the row limit for bounds checks."],6:["m = number of columns.","We need the column limit for bounds checks."],
+7:["maxTime starts at 0.","It will remember the largest rot-time we see = the answer."],8:["fresh counts fresh oranges.","At the end, fresh &gt; 0 means some orange was never reached."],
+9:["Outer loop: row i.","We must look at every cell once."],10:["Inner loop: column j.","Together the two loops visit every (i,j)."],
+11:["Is this orange rotten?","All rotten oranges start spreading at minute 0."],12:["Push rotten orange with time 0.","Every initial source must be in the queue BEFORE BFS starts, so they spread at the same time."],
+14:["Is it fresh?","Fresh oranges are the ones we hope to rot."],15:["fresh++","We need the total count to know later whether any are left."],
+19:["Row offsets: down, up, none, none.","Four directions without four copies of code."],20:["Column offsets: none, none, left, right.","Paired with rs: index 0 = down, 1 = up, 2 = left, 3 = right."],
+21:["Repeat while the queue has oranges.","Each queued orange still has neighbors to try."],22:["Read the row of the front item.","Front().first.first = outer pair → inner pair → row."],
+23:["Read the column of the front item.","Front().first.second = column."],24:["Read the time of the front item.","Stored with the orange, because the queue order alone doesn’t tell the minute."],
+25:["Remove the front item.","We already copied its data; without pop the loop never ends."],26:["maxTime = max(maxTime, t)","The latest rot-time seen so far is the minutes needed."],
+27:["Try the 4 directions (i = 0..3).","Each direction is one neighbor."],28:["nc = cs[i] + cols","New column = current column + column offset."],29:["nr = rs[i] + rows","New row = current row + row offset."],
+30:["Four checks in one if.","Bounds are checked first (&amp;&amp; stops early), so grid[nr][nc] is never read outside the grid."],
+31:["Mark it rotten NOW.","So no other orange can infect (and enqueue) it again."],32:["One fewer fresh orange.","Keeps the count correct for the final check."],33:["Push with time t+1.","It rotted one minute after its parent; it must spread later."],
+37:["Any fresh left?","Those oranges are unreachable."],38:["Return -1.","The task says -1 when not all can rot."],40:["Return maxTime.","All oranges rotted; the last one rotted at maxTime."]};
+const K=["n","m","maxTime","fresh","rows","cols","t","nr","nc","i","j","d"];
+const rs=[1,-1,0,0],cs=[0,0,-1,1],DN=["down","up","left","right"];
+function gen(base){const g=base.map(r=>r.slice()),T=[];
+const S={q:[],cur:null,nb:null,v:{n:null,m:null,maxTime:null,fresh:null,rows:null,cols:null,t:null,nr:null,nc:null,i:null,j:null,d:null}},v=S.v;
+const sn=(line,msg,x={})=>T.push(JSON.parse(JSON.stringify(Object.assign({line,msg,g,q:S.q,v,cur:S.cur,nb:S.nb,chk:null,inf:null,pop:null,res:null},x))));
+sn(4,"An empty queue Q is created.");v.n=g.length;sn(5,"n = "+v.n+" rows.");v.m=g[0].length;sn(6,"m = "+v.m+" columns.");v.maxTime=0;sn(7,"maxTime = 0.");v.fresh=0;sn(8,"fresh = 0.");
+for(v.i=0;v.i<v.n;v.i++){sn(9,"Outer loop: row i = "+v.i+".");
+for(v.j=0;v.j<v.m;v.j++){S.cur=[v.i,v.j];const c=g[v.i][v.j];sn(10,"Inner loop: column j = "+v.j+". Looking at ("+v.i+","+v.j+") = "+c+".");
+if(c==2){sn(11,"grid["+v.i+"]["+v.j+"] == 2 → true. It is rotten.");S.q.push([v.i,v.j,0]);sn(12,"Pushed {{"+v.i+","+v.j+"},0} into the queue.")}
+else{sn(11,"grid["+v.i+"]["+v.j+"] == 2 → false.");if(c==1){sn(14,"== 1 → true. Fresh orange.");v.fresh++;sn(15,"fresh is now "+v.fresh+".")}else sn(14,"== 1 → false. Empty cell, nothing to do.")}}}
+v.i=v.j=null;S.cur=null;sn(19,"rs = {1,-1,0,0}: the row change for each direction.");sn(20,"cs = {0,0,-1,1}: the column change for each direction.");
+while(true){sn(21,S.q.length?"Queue has "+S.q.length+" item(s) → enter the loop.":"Queue is empty → BFS ends.");if(!S.q.length)break;
+const [r,c,t]=S.q[0];v.rows=r;S.cur=[r,c];sn(22,"rows = "+r+" (row of the front item).");v.cols=c;sn(23,"cols = "+c+".");v.t=t;sn(24,"t = "+t+" (minute this orange rotted).");
+const p=S.q.shift();sn(25,"Front item removed from the queue.",{pop:p});v.maxTime=Math.max(v.maxTime,t);sn(26,"maxTime = max(maxTime, "+t+") = "+v.maxTime+".");
+for(v.d=0;v.d<4;v.d++){sn(27,"Direction i = "+v.d+" ("+DN[v.d]+").");v.nc=cs[v.d]+c;sn(28,"nc = cs["+v.d+"] + cols = "+cs[v.d]+" + "+c+" = "+v.nc+".");v.nr=rs[v.d]+r;S.nb=[v.nr,v.nc];sn(29,"nr = rs["+v.d+"] + rows = "+rs[v.d]+" + "+r+" = "+v.nr+".");
+const ch=[];let ok=true;const add=(l,f,tx)=>{if(ok){const x=f();ch.push([l,tx(),x]);ok=x}else ch.push([l,"skipped (earlier check failed)",null])};
+add("1. nc >= 0",()=>v.nc>=0,()=>v.nc+" >= 0");add("2. nc < m",()=>v.nc<v.m,()=>v.nc+" < "+v.m);
+add("3. 0 <= nr < n",()=>v.nr>=0&&v.nr<v.n,()=>"0 <= "+v.nr+" < "+v.n);add("4. grid[nr][nc] == 1",()=>g[v.nr][v.nc]==1,()=>"grid["+v.nr+"]["+v.nc+"] is "+g[v.nr][v.nc]);
+sn(30,ok?"All four checks pass → fresh neighbor found.":"A check failed → skip this neighbor.",{chk:ch});
+if(ok){g[v.nr][v.nc]=2;sn(31,"("+v.nr+","+v.nc+") becomes rotten.",{inf:[v.nr,v.nc]});v.fresh--;sn(32,"fresh is now "+v.fresh+".");S.q.push([v.nr,v.nc,t+1]);sn(33,"Pushed {{"+v.nr+","+v.nc+"},"+(t+1)+"}.")}
+S.nb=null}
+v.d=null;S.nb=null}
+S.cur=null;sn(37,"fresh = "+v.fresh+(v.fresh>0?" > 0 → some orange was never reached.":" → nothing left."));
+if(v.fresh>0)sn(38,"Return -1.",{res:-1});else sn(40,"Return maxTime = "+v.maxTime+".",{res:v.maxTime});return T}
+function ref(g){g=g.map(r=>r.slice());let cur=[],f=0,t=0;g.forEach((r,i)=>r.forEach((x,j)=>{if(x==2)cur.push([i,j]);if(x==1)f++}));
+while(cur.length&&f){const nx=[];for(const[i,j]of cur)for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]])if(g[i+a]&&g[i+a][j+b]==1){g[i+a][j+b]=2;f--;nx.push([i+a,j+b])}cur=nx;t++}return f?-1:t}
+const TESTS={"A – Basic spread (all rot)":[[2,1,1],[1,1,0],[0,1,1]],"B – Unreachable orange":[[2,1,1],[0,1,1],[1,0,1]],"C – Two sources, one stuck":[[2,1,1],[0,1,1],[1,0,2]],"D – Two sources, all rot":[[2,1,1],[0,1,1],[1,1,2]],"E – Your grid A, bottom-right → 0":[[2,1,1],[1,1,0],[0,1,0]]};
+let base,T,idx=0,tm=null,sel=null,edit=false,stg=0;const dn=new Set(),ans={};
+const $=id=>document.getElementById(id),esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function stop(){clearInterval(tm);tm=null}
+function load(g){base=g.map(r=>r.slice());T=gen(base);idx=0;sel=null;stop();$("er").value=g.length;$("ec").value=g[0].length;R()}
+function R(){const s=T[idx],p=T[idx-1];
+const ch=new Set(K.filter(k=>p&&p.v[k]!==s.v[k]));
+$("code").innerHTML=CODE.map((l,i)=>{const n=i+1;let h=esc(l);if(n==s.line&&sel==null)h=h.replace(/\b(n|m|maxTime|fresh|rows|cols|t|nr|nc|i|j)\b/g,w=>ch.has(w)||(w=="i"&&ch.has("d"))?'<span class="hl">'+w+"</span>":w);
+return '<div class="ln'+(n==s.line?" cur":"")+(n==sel?" sel":"")+'" data-l="'+n+'"><span class="n">'+n+"</span>"+h+"</div>"}).join("");
+const L=sel||s.line,inf=I[L]||["Structural line (brace / declaration).","It opens or closes a block; no data changes."];
+$("ex").innerHTML="<h2>Line "+L+(sel?" (selected)":"")+"</h2><p><b>What:</b> "+inf[0]+"</p><p><b>Why does this line exist?</b> "+inf[1]+"</p>"+(sel?"<p class='sk'>Press Next/Previous to return to the trace.</p>":"<p style='color:var(--nb)'>▶ "+esc(s.msg)+"</p>");
+const g=s.g,m=g[0].length;$("grid").className=edit?"edit":"";$("grid").style.cssText="display:grid;gap:6px;max-width:330px;margin:auto;grid-template-columns:repeat("+m+",1fr)";
+$("grid").innerHTML=g.map((r,i)=>r.map((x,j)=>{const e=(a)=>a&&a[0]==i&&a[1]==j;return '<div class="c v'+x+(e(s.cur)?" cur":"")+(e(s.nb)?" nb":"")+(e(s.inf)&&s.line==31?" inf":"")+'" data-r="'+i+'" data-c="'+j+'"><b>'+x+"</b><i>("+i+","+j+")</i></div>"}).join("")).join("");
+const nw=s.line==33?s.q.length-1:-1;
+$("q").innerHTML=(s.pop?'<div class="qi out">{{'+s.pop[0]+","+s.pop[1]+"},"+s.pop[2]+"} popped</div>":"")+(s.q.length?s.q.map((x,i)=>'<div class="qi mono'+(i==0?" f":"")+(i==s.q.length-1?" k":"")+(i==nw?" new":"")+'">{{'+x[0]+","+x[1]+"},"+x[2]+"}</div>").join(""):'<span class="sk">(empty)</span>');
+$("vars").innerHTML=K.map(k=>'<div class="vr mono'+(ch.has(k)?" ch":"")+'">'+k+" = "+(s.v[k]===null?"—":s.v[k])+"</div>").join("");
+let c="";if(s.v.d!==null)c+="direction i = "+s.v.d+" ("+DN[s.v.d]+")<br>";else if(s.v.i!==null)c+="scan: i = "+s.v.i+(s.v.j!==null?", j = "+s.v.j:"")+"<br>";
+if(s.line==21)c+="while(!Q.empty()) → queue size "+s.q.length+"<br>";if(s.nb&&(s.nb[0]<0||s.nb[0]>=s.v.n||s.nb[1]<0||s.nb[1]>=s.v.m))c+="<span class='no'>neighbor ("+s.nb+") is outside the grid</span><br>";
+if(s.chk)c+=s.chk.map(x=>'<span class="'+(x[2]===null?"sk":x[2]?"ok":"no")+'">'+(x[2]===null?"–":x[2]?"✔":"✘")+" "+x[0]+" → "+x[1]+"</span>").join("<br>");
+if(s.res!==null)c+="<b>Result: "+s.res+"</b> (independent check: "+ref(base)+(s.res==ref(base)?" ✔)":" ✘)");
+$("cond").innerHTML=c||'<span class="sk">—</span>';$("sc").textContent="step "+(idx+1)+"/"+T.length;$("exp").textContent="Expected answer: "+ref(base);
+const ls=[...new Set(T.map(x=>x.line))];$("jl").innerHTML=ls.map(l=>'<option value="'+l+'"'+(l==s.line?" selected":"")+">Line "+l+"</option>").join("")}
+const ST=[["1 · The problem","Every minute, each rotten orange (2) rots the fresh oranges (1) touching it: up, down, left, right. We want the minutes until no fresh orange remains, or -1 if some can never be reached. Because all rotten oranges spread at the same time, we need the minimum total time, and BFS (spreading outward layer by layer) measures exactly that.","BFS reaches cells in order of distance, so the first time we reach an orange is its earliest rot time.",21,"","Why use BFS here?",["It reaches nearer oranges first, so times are minimal","It uses less code than anything else","It sorts the grid"],0,"Layer-by-layer spreading matches minute-by-minute rotting."],
+["2 · The queue","<code>queue&lt;pair&lt;pair&lt;int,int&gt;,int&gt;&gt; Q;</code> is a line of items. Each item is a pair: the <b>outer pair</b> = {coordinates, time}; the <b>inner pair</b> = {row, column}.","We need position AND time for each orange, so we pack three ints into nested pairs.",4,"<pre>{{1,2},3}  →  inner {1,2} = row 1, col 2\n             outer second = time 3</pre>","What does {{1,2},3} mean?",["row 1, column 2, time 3","row 2, column 1, time 3","row 3, column 1, time 2"],0,"Inner pair is {row,col}; the outer pair’s second value is time."],
+["3 · Variables","<b>n</b> = rows, <b>m</b> = columns, <b>maxTime</b> = latest minute any orange rotted, <b>fresh</b> = fresh oranges not yet rotted. Watch them change in the Variables panel.","n and m are used for bounds; fresh decides -1; maxTime is the answer.",5,"","What does fresh track?",["Fresh oranges still not rotten","Number of queue items","Total grid size"],0,"It starts as the fresh count and drops by 1 for every orange that rots."],
+["4 · Initial scan","Two nested for loops visit every cell. A 2 is pushed with time 0; a 1 increments fresh. We push <b>all</b> rotten oranges first, then start BFS.","All initial rotten oranges spread at the same moment (minute 0). Starting BFS early would delay some sources and give wrong times.",9,"","Why enqueue ALL rotten oranges before BFS?",["They all start spreading at minute 0 together","To make the grid smaller","To count fresh faster"],0,"Multi-source BFS keeps every layer at the right minute."],
+["5 · Direction arrays","rs and cs hold row and column changes. Index i gives one direction. A neighbor is <code>nr = rows + rs[i]</code>, <code>nc = cols + cs[i]</code>.","A loop over 4 offsets replaces 4 copy-pasted blocks.",19,"DIRTABLE","Which is the correct neighbor access?",["grid[nr][nc]","grid[nc][nr]","grid[rows][nc]"],0,"Row always comes first: grid[row][column]."],
+["6 · The BFS loop","<code>while(!Q.empty())</code>: read the front item (rows, cols, t), then <code>Q.pop()</code> removes it, then maxTime = max(maxTime, t).","The time is stored per orange because the queue order doesn’t say which minute it belongs to.",22,"","Why store t in the queue item?",["Each orange rots at its own minute","To save memory","To sort the queue"],0,"Children get t+1, so each item must carry its own time."],
+["7 · Checking neighbors","For each of 4 directions compute nr, nc, then check: (1) nc ≥ 0, (2) nc &lt; m, (3) 0 ≤ nr &lt; n, (4) grid[nr][nc] == 1. Bounds first!","&amp;&amp; stops at the first false check, so grid[nr][nc] is never read outside the grid.",27,"","What if grid[nr][nc]==1 were checked first with nr = -1?",["Reading outside the vector: undefined behavior","It would just be false","It would return -1"],0,"Out-of-range indexing in C++ is undefined behavior, so bounds go first."],
+["8 · Infecting","<code>grid[nr][nc]=2</code>, <code>fresh--</code>, <code>Q.push({{nr,nc},t+1})</code>. Marking immediately means the cell is no longer 1, so no other rotten neighbor can push it a second time.","Each cell is queued once; fresh stays accurate; the child’s time is parent + 1.",31,"","Why set grid[nr][nc]=2 before pushing?",["So the cell can’t be queued twice","To change the answer","To free memory"],0,"A cell that is already 2 fails check 4 for everyone else."],
+["9 · Final result","<code>if(fresh&gt;0) return -1;</code> else <code>return maxTime;</code>. Compare: load <button onclick='pick(0)'>Test A</button> (all rot → 4) with <button onclick='pick(1)'>Test B</button> (one stuck → -1) and step to the end.","maxTime alone can look fine even when an orange was never reached, so fresh must be checked first.",37,"","When do we return -1?",["Some fresh orange remains after BFS","maxTime is 0","The queue starts empty"],0,"Unreached fresh oranges mean fresh &gt; 0."]];
+function pick(i){$("ts").selectedIndex=i;load(TESTS[$("ts").value])}
+function RS(){const s=ST[stg];let vis=s[4];if(vis=="DIRTABLE")vis="<table><tr><th>i</th><th>rs</th><th>cs</th><th>nr</th><th>nc</th><th>move</th></tr>"+rs.map((r,i)=>"<tr><td>"+i+"</td><td>"+r+"</td><td>"+cs[i]+"</td><td>rows"+(r?(r>0?"+1":"-1"):"")+"</td><td>cols"+(cs[i]?(cs[i]>0?"+1":"-1"):"")+"</td><td>"+DN[i]+"</td></tr>").join("")+"</table>";
+$("stage").innerHTML="<h2>"+s[0]+"</h2><p>"+s[1]+"</p>"+vis+"<p><b>Why does it exist?</b> "+s[2]+"</p><button onclick='sel=null;jumpL("+s[3]+")'>🎯 Show this in the trace</button><hr style='border-color:var(--b)'><p><b>Check:</b> "+s[5]+"</p>"+s[6].map((o,i)=>{const a=ans[stg];return "<button class='opt"+(a!==undefined&&i==s[7]?" good":a==i?" bad":"")+"' onclick='an("+i+")'>"+o+"</button>"}).join("")+(ans[stg]!==undefined?"<p class='"+(ans[stg]==s[7]?"ok":"no")+"'>"+(ans[stg]==s[7]?"Correct! ":"Not quite. ")+s[8]+"</p>":"")+"<div class='row'><button onclick='st(stg-1)'>← Previous stage</button><button onclick='st(stg+1)'>Next stage →</button></div>";
+$("chips").innerHTML=ST.map((x,i)=>"<span class='chip"+(i==stg?" on":"")+(dn.has(i)?" dn":"")+"' onclick='st("+i+")'>"+x[0]+"</span>").join("");
+$("pb").style.width=dn.size/9*100+"%";$("pt").textContent=dn.size+"/9";$("done").style.display=dn.size==9?"block":"none"}
+function an(i){ans[stg]=i;if(i==ST[stg][7])dn.add(stg);RS()}
+function st(i){if(i<0||i>8)return;stg=i;RS()}
+function jumpL(l){let k=T.findIndex((x,j)=>j>=idx&&x.line==l);if(k<0)k=T.findIndex(x=>x.line==l);if(k>=0){idx=k;sel=null;R()}}
+$("nx").onclick=()=>{if(idx<T.length-1)idx++;sel=null;R()};$("pv").onclick=()=>{if(idx>0)idx--;sel=null;R()};
+function play(){stop();tm=setInterval(()=>{if(idx<T.length-1){idx++;sel=null;R()}else stop()},+$("sp").value)}
+$("pl").onclick=()=>{if(idx>=T.length-1)idx=0;play();R()};$("pa").onclick=stop;$("sp").onchange=()=>{if(tm)play()};
+$("rs").onclick=()=>{stop();idx=0;sel=null;R()};$("jl").onchange=e=>jumpL(+e.target.value);
+$("code").onclick=e=>{const d=e.target.closest(".ln");if(d){sel=+d.dataset.l;R()}};
+$("ts").innerHTML=Object.keys(TESTS).map(k=>"<option>"+k+"</option>").join("");$("ts").onchange=()=>load(TESTS[$("ts").value]);
+$("er").innerHTML=$("ec").innerHTML=[1,2,3,4,5,6].map(n=>"<option>"+n+"</option>").join("");
+function resize(){const r=+$("er").value,c=+$("ec").value;load(Array.from({length:r},(_,i)=>Array.from({length:c},(_,j)=>(base[i]&&base[i][j]!==undefined)?base[i][j]:1)))}
+$("er").onchange=$("ec").onchange=resize;
+$("ed").onclick=()=>{edit=!edit;$("ed").className=edit?"on":"";stop();idx=0;sel=null;R()};
+$("grid").onclick=e=>{const d=e.target.closest(".c");if(!d||!edit)return;const r=+d.dataset.r,c=+d.dataset.c;base[r][c]=(base[r][c]+1)%3;T=gen(base);idx=0;sel=null;R()};
+const BUGS=[["= vs ==","if (grid[nr][nc] = 1)","if (grid[nr][nc] == 1)","Single = assigns and is always true; == compares. And in the update line, grid[nr][nc] == 2 would change nothing, so it must be grid[nr][nc] = 2."],
+["grid[nc][nr]","grid[nc][nr] == 1","grid[nr][nc] == 1","Row first, column second. Swapping crashes or reads wrong cells on non-square grids."],
+["Forgot fresh--","grid[nr][nc]=2;\nQ.push({{nr,nc},t+1});","grid[nr][nc]=2;\nfresh--;\nQ.push({{nr,nc},t+1});","fresh never drops, so the answer is always -1 when any orange was fresh."],
+["Forgot to enqueue","grid[nr][nc]=2;\nfresh--;","grid[nr][nc]=2;\nfresh--;\nQ.push({{nr,nc},t+1});","The new orange never spreads, so rot stops after one step."],
+["Enqueue before marking","Q.push({{nr,nc},t+1});\n/* grid not changed */","grid[nr][nc]=2;\nQ.push({{nr,nc},t+1});","Another neighbor sees it still as 1 and pushes it again: duplicates and wrong times."],
+["Wrong boundary","nc <= grid[0].size() && nr <= grid.size()","nc < grid[0].size() && nr < grid.size()","Valid indices are 0 … size-1. Using <= reads one past the end. Also never mix n and m."],
+["No fresh check","return maxTime;","if (fresh>0) return -1;\nreturn maxTime;","An unreachable orange leaves maxTime looking valid; only fresh tells the truth."]];
+$("bugs").innerHTML=BUGS.map(b=>"<details><summary>"+b[0]+"</summary><pre>// broken\n"+esc(b[1])+"</pre><details><summary>Reveal correction</summary><pre>// fixed\n"+esc(b[2])+"</pre><p>"+b[3]+"</p></details></details>").join("");
+load(TESTS["A – Basic spread (all rot)"]);RS();
+</script></body></html>
