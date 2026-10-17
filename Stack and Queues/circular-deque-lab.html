@@ -1,0 +1,184 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LeetCode 641 – Circular Deque Lab</title>
+<style>
+:root{--bg:#f6f7f9;--cd:#fff;--tx:#1b2433;--mu:#5d6b82;--bd:#d9dfe8;--fr:#d97706;--rr:#0f766e;--ac:#3b4fd8;--ok:#15803d;--ng:#b91c1c;--cb:#10172a}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1420;--cd:#182033;--tx:#e8ecf4;--mu:#9aa8c2;--bd:#2c3752;--fr:#f59e0b;--rr:#2dd4bf;--ac:#8b9bff;--ok:#4ade80;--ng:#f87171}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.55 system-ui,Segoe UI,sans-serif}
+header{padding:14px 20px;border-bottom:1px solid var(--bd)}h1{margin:0;font-size:20px}header p{margin:2px 0 0;color:var(--mu);font-size:14px}
+nav{display:flex;gap:4px;overflow-x:auto;padding:8px 14px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--bg);z-index:5}
+nav button{white-space:nowrap;border:0;background:none;color:var(--mu);padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:14px}nav button.on{background:var(--ac);color:#fff}
+main{max-width:1050px;margin:auto;padding:16px}section{display:none}section.on{display:block}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin:0 0 14px}h2{margin:0 0 6px;font-size:18px}h3{margin:8px 0 4px;font-size:15px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:800px){.g2{grid-template-columns:1fr}}
+button.b,select,input,textarea{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--bd);border-radius:7px;background:var(--cd);color:var(--tx)}
+button.b{cursor:pointer;background:var(--ac);color:#fff;border-color:var(--ac);margin:2px}button.b.s{background:var(--cd);color:var(--tx);border-color:var(--bd)}button.b:disabled{opacity:.4;cursor:default}
+input[type=number]{width:70px}textarea{width:100%;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+.arr{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.cell{width:76px;border:2px solid var(--bd);border-radius:8px;text-align:center;padding:2px;background:var(--cd);transition:background .3s,border-color .3s}
+.cell small{display:block;color:var(--mu);font-size:12px}.cell b{display:block;font-size:20px;min-height:30px;line-height:30px}.cell.e b{font-size:11px;color:var(--mu);font-weight:500}
+.cell i{display:block;font-style:normal;font-size:12px;height:16px;font-weight:600}.cell i.f{color:var(--fr)}.cell i.r{color:var(--rr)}
+.cell.h{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 18%,var(--cd));animation:p .5s}@keyframes p{50%{transform:translateY(-6px)}}
+@media(prefers-reduced-motion:reduce){.cell.h{animation:none}}
+.st{font-size:14px;color:var(--mu)}.st b{color:var(--tx)}#ss{font-size:16px;color:var(--tx);min-height:56px;padding:8px 10px;border-left:4px solid var(--ac);background:color-mix(in srgb,var(--ac) 8%,var(--cd));border-radius:6px;margin:6px 0}.calc{font-family:ui-monospace,Consolas,monospace;background:color-mix(in srgb,var(--ac) 10%,var(--cd));padding:6px 10px;border-radius:6px;margin:6px 0;min-height:32px;font-size:14px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;margin-right:6px;color:#fff}.t1{background:#b91c1c}.t2{background:#d97706}.t3{background:#64748b}
+pre.code{background:var(--cb);color:#dbe4ff;border-radius:8px;padding:8px 0;margin:0;font:13px/1.6 ui-monospace,Consolas,monospace;overflow-x:auto}pre.code div{padding:0 12px;white-space:pre}pre.code div.on{background:#3b4fd855;box-shadow:inset 3px 0 #fbbf24}
+.kw{color:#c4a0ff}.nm{color:#7dd3fc}.ok{color:var(--ok);font-weight:600}.ng{color:var(--ng);font-weight:600}.mu{color:var(--mu)}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid var(--bd);padding:5px 8px;text-align:left;vertical-align:top}
+.cmd{display:inline-block;padding:2px 8px;margin:2px;border:1px solid var(--bd);border-radius:6px;font:13px ui-monospace,monospace}.cmd.on{background:var(--ac);color:#fff}.cmd.d{opacity:.6}
+.fd{opacity:0;animation:fi .5s forwards}@keyframes fi{to{opacity:1}}ul{padding-left:20px;margin:4px 0}
+</style></head><body>
+<header><h1>LeetCode 641 · Design Circular Deque — interactive lab</h1><p>One convention throughout: <b>front = 0, rear = k − 1, count = 0</b> at start. Variables: <code>cap, front, rear, count</code>.</p></header>
+<nav id="nav"></nav><main id="main"></main>
+<script>
+const $=s=>document.querySelector(s),cl=o=>JSON.parse(JSON.stringify(o)),fresh=k=>({k,a:Array(k).fill(null),f:0,r:k-1,c:0});
+const M={L:'insertLast',F:'insertFront',f:'deleteFront',l:'deleteLast',g:'getFront',r:'getRear',e:'isEmpty',u:'isFull'};
+const NEEDV={insertLast:1,insertFront:1};
+/* ---------- engine: every operation returns a list of steps (text, C++ line, snapshot) ---------- */
+function run(s,op,v){const st=cl(s),k=st.k,o=[],ev=[];let ret=null;const mod=x=>((x%k)+k)%k;
+ const P=(t,ln,calc,hl)=>o.push({t,ln,calc:calc||'',hl:hl||[],s:cl(st)});
+ const full=st.c==k,emp=st.c==0;
+ if(op=='ctor'){P(`Create ${k} empty boxes (indices 0..${k-1}).`,5,`cap = ${k}`);st.f=0;st.r=k-1;st.c=0;P(`Start: front = 0, rear = k-1 = ${k-1}, count = 0. The first insert will land correctly from either end.`,6,`front=0, rear=${k-1}, count=0`);return{o,ret,end:st,ev,op}}
+ P(`Before: front=${st.f}, rear=${st.r}, count=${st.c}, capacity=${k}`,0,'');
+ if(op=='insertLast'||op=='insertFront'){const L=op=='insertLast';
+  P(`Is it full? count == cap → ${st.c} == ${k} → ${full}`,1,`count == cap → ${full}`,[st.f,st.r]);
+  if(full){ev.push('full');ret=false;P('Full, so we must NOT touch any index. Return false.',1,'return false')}
+  else{const old=L?st.r:st.f,n=L?mod(old+1):mod(old-1);if(L?old+1>=k:old-1<0)ev.push('wrap');if(k==1)ev.push('cap1');
+   if(L){st.r=n;P(`Move rear forward one step, wrapping with %.`,2,`rear = (${old} + 1) % ${k} = ${old+1} % ${k} = ${n}`,[old,n])}
+   else{st.f=n;P(`Move front backward one step. Add cap first so it never goes negative.`,2,`front = (${old} - 1 + ${k}) % ${k} = ${old-1+k} % ${k} = ${n}`,[old,n])}
+   st.a[n]=v;P(`Store ${v} in box ${n}.`,3,`a[${n}] = ${v}`,[n]);st.c++;P(`One more element: count = ${st.c}.`,4,`count++ → ${st.c}`,[n]);ret=true;P('Return true (success).',5,'return true',[n])}}
+ else if(op=='deleteFront'||op=='deleteLast'){const F=op=='deleteFront';
+  P(`Is it empty? count == 0 → ${st.c} == 0 → ${emp}`,1,`count == 0 → ${emp}`,[st.f,st.r]);
+  if(emp){ev.push('empty');ret=false;P('Nothing to delete. Return false, change nothing.',1,'return false')}
+  else{const old=F?st.f:st.r,n=F?mod(old+1):mod(old-1);if(F?old+1>=k:old-1<0)ev.push('wrap');if(k==1)ev.push('cap1');
+   if(F){st.f=n;P('Front moves forward: the old front is no longer part of the deque.',2,`front = (${old} + 1) % ${k} = ${n}`,[old,n])}
+   else{st.r=n;P('Rear moves backward: the old rear leaves the deque.',2,`rear = (${old} - 1 + ${k}) % ${k} = ${old-1+k} % ${k} = ${n}`,[old,n])}
+   const was=st.a[old];st.a[old]=null;st.c--;P(`Remove ${was} (box ${old}); count = ${st.c}. (C++ keeps the stale number in memory, but count says it is not part of the deque, so we show EMPTY.)`,3,`count-- → ${st.c}`,[old]);ret=true;P('Return true.',4,'return true',[n])}}
+ else if(op=='getFront'||op=='getRear'){const F=op=='getFront';
+  P(`Is it empty? count == 0 → ${emp}`,1,`count == 0 → ${emp}`,[st.f,st.r]);
+  if(emp){ev.push('empty','getter');ret=-1;P('Empty: there is no element, so return -1.',1,'return -1')}
+  else{ev.push('getter');const i=F?st.f:st.r;ret=st.a[i];P(`${F?'front':'rear'} = ${i}, so read a[${i}] without changing anything.`,2,`return a[${i}] = ${ret}`,[i])}}
+ else if(op=='isEmpty'){ret=emp;P(`count == 0 → ${st.c} == 0 → ${emp}`,1,`return ${emp}`)}
+ else{ret=full;P(`count == cap → ${st.c} == ${k} → ${full}`,1,`return ${full}`)}
+ return{o,ret,end:st,ev,op}}
+function exec(k,toks){let s=fresh(k),res=[];for(const[op,v]of toks){const r=run(s,op,v);s=r.end;res.push({op,v,ret:r.ret,s,ev:r.ev})}return res}
+function toks(str){return str.trim().split(/\s+/).filter(Boolean).map(t=>[M[t[0]],+t.slice(1)||0])}
+/* ---------- drawing ---------- */
+function draw(st,hl=[]){return`<div class="arr">${st.a.map((v,i)=>`<div class="cell ${hl.includes(i)?'h':''} ${v==null?'e':''}"><i class="f">${i==st.f?'▼ front':''}</i><small>[${i}]</small><b>${v==null?'EMPTY':v}</b><i class="r">${i==st.r?'▲ rear':''}</i></div>`).join('')}</div>`}
+const stats=s=>`<div class="st">count <b>${s.c}</b> / cap <b>${s.k}</b> · front=<b>${s.f}</b> rear=<b>${s.r}</b> · <b>${s.c==0?'EMPTY':s.c==s.k?'FULL':'neither'}</b></div>`;
+const rs=r=>r===null?'(void)':String(r);
+function hi(l){return l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\b(bool|int|if|return|true|false|class|public|vector)\b/g,'<span class=kw>$1</span>').replace(/\b(\d+)\b/g,'<span class=nm>$1</span>')}
+const CODE={ctor:['class MyCircularDeque {','  vector<int> a;','  int cap, front, rear, count;','public:','  MyCircularDeque(int k) {','    cap = k;  a.assign(k, 0);','    front = 0;  rear = k - 1;  count = 0;','  }'],
+insertFront:['bool insertFront(int value) {','  if (isFull()) return false;','  front = (front - 1 + cap) % cap;','  a[front] = value;','  count++;','  return true;','}'],
+insertLast:['bool insertLast(int value) {','  if (isFull()) return false;','  rear = (rear + 1) % cap;','  a[rear] = value;','  count++;','  return true;','}'],
+deleteFront:['bool deleteFront() {','  if (isEmpty()) return false;','  front = (front + 1) % cap;','  count--;','  return true;','}'],
+deleteLast:['bool deleteLast() {','  if (isEmpty()) return false;','  rear = (rear - 1 + cap) % cap;','  count--;','  return true;','}'],
+getFront:['int getFront() {','  if (isEmpty()) return -1;','  return a[front];','}'],getRear:['int getRear() {','  if (isEmpty()) return -1;','  return a[rear];','}'],
+isEmpty:['bool isEmpty() {','  return count == 0;','}'],isFull:['bool isFull() {','  return count == cap;','}']};
+const codeHtml=(op,ln)=>`<pre class="code">${CODE[op].map((l,i)=>`<div class="${i===ln?'on':''}">${hi(l)}</div>`).join('')}</pre>`;
+const INFO={insertLast:['Exam Critical','Put a new value at the back.','Not full (count < cap).','rear','rear = (rear + 1) % cap','Stored at a[rear]; count++','true on success, false if full','Full → return false, nothing changes'],
+insertFront:['Exam Critical','Put a new value at the front.','Not full (count < cap).','front','front = (front - 1 + cap) % cap','Stored at a[front]; count++','true / false','Full → return false'],
+deleteFront:['Exam Critical','Remove the front value.','Not empty (count > 0).','front','front = (front + 1) % cap','Removed logically; count--','true / false','Empty → return false'],
+deleteLast:['Exam Critical','Remove the back value.','Not empty.','rear','rear = (rear - 1 + cap) % cap','Removed logically; count--','true / false','Empty → return false'],
+getFront:['Important','Peek at the front value (no change).','Not empty.','none','—','Nothing stored/removed','a[front], or -1 if empty','Empty → -1'],getRear:['Important','Peek at the back value (no change).','Not empty.','none','—','Nothing stored/removed','a[rear], or -1 if empty','Empty → -1'],
+isEmpty:['Exam Critical','Are there zero elements?','—','none','count == 0','Nothing','true / false','—'],isFull:['Exam Critical','Is every box used?','—','none','count == cap','Nothing','true / false','—']};
+const LAB=['Label','What it does','Checked first','Index that changes','Formula','Store / remove?','Returns','If full/empty'];
+/* ---------- tabs ---------- */
+const TABS=['1 Understand','2 Index math','3 Simulator + C++','4 Commands','5 Debug','6 Practice','7 Review'];
+$('#nav').innerHTML=TABS.map((t,i)=>`<button onclick="tab(${i})">${t}</button>`).join('');
+$('#main').innerHTML=TABS.map((t,i)=>`<section id="s${i}"></section>`).join('');
+function tab(i){document.querySelectorAll('nav button').forEach((b,j)=>b.classList.toggle('on',i==j));document.querySelectorAll('section').forEach((s,j)=>s.classList.toggle('on',i==j))}
+/* ---------- 1 Understand ---------- */
+let N,C,nv,nm,cm;
+$('#s0').innerHTML=`<div class="card"><h2>The problem</h2><p>Build a <b>deque</b> (say "deck") of fixed size <code>k</code>, using <code>MyCircularDeque(k)</code>, with: insertFront, insertLast, deleteFront, deleteLast, getFront, getRear, isEmpty, isFull.</p></div>
+<div class="g2"><div class="card"><span class="tag t2">Important</span><h3>Stack vs queue vs deque</h3><ul><li><b>Stack:</b> add and remove at the same end (LIFO).</li><li><b>Queue:</b> add at the back, remove from the front (FIFO).</li><li><b>Deque:</b> add and remove at <i>both</i> ends — because we keep track of both a front position and a rear position.</li></ul></div>
+<div class="card"><span class="tag t1">Exam Critical</span><h3>What "circular" and <code>k</code> mean</h3><ul><li><code>k</code> = capacity: the fixed number of boxes in the array. It never grows.</li><li>Circular: after the last box comes box 0 again, like a clock. Free boxes at the start get reused.</li></ul></div></div>
+<div class="card"><h2>Try it: wasted space vs reuse</h2><p class="mu">Click Enqueue 5 times, Dequeue 2 times, then Enqueue again. Same actions on both arrays.</p>
+<button class="b" onclick="lp(1)">Enqueue</button><button class="b" onclick="lp(0)">Dequeue</button><button class="b s" onclick="lreset()">Reset</button>
+<h3>Normal array (indexes only move right)</h3><div id="ln"></div><div class="st" id="lnm"></div><h3>Circular array (index wraps with %)</h3><div id="lc"></div><div class="st" id="lcm"></div></div>`;
+function lreset(){N={k:5,a:Array(5).fill(null),f:0,r:-1,c:0};C=fresh(5);nv=1;nm=cm='Start clicking.';lr()}
+function lr(){$('#ln').innerHTML=draw(N);$('#lc').innerHTML=draw(C);$('#lnm').innerHTML=nm;$('#lcm').innerHTML=cm}
+function lp(e){if(e){const v=nv++;if(N.r<4){N.a[++N.r]=v;N.c++;nm=`Placed ${v}.`}else nm='<span class=ng>Rear hit the right wall — "full" even though boxes on the left are free (wasted).</span>';const r=run(C,'insertLast',v);C=r.end;cm=r.ret?`<span class=ok>Placed ${v}; rear wrapped if needed.</span>`:'<span class=ng>Truly full (count = 5).</span>'}
+ else{if(N.c){N.a[N.f++]=null;N.c--;nm='Removed front; that box is now wasted forever.'}else nm='Empty.';const r=run(C,'deleteFront');C=r.end;cm=r.ret?'Removed front; the box can be reused.':'Empty.'}lr()}
+lreset();
+/* ---------- 2 Index math ---------- */
+let IM=null;
+$('#s1').innerHTML=`<div class="card"><span class="tag t1">Exam Critical</span><h2>Why % ?</h2><p>The % operator gives the remainder, so numbers wrap around a clock of size <code>cap</code>. Forward: <code>(index + 1) % cap</code>. Backward: <code>(index - 1 + cap) % cap</code>. The "+ cap" matters because in C++ <code>-1 % 5</code> is <b>-1</b>, not 4 — a negative index is invalid. Adding cap first makes the number positive; % then removes the extra lap.</p>
+<p>Capacity <input id="mc" type="number" min="2" max="10" value="5"> Start index <input id="mi" type="number" min="0" max="9" value="4">
+<button class="b" onclick="im('f')">Forward</button><button class="b" onclick="im('b')">Backward (correct)</button><button class="b s" onclick="im('x')">Backward (no + cap)</button></p>
+<div id="imv"></div><div class="calc" id="imc">Pick an operation.</div><button class="b" id="imr" onclick="imr()" disabled>Reveal result</button> <span id="imo"></span></div>`;
+function im(m){const k=Math.max(2,Math.min(10,+$('#mc').value||5)),i=Math.max(0,Math.min(k-1,+$('#mi').value||0));IM={k,i,m};
+ const t={f:`(${i} + 1) % ${k} = ${i+1} % ${k}`,b:`(${i} - 1 + ${k}) % ${k} = ${i-1+k} % ${k}`,x:`(${i} - 1) % ${k} = ${i-1} % ${k}`}[m];
+ $('#imc').textContent=t+' = ?';$('#imo').innerHTML='';$('#imr').disabled=false;const f=fresh(k);f.a=f.a.map((_,j)=>j);f.f=f.r=-9;$('#imv').innerHTML=draw(f,[i])}
+function imr(){const{k,i,m}=IM,n=m=='f'?(i+1)%k:m=='b'?(i-1+k)%k:(i-1)%k;const f=fresh(k);f.a=f.a.map((_,j)=>j);f.f=f.r=-9;
+ $('#imv').innerHTML=draw(f,n<0?[i]:[i,n]);$('#imo').innerHTML=n<0?`<span class=ng>Result ${n} — invalid index! Array access a[${n}] is out of bounds.</span>`:`<span class=ok>Result ${n}</span>${m=='f'&&i==k-1?' — wrapped from the last box to 0.':m=='b'&&i==0?` — wrapped from 0 to the last box (${k-1}).`:''}`;$('#imr').disabled=true}
+/* ---------- 3 Simulator ---------- */
+let S=fresh(4),P=null,pi=0;
+const OPN=Object.keys(M).map(c=>M[c]);
+const SC=[['Empty → one element',3,'','insertLast',5],['One → empty',3,'L5','deleteFront',0],['Almost full → full',3,'L1 L2','insertFront',3],['Full → failed insert',3,'L1 L2 L3','insertLast',9],['Full → delete → insert works',3,'L1 L2 L3 f','insertLast',9],['Repeated wraparound',3,'L1 L2 L3 f L4','insertLast',5]];
+$('#s2').innerHTML=`<div class="card"><span class="tag t1">Exam Critical</span><b>Why count?</b> If front and rear meet, the deque could be empty <i>or</i> full — same picture. The extra variable <code>count</code> removes the doubt: <code>count==0</code> empty, <code>count==cap</code> full. Other valid solutions use different start values or leave one box unused; don't mix their formulas with these.</div>
+<div class="card">Capacity k <select id="k">${[3,4,5,6].map(x=>`<option ${x==4?'selected':''}>${x}</option>`).join('')}</select> <button class="b" onclick="sinit()">Initialize MyCircularDeque(k)</button> <button class="b s" onclick="sres()">Reset entire deque</button>
+<p>Operation <select id="op" onchange="rend()">${OPN.map(o=>`<option>${o}</option>`).join('')}</select> value <input id="v" type="number" value="7"> <button class="b" onclick="srun()">Run operation</button></p>
+<p>Predict the array after the <i>next</i> run (use - for EMPTY): <input id="pr" size="12" placeholder="7,-,-,-"> <button class="b s" onclick="pchk()">Check prediction</button> <span id="pm"></span></p>
+<p>Scenarios: ${SC.map((s,i)=>`<button class="b s" onclick="scen(${i})">${s[0]}</button>`).join('')}</p></div>
+<div class="g2"><div class="card"><div id="sv"></div><div id="ss" class="st"></div><div class="calc" id="sc"></div><div id="sx"></div><div id="sr"></div>
+<button class="b s" onclick="sstep(-1)">◀ Previous step</button><button class="b" onclick="sstep(1)">Next step ▶</button><button class="b s" onclick="pi=0;rend()">Reset operation</button><p class="mu" style="font-size:13px">Tip: pick an operation and value above, then keep pressing Next step.</p></div>
+<div class="card"><div id="cp"></div></div></div><div class="card" id="inf"></div>`;
+function sinit(){S=fresh(+$('#k').value);P=run(S,'ctor');pi=0;$('#op').value='insertLast';rend(1)}
+function sres(){S=fresh(+$('#k').value);P=null;pi=0;$('#pm').textContent='';rend()}
+function srun(){if(P)S=P.end;const op=$('#op').value;P=run(S,op,+$('#v').value);pi=0;$('#pm').textContent='';rend()}
+function sstep(d){if(d>0&&(!P||pi>=P.o.length-1)){srun();pi=Math.min(1,P.o.length-1);rend();return}if(P)pi=Math.max(0,Math.min(P.o.length-1,pi+d));rend()}
+function scen(i){const[n,k,pre,op,v]=SC[i];$('#k').value=k;S=fresh(k);toks(pre).forEach(([o,x])=>S=run(S,o,x).end);P=null;pi=0;$('#op').value=op;$('#v').value=v;rend();$('#sx').innerHTML=`<b>${n}:</b> deque is set up. Press Run operation and step through it.`}
+function pchk(){const b=P?P.end:S,r=run(b,$('#op').value,+$('#v').value),g=$('#pr').value.split(',').map(x=>x.trim()==='-'||x.trim()===''?null:+x),ok=JSON.stringify(g)==JSON.stringify(r.end.a);$('#pm').innerHTML=ok?'<span class=ok>Correct! Now run it to see why.</span>':`<span class=ng>Not quite.</span> Re-check: ${$('#op').value} changes ${INFO[$('#op').value][3]} using ${INFO[$('#op').value][4]}. Run it to compare.`}
+function rend(){const op=$('#op').value,cur=P?P.o[pi]:null,s=cur?cur.s:S;
+ $('#sv').innerHTML=draw(s,cur?cur.hl:[])+stats(s);$('#ss').innerHTML=P?`<b>Step ${pi+1} of ${P.o.length}:</b> ${cur.t}${pi==P.o.length-1?' <i>(done — Next step starts the next run of the selected operation)</i>':''}`:'Choose an operation, then press Next step (or Run operation).';$('#sc').textContent=cur?cur.calc:'';
+ $('#sr').innerHTML=P&&pi==P.o.length-1&&P.op!='ctor'?`<p>Returned: <b>${rs(P.ret)}</b></p>`:'';if(P&&P.op=='ctor'&&pi==1)$('#sr').innerHTML='<p>Constructor done.</p>';
+ const co=P&&P.op=='ctor'&&op=='insertLast'?'ctor':op;$('#cp').innerHTML=`<b>C++: ${co}</b>${codeHtml(co,P&&P.op==co||co=='ctor'&&P&&P.op=='ctor'?cur.ln:-1)}<p class="mu">Highlighted line = the step on the left.</p>`;
+ $('#inf').innerHTML=`<span class="tag ${INFO[op][0][0]=='E'?'t1':'t2'}">${INFO[op][0]}</span><b>${op}</b> · Time <b>O(1)</b> (a few arithmetic steps, no loops)<table>${LAB.slice(1).map((l,i)=>`<tr><th>${l}</th><td>${INFO[op][i+1]}</td></tr>`).join('')}</table>`}
+sinit();
+/* ---------- 4 Commands ---------- */
+let CS,ci,co;
+$('#s3').innerHTML=`<div class="card"><h2>LeetCode-style commands</h2><p class="mu">Edit if you like (JSON). The first command must be MyCircularDeque.</p><textarea id="cn" rows=2>["MyCircularDeque","insertLast","insertLast","insertFront","insertFront","getRear","isFull","deleteLast","insertFront","getFront"]</textarea><textarea id="ca" rows=2>[[3],[1],[2],[3],[4],[],[],[],[4],[]]</textarea>
+<button class="b" onclick="cload()">Load sequence</button><button class="b" onclick="cnext()">Next command ▶</button><button class="b s" onclick="cload()">Reset</button><button class="b s" onclick="while(ci<cn_.length&&cnext());">Run all</button>
+<div id="cl"></div><div id="cv"></div><div class="st" id="cw"></div><p><b>Output:</b> <code id="co"></code></p></div>`;
+let cn_=[],ca_=[];
+function cload(){try{cn_=JSON.parse($('#cn').value);ca_=JSON.parse($('#ca').value);if(cn_[0]!='MyCircularDeque'||cn_.length!=ca_.length)throw 0}catch(e){$('#cw').innerHTML='<span class=ng>Need valid JSON, equal lengths, starting with MyCircularDeque.</span>';return}CS=null;ci=0;co=[];crend('Press Next command.')}
+function cnext(){if(ci>=cn_.length)return false;const n=cn_[ci],a=ca_[ci];let w;if(n=='MyCircularDeque'){CS=fresh(a[0]);co.push(null);w=`Constructor: ${a[0]} boxes, front=0, rear=${a[0]-1}, count=0.`}
+ else if(!M||!OPN.includes(n)){w='Unknown method.';co.push(null)}else{const r=run(CS,n,a[0]);CS=r.end;co.push(r.ret);w=r.o.slice(1).map(x=>x.t).join(' → ')}ci++;crend(w);return true}
+function crend(w){$('#cl').innerHTML=cn_.map((n,i)=>`<span class="cmd ${i==ci-1?'on':i<ci?'d':''}">${n}(${(ca_[i]||[]).join(',')})</span>`).join('');$('#cv').innerHTML=CS?draw(CS)+stats(CS):'';$('#cw').innerHTML=w;$('#co').textContent=JSON.stringify(co)}
+cload();
+/* ---------- 5 Debug ---------- */
+const BUG=[['Forgetting modulo','rear = rear + 1;\na[rear] = value;',['Works fine','rear can reach cap → out-of-bounds write','front breaks'],1,['k=3, rear=2 → rear = 3','a[3] does not exist ✗ crash','Fix: rear = (rear + 1) % cap → 0 ✓']],
+['Negative index','front = (front - 1) % cap;',['front becomes -1 when front is 0','front becomes cap','Nothing'],0,['front=0 → (0-1) % 3 = -1 in C++','a[-1] ✗ invalid','Fix: (front - 1 + cap) % cap = 2 ✓']],
+['Front/rear confusion','// insertFront\nrear = (rear - 1 + cap) % cap;\na[rear] = value;',['getFront still returns the old front','Nothing wrong','count is wrong'],0,['insertFront(9) moves REAR, front unchanged','getFront returns the old value ✗','Fix: insertFront changes front, insertLast changes rear ✓']],
+['Update before check','front = (front - 1 + cap) % cap;\nif (isFull()) return false;',['Failed insert still moves front, corrupting the deque','Nothing','Returns true wrongly'],0,['Full deque, insertFront → front moved, return false','front now points at the wrong element ✗','Fix: check isFull() FIRST, change nothing on failure ✓']],
+['Wrong full condition','bool isFull() { return front == rear; }',['With 1 element front==rear → wrongly "full"','Always correct','Never true'],0,['k=3, insertLast(1): front=0, rear=0','isFull() = true ✗ (count is 1)','Fix: return count == cap ✓']],
+['Deleting wrong element','// deleteFront\nfront = (front - 1 + cap) % cap;\ncount--;',['Front moves backward instead of forward','Rear is deleted','Nothing'],0,['front=1 → front=0, exposing an old/empty box','getFront returns wrong data ✗','Fix: front = (front + 1) % cap ✓']],
+['Getter on empty deque','int getFront() {\n  return a[front];\n}',['Returns a stale number instead of -1','Crashes always','Fine'],0,['Empty deque after deleteFront','Old value still in memory → returns it ✗','Fix: if (isEmpty()) return -1; ✓']],
+['Capacity of 1','bool isFull() {\n  return (rear + 1) % cap == front;\n}',['With cap=1 the deque is always "full"','Fine for all k','Always empty'],0,['k=1: (0+1)%1 = 0 == front 0 → "full" at start','Cannot insert anything ✗','Fix: count == cap works for every k, including 1 ✓']],
+['Wrong count update','bool insertLast(int v) {\n  ...\n  a[rear] = v;\n  return true; // forgot count++\n}',['isEmpty() stays true after inserting','Nothing','Array overflows'],0,['insertLast(5) stored','isEmpty() = true ✗, deleteFront fails','Fix: count++ after storing ✓']],
+['Index vs value','int getFront() {\n  if (isEmpty()) return -1;\n  return front;\n}',['Returns the position, not the stored number','Correct','Returns -1'],0,['a=[7,_,_], front=0 → returns 0','Expected 7 ✗','Fix: return a[front]; ✓']]];
+$('#s4').innerHTML=BUG.map((b,i)=>`<div class="card"><b>${b[0]}</b><pre class="code"><div>${hi(b[1]).replace(/\n/g,'</div><div>')}</div></pre><p>What goes wrong?</p>${b[2].map((o,j)=>`<button class="b s" onclick="bug(${i},${j})">${o}</button>`).join('')}<div id="bg${i}"></div></div>`).join('');
+function bug(i,j){const b=BUG[i];$('#bg'+i).innerHTML=(j==b[3]?'<p class=ok>Correct!</p>':'<p class=ng>Not quite — see the trace:</p>')+b[4].map((l,x)=>`<div class="calc fd" style="animation-delay:${x*.6}s">${l}</div>`).join('')}
+/* ---------- 6 Practice ---------- */
+const CON={wrap:'Wraparound',full:'Full handling',empty:'Empty handling',getter:'getFront/getRear',cap1:'Capacity 1',basic:'Basic ops'};
+let Q,hn=0,chk=false,SCR={};
+const rnd=n=>Math.floor(Math.random()*n);
+$('#s5').innerHTML=`<div class="card"><h2>Practice</h2><p>Level: <select id="lv" onchange="newQ()"><option value="B">Beginner</option><option value="I">Intermediate</option><option value="A">Advanced</option><option value="F">Final challenge</option></select> <button class="b s" onclick="newQ()">Next question</button></p><div id="qq"></div></div><div class="card"><b>Concepts to practice again</b><div id="wk" class="st">Answer a question first.</div></div>`;
+function gen(L){const pool='LLFFfflgrLFeu';for(let t=0;t<300;t++){const k=L=='B'?3:L=='I'?3+rnd(2):[1,2,3][rnd(3)],n=L=='B'?1+rnd(2):L=='I'?6:10;let s='';for(let i=0;i<n;i++){const c=pool[rnd(pool.length)];s+=c+(c=='L'||c=='F'?1+rnd(9):'')+' '}const t_=toks(s),r=exec(k,t_),ev=[...new Set(r.flatMap(x=>x.ev))];if(L=='I'&&(!ev.includes('wrap')||!s.match(/[fl]/)))continue;if(L=='A'&&!(ev.includes('full')||ev.includes('empty')))continue;return{k,t:t_,r,ev:ev.length?ev:['basic']}}return gen('B')}
+function newQ(){const L=$('#lv').value;Q=L=='F'?(()=>{const t=toks('L1 L2 F3 F4 L5 r g u l f L6 F7 u r f f f e g F8 L9 r');return{k:4,t,r:exec(4,t),ev:['full','wrap','empty']}})():gen(L);hn=0;chk=false;
+ $('#qq').innerHTML=`<p>Fresh deque, capacity <b>${Q.k}</b>. Run these in order:</p><p><code>${Q.t.map(([o,v])=>o+'('+(NEEDV[o]?v:'')+')').join(' → ')}</code></p><p>Outputs of all commands (comma separated, e.g. true,false,3):</p><input id="po" style="width:100%"><p>Final array by index (use - for EMPTY):</p><input id="pa" style="width:100%">
+ <p><button class="b" onclick="qchk()">Check answer</button><button class="b s" onclick="qhint()">Show hint</button><button class="b s" onclick="qexp()">Reveal explanation</button></p><div id="qr"></div>`}
+function qhint(){const h=['Start with front=0, rear=k-1, count=0. Write all three after every command.','Which commands wrap an index? Forward: (i+1)%cap, backward: (i-1+cap)%cap.','Full or empty? Compare count with cap and 0. A failed command changes nothing; getters on empty give -1.'];$('#qr').innerHTML=`<p class="mu">Hint ${hn+1}: ${h[hn%3]}</p>`;hn++}
+function qchk(){const o=$('#po').value.toLowerCase().replace(/[\[\]\s]/g,'').split(',').filter(x=>x!==''),a=$('#pa').value.replace(/\s/g,'').split(',').map(x=>x=='-'?'-':x);
+ const eo=Q.r.map(x=>String(x.ret)),ea=Q.r.at(-1).s.a.map(x=>x==null?'-':String(x)),ok=eo.join()==o.join()&&ea.join()==a.join();chk=true;
+ Q.ev.forEach(c=>{SCR[c]=SCR[c]||{r:0,w:0};SCR[c][ok?'r':'w']++});
+ $('#qr').innerHTML=ok?'<p class=ok>Correct! ✔</p>':'<p class=ng>Not quite. Try a hint, or reveal the explanation.</p>';
+ $('#wk').innerHTML=Object.entries(SCR).map(([c,v])=>`${CON[c]}: ${v.r} right, ${v.w} wrong${v.w>v.r?' <b class=ng>← practice again</b>':''}`).join('<br>')}
+function qexp(){if(!chk){$('#qr').innerHTML='<p class=mu>Submit a prediction with Check answer first, then reveal.</p>';return}
+ $('#qr').innerHTML=`<table><tr><th>Command</th><th>Returns</th><th>State</th></tr>${Q.r.map(x=>`<tr><td>${x.op}(${NEEDV[x.op]?x.v:''})</td><td>${x.ret}</td><td>[${x.s.a.map(v=>v==null?'-':v)}] f=${x.s.f} r=${x.s.r} c=${x.s.c}</td></tr>`).join('')}</table>`}
+newQ();
+/* ---------- 7 Review ---------- */
+$('#s6').innerHTML=`<div class="card"><h2>Index formula summary</h2><table><tr><th>Action</th><th>Formula</th></tr><tr><td>Initialize</td><td>front = 0, rear = cap − 1, count = 0</td></tr><tr><td>insertLast</td><td>rear = (rear + 1) % cap; a[rear] = v; count++</td></tr><tr><td>insertFront</td><td>front = (front − 1 + cap) % cap; a[front] = v; count++</td></tr><tr><td>deleteFront</td><td>front = (front + 1) % cap; count−−</td></tr><tr><td>deleteLast</td><td>rear = (rear − 1 + cap) % cap; count−−</td></tr><tr><td>getFront / getRear</td><td>empty ? −1 : a[front] / a[rear]</td></tr><tr><td>isEmpty / isFull</td><td>count == 0 / count == cap</td></tr></table>
+<p><b>Complexity:</b> every operation is O(1) time — no loops, only a check, one % calculation and one array access. Space O(k).</p></div>
+<div class="card"><h2>Stack · queue · deque · circular deque</h2><table><tr><th></th><th>Add</th><th>Remove</th><th>Notes</th></tr><tr><td>Stack</td><td>top</td><td>top</td><td>LIFO</td></tr><tr><td>Queue</td><td>rear</td><td>front</td><td>FIFO</td></tr><tr><td>Deque</td><td>both ends</td><td>both ends</td><td>most flexible</td></tr><tr><td>Circular deque</td><td>both ends</td><td>both ends</td><td>fixed array, indexes wrap, no wasted space</td></tr></table></div>
+<div class="card"><h2>Implementation checklist</h2>${['Store cap, front=0, rear=cap−1, count=0','Check full/empty BEFORE changing anything','Forward moves use % cap; backward add cap first','Update count on every successful insert/delete','Getters return −1 when empty, else a[front] / a[rear]','Test capacity 1'].map(t=>`<label><input type="checkbox"> ${t}</label><br>`).join('')}<p><button class="b" onclick="tab(5);$('#lv').value='F';newQ()">Start the final challenge</button></p></div>`;
+tab(2);
+</script></body></html>
