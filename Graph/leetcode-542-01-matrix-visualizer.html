@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LeetCode 542 — 01 Matrix</title>
+<style>
+:root{--bg:#0f1420;--pn:#171e2e;--bd:#2a3550;--tx:#e6ebf5;--mu:#93a0bb;--ac:#5aa9ff;--cur:#ffb020;--nw:#37d67a;--bad:#ff5d6c;--qd:#a98bff;--vi:#2f6f6a;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:14px}
+h1{margin:0;font-size:1.5rem}.sub{color:var(--mu);margin:2px 0 12px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--pn);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:12px}
+button,select,textarea{font:inherit;color:var(--tx);background:#222c44;border:1px solid var(--bd);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--ac)}button:disabled{opacity:.4;cursor:default}button.p{background:#245aa8}
+.badge{padding:3px 10px;border-radius:99px;font-weight:600;background:#223;border:1px solid var(--ac);color:var(--ac)}
+.prog{flex:1;min-width:140px}.prog div{height:6px;background:#222c44;border-radius:4px;overflow:hidden}.prog i{display:block;height:100%;background:var(--ac);width:0}
+.bar{position:sticky;top:0;z-index:20}.pn{overflow-x:auto}.sl{flex:1;min-width:160px}.hint{font-size:.78rem;color:var(--mu)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px}
+.pn{background:var(--pn);border:1px solid var(--bd);border-radius:10px;padding:12px;min-width:0}
+.pn h2{margin:0 0 8px;font-size:1rem;color:var(--ac)}
+.g{display:inline-grid;gap:4px;margin:4px 0}
+.c{width:54px;height:54px;border-radius:8px;border:2px solid var(--bd);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:1.15rem;position:relative}
+.c small{font-size:.58rem;font-weight:500;color:var(--mu);line-height:1}
+.hd{width:54px;text-align:center;color:var(--mu);font-size:.75rem}
+.z{background:#10301f;border-color:#2e8f56}.o{background:#2a2f40}
+.un{background:#222838;color:var(--mu)}.vi{background:var(--vi)}.qd{background:#3a2f66;border-color:var(--qd)}
+.cur{border-color:var(--cur)!important;box-shadow:0 0 0 3px #ffb02055;background:#5a4210}
+.nw{border-color:var(--nw)!important;box-shadow:0 0 0 3px #37d67a55}.ck{border-color:var(--ac)!important;box-shadow:0 0 0 3px #5aa9ff55}
+.vs{border-color:var(--mu)!important;border-style:dashed!important}.sc{border-color:var(--cur)!important;border-style:dashed!important}
+.ar{position:absolute;top:1px;right:3px;color:var(--nw);font-size:1rem}
+.leg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.78rem;color:var(--mu);margin-top:6px}.leg span:before{content:"";display:inline-block;width:11px;height:11px;border:2px solid;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.l1:before{border-color:var(--cur);background:#5a4210}.l2:before{border-color:var(--nw)}.l3:before{border-color:var(--ac)}.l4:before{border-color:var(--qd);background:#3a2f66}.l5:before{border-color:var(--vi);background:var(--vi)}.l6:before{border-color:var(--bd);background:#222838}.l7:before{border-color:var(--bad)}
+.note{margin-top:6px;padding:6px 10px;border-radius:8px;background:#1d2538;font-size:.88rem;min-height:2.4em}
+.bad{color:var(--bad)}.good{color:var(--nw)}code,.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.q{display:flex;flex-wrap:wrap;gap:6px;min-height:44px;align-items:center;padding:8px;background:#10151f;border-radius:8px}
+.chip{padding:4px 9px;border-radius:7px;background:#3a2f66;border:1px solid var(--qd);font-family:ui-monospace,monospace;position:relative;animation:pop .3s}
+.chip.f{border-color:var(--cur);background:#5a4210}.chip.n{border-color:var(--nw);background:#14502f}.chip.x{border-color:var(--bad);text-decoration:line-through;background:#4a1d26;animation:none}
+.chip em{position:absolute;top:-9px;left:3px;font-size:.6rem;font-style:normal;color:var(--cur);background:var(--pn);padding:0 3px}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.code{background:#0b0f18;border-radius:8px;padding:6px 0;font:12.5px/1.65 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto}
+.ln{display:block;white-space:pre;padding:0 10px;border-left:3px solid transparent;color:#b6c2dc}.ln b{display:inline-block;width:24px;color:#566;font-weight:400}
+.ln.on{background:#3b3010;border-left-color:var(--cur);color:#fff}
+.vars{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.vars span{background:#10151f;border:1px solid var(--bd);border-radius:6px;padding:1px 8px;font-family:ui-monospace,monospace;font-size:.85rem}
+table{border-collapse:collapse;font-size:.85rem}td,th{border:1px solid var(--bd);padding:3px 9px;text-align:center}
+.full{margin-top:12px}.hid{display:none}
+textarea{width:100%;font-family:ui-monospace,monospace;height:70px}
+.opt{display:block;width:100%;text-align:left;margin:6px 0}.opt.ok{border-color:var(--nw);background:#14502f}.opt.no{border-color:var(--bad);background:#4a1d26}
+pre{margin:0;font-family:ui-monospace,monospace;white-space:pre;overflow-x:auto;font-size:.85rem}
+details summary{cursor:pointer;color:var(--ac);font-weight:600}
+</style></head><body>
+<h1>LeetCode 542 — 01 Matrix</h1><div class="sub">Multi-Source BFS | Interactive C++ Execution</div>
+
+<div class="bar">
+<button id="prev">◀ Previous Step</button><button id="next" class="p">Next Step ▶</button><button id="reset">Reset</button>
+<button id="play">▶ Play</button>
+<label>Speed <select id="spd"><option value="1600">Slow</option><option value="900" selected>Normal</option><option value="350">Fast</option></select></label>
+<span class="badge" id="status">Initializing</span>
+<div class="prog"><span id="ptxt" class="mono"></span><div><i id="pbar"></i></div></div>
+<div style="flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+<button id="ss">⏩ Skip setup</button><button id="pc">⏮ Prev cell</button><button id="nd">▷ Next direction</button><button id="nc">⏭ Next cell</button><button id="je">⏭⏭ Jump to end</button>
+<input type="range" id="sl" class="sl" min="0" max="1" value="0" aria-label="Step slider">
+<span class="hint">Keys: ← → step · ↑ ↓ cell · Space play/pause</span></div>
+</div>
+
+<div class="pn" style="margin-bottom:12px"><h2>Input editor</h2>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px" id="presets"></div>
+<textarea id="ta" spellcheck="false"></textarea>
+<div><button id="load">Load matrix</button> <span id="err" class="bad"></span></div></div>
+
+<div class="grid2">
+<div class="pn"><h2>A — Input matrix <code>mat</code> (never changes)</h2><div id="A"></div>
+<div class="note">Only <b>0</b>s and <b>1</b>s. Green = zero cell (a BFS source). Gray = one cell. Dashed amber = cell being scanned during setup.</div></div>
+
+<div class="pn"><h2>B — Distance matrix <code>d</code></h2><div id="B"></div>
+<div class="note" id="calc"></div>
+<div class="leg"><span class="l1">Current cell</span><span class="l2">Newly discovered</span><span class="l3">Neighbor being checked</span><span class="l4">In queue</span><span class="l5">Visited (done)</span><span class="l6">Unvisited (-1)</span><span class="l7">Out-of-bounds (rejected)</span></div>
+<div class="note" style="font-size:.8rem"><b>0</b> = zero cell, distance 0. <b>-1</b> = not calculated yet. <b>Positive</b> = shortest distance found.</div></div>
+
+<div class="pn"><h2>C — BFS queue <code>Q</code> (front → back)</h2><div class="q" id="Q"></div>
+<div class="note" id="qnote"></div>
+<div class="mono" style="margin-top:6px;font-size:.8rem">front() = read next · pop() = remove it · push() = add to back</div></div>
+
+<div class="pn"><h2>D — Current C++ execution</h2><div class="code" id="code"></div>
+<div class="vars" id="vars"></div><div class="note" id="exp"></div></div>
+</div>
+
+<div class="grid2 full">
+<div class="pn"><h2>Directions: <code>r = {1,-1,0,0}</code>, <code>j = {0,0,-1,1}</code></h2>
+<table><tr><th>i</th><th>Row Δ</th><th>Col Δ</th><th>Direction</th></tr>
+<tr><td>0</td><td>+1</td><td>0</td><td>Down</td></tr><tr><td>1</td><td>-1</td><td>0</td><td>Up</td></tr>
+<tr><td>2</td><td>0</td><td>-1</td><td>Left</td></tr><tr><td>3</td><td>0</td><td>+1</td><td>Right</td></tr></table>
+<p><code>nr = rs + r[i]; nc = cs + j[i];</code> Rows are checked with <code>nr &gt;= 0 &amp;&amp; nr &lt; n</code>, columns with <code>nc &gt;= 0 &amp;&amp; nc &lt; m</code> — a neighbor outside either range doesn’t exist.</p></div>
+<div class="pn"><h2>Key ideas</h2>
+<p><b>Multi-source BFS:</b> every zero is pushed before the loop and given distance 0. All zeros are distance-0 sources, so BFS expands from all of them at once; starting from only the first zero would give wrong answers for cells nearer to another zero.</p>
+<p><b>Why shortest:</b> BFS processes cells in order of distance (all 0s, then all 1s, then 2s…). The first time a cell is reached is via the shortest path in an unweighted grid.</p>
+<p><b><code>d</code> vs <code>mat</code> vs <code>Q</code>:</b> <code>mat</code> = original 0/1 input; <code>d</code> = computed distances (and the visited record); <code>Q</code> = cells waiting to be explored. The update uses <code>d[rs][cs]+1</code>, not <code>mat</code>, because <code>mat</code> is only 0 or 1.</p>
+<p><b>Visited check <code>d[nr][nc] == -1</code>:</b> a cell is unvisited only while it holds -1. Once assigned, other paths fail the check, so it’s never overwritten or enqueued twice. Checking <code>mat[nr][nc] == -1</code> would be wrong: <code>mat</code> never contains -1, so the test would never be true.</p>
+<p><b>Code notes:</b> <code>int distance = 0;</code> is unused and can be removed. Naming the column-direction vector <code>j</code> clashes visually with loop variables; <code>c</code> would be clearer. Neither is a logic error.</p></div>
+</div>
+
+<div class="pn full hid" id="sum"><h2>Algorithm summary</h2>
+<pre>Initialize d with -1
+        ↓
+Enqueue every zero and set its distance to 0
+        ↓
+Is queue empty?
+  No ↓         Yes → Return d
+Read front cell
+        ↓
+Check four neighbors
+        ↓
+Valid and unvisited?
+   Yes → Assign current distance + 1 and enqueue
+   No  → Skip neighbor
+        ↓
+Repeat</pre>
+<p><b>Time:</b> <code>O(n × m)</code> · <b>Auxiliary space:</b> <code>O(n × m)</code>. Each cell is enqueued at most once (the <code>-1</code> check guarantees it), and each dequeued cell does 4 constant-time neighbor checks.</p></div>
+
+<div class="pn full hid" id="quiz"><h2>Quiz <span id="qn"></span></h2><div id="qb"></div></div>
+
+<script>
+'use strict';
+const CODE=["int n = mat.size();","int m = mat[0].size();","vector<vector<int>> d(n, vector<int>(m, -1));","queue<pair<int,int>> Q;",
+"for (i..n) for (j..m) {","    if (mat[i][j] == 0) {","        Q.push({i,j});","        d[i][j] = 0;   } }",
+"while (!Q.empty()) {","    int rs = Q.front().first;","    int cs = Q.front().second;","    Q.pop();",
+"    for (int i = 0; i < 4; i++) {","        int nr = r[i] + rs;","        int nc = j[i] + cs;",
+"        if (nr >= 0 && nr < n && nc >= 0 && nc < m &&","            d[nr][nc] == -1) {","            d[nr][nc] = d[rs][cs] + 1;","            Q.push({nr,nc});","        }  }  }  // end for / while","return d;"];
+const DR=[1,-1,0,0],DC=[0,0,-1,1],DN=['Down','Up','Left','Right'],AR=['↓','↑','←','→'];
+const PRE=[[[0,1,1],[1,1,1],[1,1,1]],[[0,0,0],[0,1,0],[1,1,1]],[[1,1,0],[1,1,1],[1,1,1]],[[0,1],[1,1]]];
+let S=[],idx=0,mat=PRE[0],timer=null;
+const P=(a)=>'('+a[0]+','+a[1]+')';
+
+function build(mat){
+ const n=mat.length,m=mat[0].length,out=[];let d=[],Q=[],vars={};
+ const snap=(o)=>out.push(JSON.parse(JSON.stringify(Object.assign({line:0,st:'Initializing',text:'',d:d,Q:Q,vars:vars,cur:null,nb:null,nbs:null,scan:null,dir:null,calc:'',qe:null,oob:null},o))));
+ snap({line:-1,text:'Ready. Press <b>Next Step</b> to execute one operation at a time. The input is a '+n+'×'+m+' matrix.'});
+ vars={n:n};snap({line:0,text:'<code>n = mat.size()</code> is the number of rows → <b>'+n+'</b>.'});
+ vars={n:n,m:m};snap({line:1,text:'<code>m = mat[0].size()</code> is the number of columns → <b>'+m+'</b>.'});
+ d=Array.from({length:n},()=>Array(m).fill(-1));
+ snap({line:2,text:'Create <code>d</code> filled with <b>-1</b>. -1 means “distance not calculated yet”, which doubles as the <i>unvisited</i> marker.'});
+ snap({line:3,text:'Create an empty queue <code>Q</code> of (row,col) pairs. BFS will explore cells in first-in-first-out order.'});
+ for(let i=0;i<n;i++)for(let j=0;j<m;j++){
+  vars={n:n,m:m,i:i,j:j};
+  if(mat[i][j]===0){
+   snap({line:5,scan:[i,j],text:'<code>mat['+i+']['+j+'] == 0</code> is true: this is a zero cell, so it is a BFS source.'});
+   Q=Q.concat([[i,j]]);snap({line:6,scan:[i,j],qe:{push:[i,j]},text:'<code>Q.push({'+i+','+j+'})</code> adds this zero to the queue <i>before</i> BFS starts. Every zero is a starting point (multi-source BFS).'});
+   d[i][j]=0;snap({line:7,scan:[i,j],text:'<code>d['+i+']['+j+'] = 0</code>: a zero is at distance 0 from the nearest zero (itself).'});
+  } else snap({line:5,scan:[i,j],text:'<code>mat['+i+']['+j+'] == 0</code> is false (value 1): skip it. Its distance will be found by BFS.'});
+ }
+ vars={n:n,m:m};
+ while(true){
+  if(Q.length===0){snap({line:8,st:'Processing Queue',text:'<code>!Q.empty()</code> is false: the queue is empty, every reachable cell has its distance. Exit the loop.'});break;}
+  snap({line:8,st:'Processing Queue',text:'<code>!Q.empty()</code> is true ('+Q.length+' cell'+(Q.length>1?'s':'')+' waiting): keep going.'});
+  const [rs,cs]=Q[0];vars={rs:rs,cs:cs};
+  snap({line:9,st:'Processing Queue',cur:[rs,cs],qe:{front:1},text:'<code>Q.front().first</code> is the row of the oldest queued cell: <code>rs = '+rs+'</code>. (front() only reads; nothing is removed yet.)'});
+  snap({line:10,st:'Processing Queue',cur:[rs,cs],qe:{front:1},text:'<code>cs = '+cs+'</code>: the column. Current cell = <b>'+P([rs,cs])+'</b>, with <code>d = '+d[rs][cs]+'</code>.'});
+  const popped=Q[0];Q=Q.slice(1);
+  snap({line:11,st:'Processing Queue',cur:[rs,cs],qe:{pop:popped},text:'<code>Q.pop()</code> removes '+P(popped)+' from the front. We saved its coordinates in <code>rs, cs</code>, so we can still use them.'});
+  for(let i=0;i<4;i++){
+   const nr=rs+DR[i],nc=cs+DC[i];
+   const b={st:'Checking Neighbor',cur:[rs,cs],dir:i};
+   vars={rs:rs,cs:cs,i:i};snap(Object.assign({line:12,text:'Direction <code>i = '+i+'</code>: <b>'+DN[i]+'</b> (row Δ '+DR[i]+', col Δ '+DC[i]+').'},b));
+   vars={rs:rs,cs:cs,i:i,nr:nr};snap(Object.assign({line:13,text:'<code>nr = rs + r['+i+'] = '+rs+' + ('+DR[i]+') = '+nr+'</code>'},b));
+   vars={rs:rs,cs:cs,i:i,nr:nr,nc:nc};
+   const inb=nr>=0&&nr<n&&nc>=0&&nc<m;
+   const nbp=inb?[nr,nc]:null;
+   snap(Object.assign({line:14,nb:nbp,nbs:'ck',oob:inb?null:[nr,nc],text:'<code>nc = cs + j['+i+'] = '+cs+' + ('+DC[i]+') = '+nc+'</code>. Candidate neighbor: <b>'+P([nr,nc])+'</b>.'},b));
+   if(!inb){
+    const why=(nr<0?'row '+nr+' &lt; 0 (above the grid)':nr>=n?'row '+nr+' ≥ n='+n+' (below the grid)':nc<0?'column '+nc+' &lt; 0 (left of the grid)':'column '+nc+' ≥ m='+m+' (right of the grid)');
+    snap(Object.assign({line:15,oob:[nr,nc],nbs:'bad',text:'<b class="bad">Bounds check fails:</b> '+why+'. This cell doesn’t exist, and reading <code>d[nr][nc]</code> would be out-of-range, so the <code>&amp;&amp;</code> short-circuits and we skip it.'},b));
+    continue;}
+   snap(Object.assign({line:15,nb:nbp,nbs:'ck',text:'<b class="good">Bounds check passes:</b> 0 ≤ '+nr+' &lt; '+n+' and 0 ≤ '+nc+' &lt; '+m+'. Next: is it still unvisited?'},b));
+   if(d[nr][nc]!==-1){
+    snap(Object.assign({line:16,nb:nbp,nbs:'vs',text:'<b class="bad">Visited check fails:</b> <code>d['+nr+']['+nc+'] = '+d[nr][nc]+'</code>, not -1. It already has a shortest distance (found earlier or it is a zero), so we ignore it — no overwrite, no duplicate push.'},b));
+    continue;}
+   snap(Object.assign({line:16,nb:nbp,nbs:'ck',text:'<b class="good">Visited check passes:</b> <code>d['+nr+']['+nc+'] == -1</code>, so this is the first time BFS reaches it.'},b));
+   const cd=d[rs][cs];d[nr][nc]=cd+1;
+   snap(Object.assign({line:17,nb:nbp,nbs:'nw',calc:'Current cell: '+P([rs,cs])+' · Current distance: '+cd+' · Neighbor: '+P([nr,nc])+' · New distance: '+cd+' + 1 = '+(cd+1),
+    text:'<code>d[nr][nc] = d[rs][cs] + 1 = '+cd+' + 1 = '+(cd+1)+'</code>. We use <code>d</code> (computed distances), never <code>mat</code> (which holds only 0/1). The neighbor is one step farther than the current cell.'},b));
+   Q=Q.concat([[nr,nc]]);
+   snap(Object.assign({line:18,nb:nbp,nbs:'nw',qe:{push:[nr,nc]},text:'<code>Q.push({'+nr+','+nc+'})</code> adds it to the back so its own neighbors are explored later.'},b));
+  }
+  vars={rs:rs,cs:cs};
+  snap({line:19,st:'Processing Queue',cur:[rs,cs],text:'All 4 directions of '+P([rs,cs])+' are done. Back to <code>while (!Q.empty())</code>.'});
+ }
+ vars={};snap({line:20,st:'Completed',text:'<code>return d;</code> Every cell now holds its shortest distance to a zero.'});
+ return out;
+}
+
+const $=id=>document.getElementById(id);
+function render(){
+ const s=S[idx],n=mat.length,m=mat[0].length;
+ const hdr=(t)=>'<div class="hd">'+t+'</div>';
+ let a='<div class="g" style="grid-template-columns:repeat('+(m+1)+',54px)">'+hdr('')+[...Array(m).keys()].map(hdr).join('');
+ for(let i=0;i<n;i++){a+=hdr(i);for(let j=0;j<m;j++){const sc=s.scan&&s.scan[0]==i&&s.scan[1]==j;a+='<div class="c '+(mat[i][j]?'o':'z')+(sc?' sc':'')+'">'+mat[i][j]+'<small>'+(mat[i][j]?'one':'zero')+'</small></div>';}}
+ $('A').innerHTML=a+'</div>';
+ const inQ=(i,j)=>s.Q.some(q=>q[0]==i&&q[1]==j);
+ let b='<div class="g" style="grid-template-columns:repeat('+(m+1)+',54px)">'+hdr('')+[...Array(m).keys()].map(hdr).join('');
+ for(let i=0;i<n;i++){b+=hdr(i);for(let j=0;j<m;j++){
+  const v=s.d[i][j];let cl='un',lab='unvisited';
+  if(v>=0){cl='vi';lab='visited';if(inQ(i,j)){cl='qd';lab='in queue';}}
+  const isc=s.cur&&s.cur[0]==i&&s.cur[1]==j,isn=s.nb&&s.nb[0]==i&&s.nb[1]==j;
+  let x='';if(isc){x=' cur';lab='current';}
+  if(isn&&!isc){x=s.nbs=='nw'?' nw':s.nbs=='vs'?' vs':' ck';lab=s.nbs=='nw'?'new':s.nbs=='vs'?'skipped':'checking';}
+  if(s.scan&&s.scan[0]==i&&s.scan[1]==j)x+=' sc';
+  b+='<div class="c '+cl+x+'">'+v+'<small>'+lab+'</small>'+(isn&&s.nbs=='nw'&&s.dir!=null?'<span class="ar">'+AR[s.dir]+'</span>':'')+'</div>';}}
+ b+='</div>';
+ if(s.oob)b+='<div class="note bad">✖ Candidate '+P(s.oob)+' is outside the grid — rejected.</div>';
+ $('B').innerHTML=b;
+ $('calc').innerHTML=s.calc?'<b>Distance update:</b> '+s.calc.replace(/ · /g,'<br>'):(s.dir!=null?'Direction: <b>'+DN[s.dir]+'</b> '+AR[s.dir]+' from '+P(s.cur):'Distances propagate 0 → 1 → 2 → …');
+ let q='';const e=s.qe||{};
+ if(e.pop)q+='<span class="chip x">'+P(e.pop)+'</span><span class="mono">← pop()</span>';
+ if(!s.Q.length&&!e.pop)q+='<i style="color:var(--mu)">empty</i>';
+ s.Q.forEach((c,k)=>{const isF=k==0&&e.front;const isN=e.push&&e.push[0]==c[0]&&e.push[1]==c[1]&&k==s.Q.length-1;
+  q+='<span class="chip'+(isF?' f':'')+(isN?' n':'')+'">'+(isF?'<em>front()</em>':'')+P(c)+'</span>';});
+ if(e.push)q+='<span class="mono good">← push()</span>';
+ $('Q').innerHTML=q;
+ $('qnote').innerHTML='Q = ['+s.Q.map(P).join(', ')+'] · size '+s.Q.length;
+ $('code').innerHTML=CODE.map((t,k)=>'<span class="ln'+(k==s.line?' on':'')+'"><b>'+(k+1)+'</b>'+t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>').join('');
+ $('vars').innerHTML=Object.entries(s.vars).map(([k,v])=>'<span>'+k+' = '+v+'</span>').join('');
+ $('exp').innerHTML=s.text;
+ $('status').textContent=s.st;
+ $('ptxt').textContent='Step '+idx+' / '+(S.length-1);
+ $('pbar').style.width=(100*idx/(S.length-1))+'%';
+ $('sl').max=S.length-1;$('sl').value=idx;$('prev').disabled=idx==0;$('next').disabled=idx==S.length-1;
+ const done=idx==S.length-1;$('sum').classList.toggle('hid',!done);$('quiz').classList.toggle('hid',!done);
+ if(done&&!qStarted)startQuiz();
+ if(done)stop();
+}
+function go(k){idx=Math.max(0,Math.min(S.length-1,k));render();}
+function stop(){clearInterval(timer);timer=null;$('play').textContent='▶ Play';}
+function play(){if(timer){stop();return;}if(idx==S.length-1)idx=0;$('play').textContent='⏸ Pause';timer=setInterval(()=>go(idx+1),+$('spd').value);render();}
+$('next').onclick=()=>{stop();go(idx+1)};$('prev').onclick=()=>{stop();go(idx-1)};
+$('reset').onclick=()=>{stop();qStarted=false;go(0)};$('play').onclick=play;
+const nextBy=p=>{for(let k=idx+1;k<S.length;k++)if(p(S[k]))return k;return S.length-1};
+const prevBy=p=>{for(let k=idx-1;k>=0;k--)if(p(S[k]))return k;return 0};
+const isCell=s=>s.line===9||s.line===20,isDir=s=>s.line===12||s.line===19||s.line===20||s.line===9;
+$('ss').onclick=()=>{stop();go(Math.max(idx,S.findIndex(s=>s.line===8)))};
+$('nc').onclick=()=>{stop();go(nextBy(isCell))};
+$('pc').onclick=()=>{stop();go(prevBy(s=>s.line===9))};
+$('nd').onclick=()=>{stop();go(nextBy(isDir))};
+$('je').onclick=()=>{stop();go(S.length-1)};
+$('sl').oninput=()=>{stop();go(+$('sl').value)};
+document.addEventListener('keydown',e=>{const t=e.target.tagName;if(t==='TEXTAREA'||t==='INPUT'||t==='SELECT'||t==='BUTTON')return;
+ if(e.key==='ArrowRight'){stop();go(idx+1)}else if(e.key==='ArrowLeft'){stop();go(idx-1)}
+ else if(e.key==='ArrowDown'){stop();go(nextBy(isCell))}else if(e.key==='ArrowUp'){stop();go(prevBy(s=>s.line===9))}
+ else if(e.key===' '){e.preventDefault();play()}});
+$('spd').onchange=()=>{if(timer){stop();play();}};
+
+function loadMat(M){stop();mat=M;S=build(mat);idx=0;qStarted=false;$('ta').value=JSON.stringify(M);$('err').textContent='';render();}
+PRE.forEach((p,k)=>{const b=document.createElement('button');b.textContent='Preset '+(k+1)+': '+JSON.stringify(p);b.onclick=()=>loadMat(p);$('presets').appendChild(b);});
+$('load').onclick=()=>{let M;try{M=JSON.parse($('ta').value);}catch(e){$('err').textContent='Invalid JSON, e.g. [[0,1],[1,1]]';return;}
+ if(!Array.isArray(M)||!M.length||!M.every(r=>Array.isArray(r)&&r.length)){$('err').textContent='Matrix must be non-empty with non-empty rows.';return;}
+ if(!M.every(r=>r.length===M[0].length)){$('err').textContent='All rows must have the same number of columns.';return;}
+ if(!M.every(r=>r.every(v=>v===0||v===1))){$('err').textContent='Entries must be 0 or 1.';return;}
+ if(M.length>8||M[0].length>8){$('err').textContent='Please keep it at 8×8 or smaller so it fits the screen.';return;}
+ loadMat(M);};
+
+const QZ=[
+["Why are ALL zeros pushed into the queue before the loop?",["To sort them","Each zero is a distance-0 source, so BFS spreads from all of them at once","Only to count them"],1,"Every zero is its own starting point. Spreading from all together means each cell is first reached by its nearest zero."],
+["Why does <code>d</code> start filled with -1?",["-1 marks “not calculated / unvisited yet”","-1 is the distance to a zero","It saves memory"],0,"-1 can’t be a real distance, so it safely means “unvisited” and doubles as the visited array."],
+["What does <code>Q.front()</code> do?",["Removes the first element","Reads the first element without removing it","Adds an element"],1,"front() only looks. pop() is what removes it."],
+["What does <code>Q.pop()</code> do?",["Returns the front value","Removes the front element (returns nothing)","Clears the queue"],1,"pop() on std::queue removes the front and returns void — that’s why we copy the values into rs and cs first."],
+["Why is a newly discovered neighbor pushed?",["So its own neighbors get explored later","To print it","To mark it as zero"],0,"The neighbor now has a distance, but its neighbors still need processing; the queue holds that pending work."],
+["What does <code>d[rs][cs] + 1</code> mean?",["The neighbor is one step farther than the current cell","Add 1 to the input value","The row index plus one"],0,"Moving to an adjacent cell costs one step, so neighbor distance = current distance + 1."],
+["Why check <code>nr &gt;= 0 &amp;&amp; nr &lt; n</code> (and columns)?",["To skip ones","Neighbors may fall outside the grid; indexing there is invalid","To speed up sorting"],1,"Edge and corner cells have fewer than 4 neighbors. Indexing outside the vectors is undefined behavior."],
+["Why skip neighbors where <code>d[nr][nc] != -1</code>?",["They are already assigned a shortest distance; re-processing would duplicate work","They are walls","They are out of bounds"],0,"BFS reaches each cell first via its shortest path, so later arrivals can’t improve it. Skipping avoids duplicates."],
+["Why does BFS give the shortest distance here?",["It processes cells in increasing distance order in an unweighted grid","It tries random paths","It uses recursion"],0,"The queue holds distance k cells before k+1 cells, so the first time a cell is reached is the shortest."],
+["Why must we NOT use <code>mat</code> for the distance/visited check?",["It’s const","It only holds 0 and 1 and never changes, so it can’t store distances or contain -1","It is faster"],1,"<code>mat[nr][nc] == -1</code> would never be true. Distances live in <code>d</code>."]];
+let qi=0,qStarted=false;
+function startQuiz(){qStarted=true;qi=0;showQ();}
+function showQ(){
+ if(qi>=QZ.length){$('qn').textContent='';$('qb').innerHTML='<p class="good"><b>Quiz complete!</b> You covered all '+QZ.length+' ideas.</p><button id="rq">Restart quiz</button>';$('rq').onclick=()=>{qi=0;showQ();};return;}
+ const q=QZ[qi];$('qn').textContent='('+(qi+1)+' / '+QZ.length+')';
+ $('qb').innerHTML='<p>'+q[0]+'</p>'+q[1].map((o,k)=>'<button class="opt" data-k="'+k+'">'+o+'</button>').join('')+'<div class="note" id="fb">Choose an answer.</div><button id="nq" class="hid p">Next question ▶</button>';
+ document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+  const k=+b.dataset.k;
+  if(k===q[2]){b.classList.add('ok');$('fb').innerHTML='<b class="good">Correct.</b> '+q[3];$('nq').classList.remove('hid');$('nq').onclick=()=>{qi++;showQ();};}
+  else{b.classList.add('no');$('fb').innerHTML='<b class="bad">Not quite.</b> Try another option; you can retry as many times as you like.';}});
+}
+loadMat(PRE[0]);
+</script></body></html>
