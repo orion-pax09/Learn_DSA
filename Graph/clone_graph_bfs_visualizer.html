@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clone Graph BFS Visualizer (C++)</title>
+<style>
+:root{--bg:#1e1e1e;--pn:#252526;--bd:#3c3c3c;--tx:#d4d4d4;--mu:#858585;--o:#4fc1ff;--c:#4ec9b0;--cur:#ffd33d;--new:#ff8c42;--re:#e07bd8;--map:#b48ead;--hl:#264f78}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:13px/1.45 "Segoe UI",system-ui,sans-serif}
+code,pre,.mono{font-family:Consolas,"Cascadia Mono",Menlo,monospace}
+#app{display:grid;grid-template-columns:1.05fr 1.5fr 1.25fr;grid-template-rows:auto 1fr;height:100vh;gap:6px;padding:6px}
+header{grid-column:1/4;display:flex;gap:6px;align-items:center;background:var(--pn);border:1px solid var(--bd);padding:6px 10px;flex-wrap:wrap}
+header h1{font-size:14px;margin:0 auto 0 0;font-weight:600}
+button{background:#0e639c;color:#fff;border:0;padding:5px 11px;border-radius:3px;cursor:pointer;font:inherit}
+button:hover:not(:disabled){background:#1177bb}button:disabled{opacity:.4;cursor:default}button.g{background:#3a3d41}
+#pos{color:var(--mu);min-width:80px;text-align:right}
+.col{display:flex;flex-direction:column;gap:6px;min-height:0}
+.pn{background:var(--pn);border:1px solid var(--bd);padding:6px 8px;min-height:0;overflow:auto}
+.pn>h2{font-size:11px;margin:0 0 5px;color:var(--mu);font-weight:600;letter-spacing:.3px}
+.grow{flex:1}
+#code{font:12px/1.6 Consolas,monospace;white-space:pre}
+.ln{display:block;padding:0 6px;border-left:3px solid transparent}.ln i{display:inline-block;width:24px;color:#6e7681;font-style:normal}
+.ln.on{background:#3b3a1a;border-left-color:var(--cur)}
+.kw{color:#569cd6}.ty{color:#4ec9b0}
+.o{color:var(--o)}.c{color:var(--c)}
+.cells{display:flex;gap:4px;flex-wrap:wrap;align-items:stretch}
+.cell{border:1.5px solid var(--bd);border-radius:4px;padding:3px 8px;text-align:center;min-width:92px;background:#1b1b1b;font-size:12px}
+.cell b{display:block;color:var(--mu);font-weight:400;font-size:10px}
+.cell.o{border-color:var(--o);color:var(--o)}.cell.c{border-color:var(--c);color:var(--c)}
+.cell.cl{cursor:pointer}.cell.cl:hover{background:#2a2d2e}
+.cell.act{box-shadow:0 0 0 2px var(--cur)}
+.cell.ghost{opacity:.45;border-style:dashed;text-decoration:line-through}
+.pop{animation:pop .55s ease-out}@keyframes pop{0%{transform:scale(.3);opacity:0;background:var(--new)}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.pop{animation:none}}
+.lbl{display:flex;justify-content:space-between;color:var(--mu);font-size:11px;margin-bottom:2px}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid var(--bd);padding:2px 8px;text-align:left}th{color:var(--mu);font-weight:400}
+tr.hit td{background:#3b3a1a}tr.pop td{background:#4a3320}
+.sw{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px;border:2px solid}
+.tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:5px}.tabs button{background:#2d2d2d;padding:3px 8px}.tabs button.on{background:#0e639c}
+.note{color:var(--mu);font-size:12px}
+pre{background:#1b1b1b;padding:6px;margin:4px 0;border-left:3px solid var(--bd);overflow:auto;font-size:12px}
+li{margin:2px 0}ul{margin:3px 0;padding-left:18px}
+.var{display:flex;justify-content:space-between;padding:2px 6px;border-bottom:1px solid #333}.var.ch{background:#3b3a1a}
+.lg div{margin:1px 0}
+.opt{display:block;width:100%;text-align:left;background:#2d2d2d;margin:3px 0}.opt.ok{background:#2d6a4f}.opt.no{background:#8b2f2f}
+.logrow{padding:1px 4px;color:var(--mu)}.logrow.now{color:var(--cur);background:#2b2a14}
+svg text{font-family:Consolas,monospace}
+</style></head><body>
+<div id="app">
+<header>
+<h1>LeetCode 133 · Clone Graph with BFS · C++ step debugger</h1>
+<button id="bPrev" class="g">◀ Previous Step</button><button id="bNext">Next Step ▶</button>
+<button id="bRest" class="g">⟲ Restart</button><button id="bPlay" class="g">▶ Play</button><button id="bPause" class="g">❚❚ Pause</button>
+<button id="bConc" class="g">Show Next Concept</button><span id="pos"></span>
+</header>
+
+<div class="col">
+ <div class="pn grow"><h2>C++ CODE (current line highlighted)</h2><div id="code"></div></div>
+ <div class="pn lg"><h2>LEGEND</h2>
+  <div><span class="sw" style="border-color:var(--o);background:#12354a"></span>Original node &nbsp;<span class="sw" style="border-color:var(--c);background:#10382f"></span>Cloned node</div>
+  <div><span class="sw" style="border-color:var(--cur)"></span>Current node (<code>temp</code> / its clone)</div>
+  <div><span class="sw" style="border-color:var(--new)"></span>Newly discovered &nbsp;<span class="sw" style="border-color:var(--re)"></span>Existing clone reused</div>
+  <div><span class="sw" style="border-radius:0;border-color:var(--cur);background:#3b3a1a"></span>Executing code line</div>
+  <svg width="100%" height="64" viewBox="0 0 330 64"><g font-size="11" fill="#d4d4d4">
+   <line x1="5" y1="10" x2="60" y2="10" stroke="#4fc1ff" stroke-width="2.5"/><text x="68" y="14">Original edge: Original 1 → Original 2</text>
+   <line x1="5" y1="30" x2="60" y2="30" stroke="#b48ead" stroke-width="2.5" stroke-dasharray="5 4"/><text x="68" y="34">Map link: Original 1 → Clone 1 (not an edge!)</text>
+   <line x1="5" y1="50" x2="60" y2="50" stroke="#4ec9b0" stroke-width="2.5"/><text x="68" y="54">Cloned edge: Clone 1 → Clone 2</text></g></svg>
+ </div>
+</div>
+
+<div class="col">
+ <div class="pn"><h2>ORIGINAL GRAPH (never changes) &nbsp;|&nbsp; CLONED GRAPH (built step by step) — click any node to inspect it</h2><svg id="gr" viewBox="0 0 560 225" width="100%"></svg></div>
+ <div class="pn"><h2>QUEUE &nbsp;<code>queue&lt;Node*&gt; Q</code> — holds ORIGINAL node pointers only</h2><div id="queue"></div></div>
+ <div class="pn grow"><h2>HASH MAP &nbsp;<code>unordered_map&lt;Node*, Node*&gt; mp</code> — key: original pointer, value: clone pointer</h2><div id="map"></div></div>
+</div>
+
+<div class="col">
+ <div class="pn"><h2>CURRENT NODE <code>temp</code> AND ITS NEIGHBORS VECTORS</h2><div id="vecs"></div></div>
+ <div class="pn"><h2>NODE INSPECTOR (click a node; click a pointer cell to highlight its target)</h2><div id="insp"></div></div>
+ <div class="pn grow"><div class="tabs" id="tabs"></div><div id="tab"></div></div>
+</div>
+</div>
+
+<script>
+/* ---------- Data & code ---------- */
+const adj={1:[2,3],2:[1,3],3:[1,2]};
+const CODE=["class Solution {","public:","    Node* cloneGraph(Node* node) {","","        if (node == nullptr) {","            return nullptr;","        }","","        unordered_map<Node*, Node*> mp;","","        mp[node] = new Node(node->val);","","        queue<Node*> Q;","        Q.push(node);","","        while (!Q.empty()) {","","            Node* temp = Q.front();","            Q.pop();","","            for (Node* vis : temp->neighbors) {","","                if (mp.find(vis) == mp.end()) {","","                    mp[vis] = new Node(vis->val);","","                    Q.push(vis);","                }","","                mp[temp]->neighbors.push_back(mp[vis]);","            }","        }","","        return mp[node];","    }","};"];
+const O=n=>"Original Node "+n,C=n=>"Clone Node "+n,Oi=n=>"Original_Node_"+n,Ci=n=>"Clone_Node_"+n;
+
+/* ---------- Deterministic trace: every step is a full state snapshot ---------- */
+const S={line:-1,node:null,temp:null,vis:null,visNew:null,cur:null,nbr:null,idx:null,mapOn:0,qOn:0,map:[],Q:[],
+ cl:{1:{made:0,nb:[]},2:{made:0,nb:[]},3:{made:0,nb:[]}},pend:null,ret:0,fx:{},vars:[],title:"",what:[]};
+const T=[];
+function snap(line,title,what,vars,fx,mut){if(mut)mut();Object.assign(S,{line,title,what,vars,fx:fx||{}});T.push(JSON.parse(JSON.stringify(S)));}
+(function build(){
+ snap(-1,"Ready",["mp = {}, Q = [], cloned graph is empty.","Press Next Step to run the first line."],[],{});
+ snap(4,"if (node == nullptr)",["<code>node</code> holds a pointer to Original Node 1.","It is not nullptr, so we skip the early return.","Nothing in mp, Q or the clone graph changed."],["node"],{},()=>S.node=1);
+ snap(8,"unordered_map<Node*, Node*> mp;",["An empty hash map was created.","Keys will be original pointers; values will be clone pointers."],["mp"],{},()=>S.mapOn=1);
+ snap(10,"mp[node] = new Node(node->val);  (part 1: new Node)",["A new Node object was created on the heap: Clone Node 1.","<code>val</code> was copied (1). Its neighbors vector is empty.","It is NOT in the map yet."],["clone graph"],{new:1},()=>{S.cl[1].made=1;S.pend=1});
+ snap(10,"mp[node] = new Node(node->val);  (part 2: store in map)",["The mapping Original Node 1 → Clone Node 1 was added to mp."],["mp"],{mapnew:1},()=>{S.map.push([1,1]);S.pend=null});
+ snap(12,"queue<Node*> Q;",["An empty queue of Node* was created."],["Q"],{},()=>S.qOn=1);
+ snap(13,"Q.push(node);",["Original Node 1's pointer was added at the BACK of the queue.","The queue holds ORIGINAL pointers; clones never go in it."],["Q"],{qpush:1},()=>S.Q.push(1));
+ while(S.Q.length){
+  snap(15,"while (!Q.empty())",[`Q has ${S.Q.length} element(s), so the loop body runs.`],["Q"],{});
+  const t=S.Q[0];
+  snap(17,"Node* temp = Q.front();",[`The FRONT pointer (${O(t)}) was copied into <code>temp</code>.`,"The queue itself is unchanged: front() only reads."],["temp"],{front:1},()=>{S.temp=t});
+  snap(18,"Q.pop();",[`The queue entry for ${O(t)} was removed.`,"The Node object still exists in memory; only the queue slot is gone.","<code>temp</code> still points to it."],["Q"],{popped:t},()=>S.Q.shift());
+  adj[t].forEach((v,i)=>{
+   snap(20,"for (Node* vis : temp->neighbors)",[`<code>vis</code> = temp->neighbors[${i}] → ${O(v)}.`,"<code>vis</code> is a copy of that pointer; the original vector is untouched."],["vis"],{},()=>{S.vis=v;S.idx=i;S.visNew=null;S.cur=null;S.nbr=null});
+   const has=S.map.some(p=>p[0]==v);
+   snap(22,"if (mp.find(vis) == mp.end())",has?[`${O(v)} IS in the map, so find() ≠ end() → condition is false.`,`Its clone already exists, so we reuse ${C(v)}. No new node is created.`]:[`${O(v)} is NOT in the map, so find() == end() → condition is true.`,"It has not been cloned yet."],["mp"],{found:has,look:v},()=>S.visNew=!has);
+   if(!has){
+    snap(24,"mp[vis] = new Node(vis->val);  (part 1: new Node)",[`A new Node object was created: ${C(v)}.`,`val copied from ${O(v)}. Neighbors vector starts empty.`,"Not in the map yet."],["clone graph"],{new:v},()=>{S.cl[v].made=1;S.pend=v});
+    snap(24,"mp[vis] = new Node(vis->val);  (part 2: store in map)",[`mp gained: ${O(v)} → ${C(v)}.`,"Queue and edges have not changed yet."],["mp"],{mapnew:v},()=>{S.map.push([v,v]);S.pend=null});
+    snap(26,"Q.push(vis);",[`${O(v)} (the ORIGINAL pointer, not the clone) was added to the back of Q.`,"Later BFS must read its original neighbors, so it needs the original."],["Q"],{qpush:1},()=>S.Q.push(v));
+   }
+   snap(29,"mp[temp]  →  currentClone",[`mp[temp]: take the original pointer in temp (${O(t)}), find it in mp, get ${C(t)}.`,"Equivalent: <code>Node* currentClone = mp[temp];</code>"],["currentClone"],{look:t},()=>S.cur=t);
+   snap(29,"mp[vis]  →  neighborClone",[`mp[vis]: take vis (${O(v)}), find it in mp, get ${C(v)}.`,"Equivalent: <code>Node* neighborClone = mp[vis];</code>",S.visNew?"This clone was just created.":"This clone already existed and is being reused."],["neighborClone"],{look:v,reuse:S.visNew?0:v},()=>S.nbr=v);
+   const k=S.cl[t].nb.length;
+   snap(29,"currentClone->neighbors.push_back(neighborClone)",[`push_back appended ONE new cell at index ${k} of ${C(t)}'s neighbors vector.`,`The cell stores a pointer to ${C(v)}, not a copy of it. size(): ${k} → ${k+1}.`,"A new cloned edge exists; the original graph is untouched."],["clone graph"],{cell:k,reuse:S.visNew?0:v},()=>S.cl[t].nb.push(v));
+  });
+  snap(20,"for loop ends",[`${O(t)} has no more neighbors. Back to the while condition.`],["vis"],{},()=>{S.vis=null;S.visNew=null;S.idx=null;S.cur=null;S.nbr=null});
+ }
+ snap(15,"while (!Q.empty())  → false",["The queue is empty: every discovered original node has been processed.","The loop terminates."],["Q"],{});
+ snap(33,"return mp[node];",["<code>node</code> still points to Original Node 1, so mp[node] gives Clone Node 1.","The whole cloned graph is reachable from that pointer.","Same structure as the original, but every node is a different object."],["mp"],{ret:1,look:1},()=>S.ret=1);
+})();
+
+/* ---------- Rendering ---------- */
+let i=0,sel={t:"o",id:1},hl=null,tab="chg",cc=-1,timer=null;
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const P={1:[110,50],2:[40,160],3:[180,160]},OFF=300,R=22;
+const cellH=(kind,idx,txt,extra="")=>`<div class="cell ${kind} ${extra}"><b>index ${idx}</b>pointer to<br>${txt}</div>`;
+
+function edge(a,b,off,ab,ba,col,mk){
+ const [x1,y1]=[P[a][0]+off,P[a][1]],[x2,y2]=[P[b][0]+off,P[b][1]],d=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/d,uy=(y2-y1)/d,g=R+3;
+ return `<line x1="${x1+ux*g}" y1="${y1+uy*g}" x2="${x2-ux*g}" y2="${y2-uy*g}" stroke="${col}" stroke-width="2.5" ${ab?`marker-end="url(#${mk})"`:""} ${ba?`marker-start="url(#${mk})"`:""}/>`;
+}
+function drawGraph(s,pv){
+ let h=`<defs><marker id="mo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#4fc1ff"/></marker><marker id="mc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#4ec9b0"/></marker></defs>
+ <text x="10" y="14" fill="#4fc1ff" font-size="12">Original</text><text x="${OFF+10}" y="14" fill="#4ec9b0" font-size="12">Clone</text><line x1="${OFF-20}" y1="5" x2="${OFF-20}" y2="215" stroke="#3c3c3c"/>`;
+ [[1,2],[1,3],[2,3]].forEach(([a,b])=>h+=edge(a,b,0,1,1,"#4fc1ff","mo"));
+ s.map.forEach(([o,c])=>{const x1=P[o][0]+R,x2=P[c][0]+OFF-R,y=P[o][1];
+  h+=o==1?`<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#b48ead" stroke-width="2" stroke-dasharray="5 4"/>`:`<path d="M${x1-R+4} ${y+R} Q${(x1+x2)/2} ${y+90} ${x2+R-4} ${y+R}" fill="none" stroke="#b48ead" stroke-width="2" stroke-dasharray="5 4"/>`;});
+ const seen={};
+ for(const a in s.cl)for(const b of s.cl[a].nb){const k=Math.min(a,b)+"-"+Math.max(a,b);(seen[k]=seen[k]||[a,b,0,0]);if(+a<+b)seen[k][2]=1;else seen[k][3]=1;}
+ for(const k in seen){const [a,b,f,r]=seen[k],lo=Math.min(a,b),hi=Math.max(a,b);h+=edge(lo,hi,OFF,f,r,"#4ec9b0","mc");}
+ const vc=s.visNew===true?"#ff8c42":s.visNew===false?"#e07bd8":"#ffffff";
+ for(const n of [1,2,3]){
+  let st="#4fc1ff",fill="#12354a",w=2,da="",ring="";
+  if(s.temp==n)ring="#ffd33d";else if(s.vis==n)ring=vc;
+  if(hl&&hl.t=="o"&&hl.id==n)ring="#fff";
+  h+=`<g style="cursor:pointer" onclick="pick('o',${n})"><circle cx="${P[n][0]}" cy="${P[n][1]}" r="${R}" fill="${fill}" stroke="${ring||st}" stroke-width="${ring?4:2}"/><text x="${P[n][0]}" y="${P[n][1]+5}" text-anchor="middle" fill="#4fc1ff" font-size="14">O${n}</text></g>`;
+  if(s.cl[n].made){
+   let r2="#4ec9b0",w2=2,d2=s.pend==n?'stroke-dasharray="4 3"':"";
+   if(s.cur==n)r2="#ffd33d",w2=4;else if(s.nbr==n)r2=s.visNew?"#ff8c42":"#e07bd8",w2=4;else if(s.fx.new==n)r2="#ff8c42",w2=4;
+   if(hl&&hl.t=="c"&&hl.id==n)r2="#fff",w2=4;
+   h+=`<g style="cursor:pointer" onclick="pick('c',${n})"><circle cx="${P[n][0]+OFF}" cy="${P[n][1]}" r="${R}" fill="#10382f" stroke="${r2}" stroke-width="${w2}" ${d2}/><text x="${P[n][0]+OFF}" y="${P[n][1]+5}" text-anchor="middle" fill="#4ec9b0" font-size="14">C${n}</text></g>`;
+  }
+ }
+ if(!s.map.length&&!s.pend)h+=`<text x="${OFF+120}" y="110" fill="#858585" font-size="12" text-anchor="middle">(cloned graph is empty)</text>`;
+ return h;
+}
+function nbrs(kind,n,s){return kind=="o"?adj[n]:s.cl[n].nb;}
+function vecHtml(kind,n,s,pv,active,showNew){
+ const v=nbrs(kind,n,s),pl=kind=="o"?v.length:pv.cl[n].nb.length,nm=kind=="o"?O:C;
+ let h=`<div class="lbl"><span class="${kind}">${nm(n)} neighbors</span><span>size() = ${v.length}${pl!=v.length?` (was ${pl})`:""}</span></div><div class="cells">`;
+ if(!v.length)h+=`<span class="note">[ ] empty vector</span>`;
+ v.forEach((x,j)=>{h+=`<div class="cell ${kind} cl ${active===j?"act":""} ${showNew&&s.fx.cell===j?"pop":""}" onclick="hlt('${kind}',${x})"><b>index ${j}</b>pointer to<br>${nm(x)}</div>`;});
+ return h+"</div>";
+}
+function render(){
+ const s=T[i],pv=T[Math.max(0,i-1)];
+ $("pos").textContent=`step ${i}/${T.length-1}`;
+ $("bPrev").disabled=i==0;$("bNext").disabled=i==T.length-1;
+ // code
+ $("code").innerHTML=CODE.map((l,k)=>`<span class="ln ${k==s.line?"on":""}"><i>${k+1}</i>${esc(l)||" "}</span>`).join("");
+ const on=document.querySelector(".ln.on");if(on)on.scrollIntoView({block:"nearest"});
+ // graph
+ $("gr").innerHTML=drawGraph(s,pv);
+ // queue
+ let q=`<div class="lbl"><span>FRONT ▼</span><span>▼ BACK</span></div><div class="cells" style="min-height:44px">`;
+ if(s.fx.popped)q+=`<div class="cell o ghost"><b>popped</b>${O(s.fx.popped)}</div>`;
+ s.Q.forEach((x,j)=>q+=`<div class="cell o ${s.fx.qpush&&j==s.Q.length-1?"pop":""} ${s.fx.front&&j==0?"act":""}"><b>${j==0?"front":j==s.Q.length-1?"back":"·"}</b>${O(x)}</div>`);
+ if(!s.Q.length&&!s.fx.popped)q+=`<span class="note">${s.qOn?"[ ] empty":"(not created yet)"}</span>`;
+ q+=`</div><div class="note mono" style="margin-top:4px">before: [${pv.Q.map(x=>"O"+x)}] → after: [${s.Q.map(x=>"O"+x)}]${s.fx.front?" &nbsp;(front() only reads)":""}</div>`;
+ $("queue").innerHTML=q;
+ // map
+ let m=`<table style="${s.mapOn?"":"opacity:.45"}"><tr><th>Original pointer (key)</th><th>Cloned pointer (value)</th></tr>`;
+ s.map.forEach(([o,c])=>{const hit=s.fx.look==o;m+=`<tr class="${s.fx.mapnew==o?"pop":hit?"hit":""}"><td class="o">${O(o)}</td><td class="c">${C(c)}</td></tr>`;});
+ if(!s.map.length)m+=`<tr><td colspan="2" class="note">mp = {}</td></tr>`;
+ m+="</table>";
+ if(s.pend)m+=`<div class="note" style="margin-top:4px">⚠ ${C(s.pend)} exists on the heap but is not in mp yet.</div>`;
+ let lk="";if(s.line==22)lk=`mp.find(${s.vis?"vis":""}) → ${s.fx.found?"found":"== mp.end() (absent)"}`;
+ if(s.cur&&!s.nbr)lk=`mp[temp] = mp[${O(s.cur)}] → ${C(s.cur)}`;
+ if(s.nbr)lk=`mp[vis] = mp[${O(s.nbr)}] → ${C(s.nbr)}${s.cur?` &nbsp;|&nbsp; mp[temp] → ${C(s.cur)}`:""}`;
+ if(s.ret)lk=`mp[node] = mp[${O(1)}] → ${C(1)} (returned)`;
+ m+=`<div class="mono" style="margin-top:5px;color:var(--cur)">${lk}</div><div class="note" style="margin-top:3px">Keys are pointers to Node objects, not the ints in <code>val</code>. The map stops duplicate clones.</div>`;
+ $("map").innerHTML=m;
+ // vectors
+ let v="";
+ if(s.temp){v+=`<div class="note">temp → ${O(s.temp)} &nbsp; vis → ${s.vis?O(s.vis):"—"}</div>`+vecHtml("o",s.temp,s,pv,s.idx,0)+`<div style="height:6px"></div>`+vecHtml("c",s.temp,s,pv,null,1);
+  v+=`<div class="note" style="margin-top:4px">Cells hold pointers (Node*), not Node copies. A clone's cells only ever point to clones.</div>`;}
+ else v=`<span class="note">No current node yet. <code>temp</code> is set when Q.front() runs.</span>`;
+ $("vecs").innerHTML=v;
+ // inspector
+ const k=sel.t,n=sel.id;
+ if(k=="c"&&!s.cl[n].made){$("insp").innerHTML=`<span class="note">${C(n)} does not exist yet.</span>`;}
+ else $("insp").innerHTML=`<div class="mono"><b class="${k}">Node object: ${k=="o"?O(n):C(n)}</b><br>Memory identity: ${k=="o"?Oi(n):Ci(n)} <span class="note">(symbolic label, not a real address)</span><br>val: ${n}<br>neighbors: ${vecHtml(k,n,s,pv,null,0).replace(/<div class="lbl">.*?<\/div>/,"")}</div><div class="note" style="margin-top:3px">Original and clone both have val = ${n} but are different objects.</div>`;
+ // tab
+ $("tabs").innerHTML=[["chg","What changed?"],["var","Variables"],["log","Log"],["con","Concepts"],["qz","Quiz"]].map(([k,l])=>`<button class="${tab==k?"on":""}" onclick="setTab('${k}')">${l}</button>`).join("");
+ if(tab!="qz")drawTab(s);
+}
+function drawTab(s){
+ let h="";
+ if(tab=="chg"){h=`<div class="mono" style="color:var(--cur)">${esc(s.title)}</div><div><b>What changed?</b></div><ul>${s.what.map(w=>`<li>${w}</li>`).join("")}</ul>`;
+  if(s.line==29)h+=`<div class="note">Short form <code>mp[temp]->neighbors.push_back(mp[vis]);</code> does the same as:</div><pre>Node* currentClone  = mp[temp];\nNode* neighborClone = mp[vis];\ncurrentClone->neighbors.push_back(neighborClone);</pre>`;}
+ if(tab=="var"){const pv=T[Math.max(0,i-1)],r=(n,val)=>`<div class="var ${s.vars.includes(n)?"ch":""}"><span class="mono">${n}</span><span class="mono">${val}</span></div>`;
+  h=r("node",s.node?"→ "+O(s.node):"?")+r("temp",s.temp?"→ "+O(s.temp):"?")+r("vis",s.vis?"→ "+O(s.vis):"—")+
+   r("mp","{"+s.map.map(p=>"O"+p[0]+"→C"+p[1])+"}")+r("Q","["+s.Q.map(x=>"O"+x)+"]")+
+   r("clone graph",[1,2,3].filter(n=>s.cl[n].made).map(n=>`C${n}[${s.cl[n].nb.map(x=>"C"+x)}]`).join(" ")||"empty")+
+   r("currentClone",s.cur?"→ "+C(s.cur):"—")+r("neighborClone",s.nbr?"→ "+C(s.nbr):"—")+`<div class="note">Highlighted = changed or used in this step.</div>`;}
+ if(tab=="log"){h=T.slice(1,i+1).map((x,j)=>`<div class="logrow mono ${j+1==i?"now":""}">${j+1}. [L${x.line+1}] ${esc(x.title)}</div>`).join("")||"<span class='note'>Nothing executed yet.</span>";}
+ if(tab=="con"){h=cc<0?"<span class='note'>Press “Show Next Concept” to step through the explanations.</span>":CON[cc]+`<div class="note">Concept ${cc+1}/${CON.length}</div>`;}
+ $("tab").innerHTML=h;
+ if(tab=="log"){$("tab").parentNode.scrollTop=1e5;}
+}
+function setTab(t){tab=t;render();if(t=="qz")drawQuiz();}
+function pick(t,id){sel={t,id};hl=null;render();}
+function hlt(kind,id){hl={t:kind,id};render();}
+function go(d){i=Math.max(0,Math.min(T.length-1,i+d));hl=null;render();if(i==T.length-1)stop();}
+function stop(){clearInterval(timer);timer=null;}
+$("bNext").onclick=()=>go(1);$("bPrev").onclick=()=>go(-1);
+$("bRest").onclick=()=>{stop();i=0;hl=null;render();};
+$("bPlay").onclick=()=>{if(timer||i==T.length-1)return;timer=setInterval(()=>go(1),1300);};
+$("bPause").onclick=stop;
+$("bConc").onclick=()=>{cc=(cc+1)%CON.length;tab="con";render();};
+addEventListener("keydown",e=>{if(e.key=="ArrowRight")go(1);if(e.key=="ArrowLeft")go(-1);});
+
+/* ---------- Concepts ---------- */
+const CON=[
+`<b>What is a Node object?</b><pre>class Node { int val; vector&lt;Node*&gt; neighbors; };</pre><ul><li><code>Node*</code> is a pointer: it says <i>where</i> a Node object lives.</li><li><code>neighbors</code> is a vector whose elements are <code>Node*</code>, so each cell points to another object. It is not a vector of ints.</li><li>Two different Node objects can have the same <code>val</code>. Original 1 and Clone 1 both have val = 1.</li></ul>`,
+`<b>A. Node* temp = Q.front();</b><br>The front pointer of the queue is copied into <code>temp</code>. <code>temp</code> is a pointer to an <span class="o">original</span> node: the one BFS processes now.`,
+`<b>B. for (Node* vis : temp->neighbors)</b><br><code>vis</code> takes each pointer of temp's neighbors vector in turn. <code>temp->neighbors</code> is right because temp is the node being processed. <code>node->neighbors</code> would always loop over node 1's neighbors and never explore the rest of the graph.`,
+`<b>C. if (mp.find(vis) == mp.end())</b><br>True when <code>vis</code> is not a key in the map, i.e. that original node has not been cloned yet. False means a clone exists and we reuse it.`,
+`<b>D. mp[vis] = new Node(vis->val);</b><br>1) <code>new</code> creates a Node object on the heap. 2) The constructor copies <code>val</code> and makes <code>neighbors</code> an empty vector. 3) The new pointer is stored in the map under the key <code>vis</code>.`,
+`<b>E. Q.push(vis);</b><br><code>vis</code> is an original pointer. We queue the original because later we must read ITS neighbors; a clone's neighbors vector is still empty, so queueing <code>mp[vis]</code> would be wrong.`,
+`<b>F. Connecting clones</b><pre>mp[temp]->neighbors.push_back(mp[vis]);\n// same as\nNode* currentClone  = mp[temp];\nNode* neighborClone = mp[vis];\ncurrentClone->neighbors.push_back(neighborClone);</pre>Find the clone of temp, use <code>-></code> to reach its vector, find the clone of vis, append that pointer as one new cell.`,
+`<b>G. return mp[node];</b><br>The starting original pointer is the key; the value is Clone 1. Since clone cells point to other clones, returning Clone 1 returns the whole cloned graph.`,
+`<b>Three different relationships</b><ul><li><span class="o">Original edge</span>: Original 1 → Original 2 (inside neighbors vectors of originals)</li><li><span style="color:var(--map)">Map relationship</span>: Original 1 → Clone 1 (bookkeeping only; not a graph edge)</li><li><span class="c">Cloned edge</span>: Clone 1 → Clone 2 (inside neighbors vectors of clones)</li></ul>`,
+`<b>Queue pop does not delete</b><br><code>Q.pop()</code> removes the queue's entry. The Node object it pointed to is untouched, and <code>temp</code> and the map still refer to it.`];
+
+/* ---------- Quiz ---------- */
+const QZ=[
+["What type of pointer does <code>temp</code> hold?",["A pointer to a cloned Node","A pointer to an original Node","An int copy of val","A whole copy of the graph"],1,"temp = Q.front(), and the queue holds original pointers."],
+["What objects are stored in the queue?",["Cloned Node pointers","Map entries","Original Node pointers","Only integers"],2,"Q is queue&lt;Node*&gt; and we push originals (node, vis)."],
+["What does each element of <code>neighbors</code> store?",["A Node* pointing to another Node object","A full copy of a Node","An int val","A map key and value"],0,"It is a vector of pointers; each cell points to an existing object."],
+["Why check the map before creating a clone?",["To speed up printing","Because new Node is illegal","To sort the nodes","To avoid creating a second clone of a node already cloned"],3,"Without the check, node 3 would be cloned twice and the clone graph would be wrong."],
+["What happens when <code>Q.pop()</code> executes?",["The front queue entry is removed","The node object is deleted","The map entry is erased","The clone is deleted"],0,"Only the queue entry is removed."],
+["Does <code>Q.pop()</code> delete the original node?",["Yes, memory is freed","Yes, but only clones","No, only the queue slot goes away","It deletes its neighbors"],2,"The Node lives on the heap; the queue only held a pointer."],
+["Why enqueue <code>vis</code> rather than <code>mp[vis]</code>?",["Clones cannot be pointers","BFS must later read the ORIGINAL node's neighbors","The map is slower","Queues reject clones for no reason"],1,"A clone's neighbors vector is empty until we fill it; the original has the real neighbors."],
+["What does <code>mp[temp]</code> return?",["The int val of temp","temp itself","temp's neighbors vector","The clone of the original node temp points to"],3,"Key = original pointer, value = its clone pointer."],
+["What does <code>push_back()</code> change?",["It adds one new element at the end of the vector","It removes the first element","It copies the whole node","It changes the original graph"],0,"size() grows by one; here the new cell is a pointer to a clone."],
+["Why does the cloned graph start with empty neighbors vectors?",["It is a bug","new Node(val) only sets val and an empty vector; edges are added later by push_back","Clones have no edges","The queue fills them"],1,"The constructor creates an empty vector; the loop connects clones afterwards."],
+["Why is clone 3 not created again while processing node 2?",["Node 3 has no neighbors","Q is empty","mp already has Original 3, so find() ≠ end() and we reuse Clone 3","BFS skips node 3"],2,"The map check is false for node 3, so only push_back runs."],
+["What does <code>return mp[node]</code> return?",["Original Node 1","The clone of the starting node (Clone Node 1)","The map","The queue"],1,"node is the original start pointer; mp maps it to Clone 1."]];
+let qi=0,qs=0,qa=false;
+function drawQuiz(){
+ const el=$("tab");
+ if(qi>=QZ.length){el.innerHTML=`<b>Done! Score: ${qs}/${QZ.length}</b><br><button onclick="qi=0;qs=0;qa=false;drawQuiz()">Restart quiz</button>`;return;}
+ const q=QZ[qi];
+ el.innerHTML=`<div class="note">Question ${qi+1}/${QZ.length}</div><div style="margin:4px 0"><b>${q[0]}</b></div>`+q[1].map((o,j)=>`<button class="opt" onclick="ans(${j})">${o}</button>`).join("")+`<div id="fb"></div>`;
+ qa=false;
+}
+function ans(j){
+ if(qa)return;qa=true;const q=QZ[qi],b=document.querySelectorAll(".opt");
+ b[j].classList.add(j==q[2]?"ok":"no");b[q[2]].classList.add("ok");if(j==q[2])qs++;
+ $("fb").innerHTML=`<p><b>${j==q[2]?"Correct!":"Not quite."}</b> ${q[3]}</p><button onclick="qi++;drawQuiz()">${qi==QZ.length-1?"See score":"Next question"}</button>`;
+}
+render();
+</script></body></html>
