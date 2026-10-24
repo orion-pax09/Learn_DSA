@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clone Graph (LeetCode 133) — Step Debugger</title>
+<style>
+:root{--bg:#1e1e1e;--side:#252526;--bar:#333337;--line:#3c3c3c;--tx:#d4d4d4;--dim:#8b8b8b;--orig:#4fa3f7;--clone:#4ec9a0;--warn:#e5c07b;--bad:#f07178;--hl:#264f78;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:13px/1.45 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.mono,code,pre{font-family:"Cascadia Code",Consolas,"SF Mono",Menlo,monospace}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bar);padding:6px 12px;border-bottom:1px solid #000}
+header h1{font-size:14px;margin:0;font-weight:600;margin-right:auto}
+button{background:#0e639c;color:#fff;border:0;border-radius:4px;padding:6px 12px;font:inherit;cursor:pointer}
+button:hover{background:#1177bb}button:disabled{background:#3a3d41;color:#777;cursor:not-allowed}
+button.alt{background:#3a3d41}button.alt:hover{background:#4a4d52}
+button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.prog{min-width:110px;text-align:center;font-weight:600}
+main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,0.9fr) minmax(380px,1.3fr) minmax(280px,0.8fr);gap:1px;background:var(--line)}
+section{background:var(--bg);min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.col{overflow:auto;min-height:0;display:flex;flex-direction:column;gap:1px;background:var(--line)}
+.panel{background:var(--bg);padding:8px 12px}
+.ph{color:var(--dim);font-size:11.5px;margin:0 0 5px;font-weight:600;letter-spacing:.02em}
+pre{margin:0;font-size:12px;line-height:1.55}
+.cl{display:flex;white-space:pre;padding-right:8px}
+.cl i{width:28px;color:#6e7681;text-align:right;padding-right:10px;font-style:normal;flex:none;user-select:none}
+.cl.on{background:var(--hl);box-shadow:inset 3px 0 var(--warn)}
+.k{color:#c586c0}.t{color:#4ec9b0}.f{color:#dcdcaa}.n{color:#569cd6}
+.exp h2{font-size:14px;margin:0 0 4px}
+.exp p{margin:3px 0}
+.mem{border-left:3px solid var(--clone);padding-left:8px;color:#b5e8d5}
+.call{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12px}
+.call b{color:var(--dim);font-weight:500}
+.tag{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;background:#3a3d41;color:var(--dim);margin:0 4px 4px 0}
+.tag.on{background:var(--warn);color:#222;font-weight:700}
+svg{width:100%;height:auto;max-height:100%;display:block}
+.gwrap{padding:6px 10px}
+.n-o{fill:#16324f;stroke:var(--orig);stroke-width:3}
+.n-c{fill:#0f3a2f;stroke:var(--clone);stroke-width:3;stroke-dasharray:6 3}
+.n-g{fill:none;stroke:#444;stroke-width:1.5;stroke-dasharray:3 4}
+.nt{fill:#fff;font:700 18px "Cascadia Code",Consolas,monospace;text-anchor:middle;dominant-baseline:central}
+.ad{fill:var(--dim);font:10px "Cascadia Code",Consolas,monospace;text-anchor:middle}
+.ring{fill:none;stroke:var(--warn);stroke-width:3}
+.ring2{fill:none;stroke:#fff;stroke-width:2;stroke-dasharray:3 3}
+.pop{animation:pop .5s ease-out;transform-box:fill-box;transform-origin:center}
+@keyframes pop{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+.draw{stroke-dasharray:1;animation:dr .6s ease-out forwards}
+@keyframes dr{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{border:1px solid var(--line);padding:3px 6px;text-align:left}
+th{color:var(--dim);font-weight:600}
+tr.new td{background:#1d4a3a;animation:fl 1s}
+@keyframes fl{from{background:var(--warn)}}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+.nb div{margin:2px 0;font-size:12px}
+.chip{display:inline-block;border-radius:3px;padding:0 5px;margin:0 2px;background:#16324f;color:#9cc9f5}
+.chip.c{background:#0f3a2f;color:#8fe3c4}.chip.hot{outline:2px solid var(--warn);animation:pop .5s}
+.tabs{display:flex;background:var(--side);border-bottom:1px solid #000}
+.tabs button{background:transparent;color:var(--dim);border-radius:0;padding:7px 12px;border-bottom:2px solid transparent}
+.tabs button.act{color:#fff;border-bottom-color:var(--orig)}
+.tp{display:none;overflow:auto;padding:10px 12px;flex:1;min-height:0}.tp.act{display:block}
+.fr{border:1px solid var(--line);border-radius:4px;padding:5px 8px;margin:0 0 4px;background:var(--side);font-size:12px}
+.fr.top{border-color:var(--warn);background:#3a3420}
+.fr small{display:block;color:var(--dim)}
+.fr.ret{border-color:var(--clone)}
+.log div{font-size:12px;white-space:pre;color:var(--dim)}
+.log div:last-child{color:var(--tx)}
+details{border:1px solid var(--line);border-radius:4px;margin:0 0 6px;background:var(--side)}
+summary{cursor:pointer;padding:6px 10px;font-weight:600}
+details p{margin:0;padding:0 10px 8px}
+.opt{display:block;width:100%;text-align:left;background:#2d2d30;margin:5px 0;padding:8px 10px}
+.opt:hover{background:#3a3d41}.opt.good{background:#1d5a3f}.opt.bad{background:#6b2630}
+.fb{margin-top:8px;padding:8px;border-radius:4px;background:var(--side);border-left:3px solid var(--warn)}
+@media (max-width:980px){body{height:auto}main{display:block}section,.col{overflow:visible}.tp{max-height:none}html,body{height:auto}.panel{border-bottom:1px solid var(--line)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Clone Graph · LeetCode 133 · DFS + hash map</h1>
+  <button id="bR" class="alt">Restart</button>
+  <button id="bP" class="alt">Previous step</button>
+  <span class="prog mono" id="prog"></span>
+  <button id="bN">Next step</button>
+  <button id="bPl" class="alt">Play (off)</button>
+</header>
+<main>
+<section class="col">
+  <div class="panel"><p class="ph">C++ — highlighted line is the one running now</p><pre id="code"></pre></div>
+  <div class="panel exp"><p class="ph">What is happening</p><h2 id="eT"></h2><p id="eW"></p><p class="mem" id="eM"></p></div>
+  <div class="panel"><p class="ph">Current call</p><div class="call" id="callp"></div></div>
+</section>
+
+<section class="col">
+  <div class="panel gwrap"><p class="ph">Original graph (blue, solid) vs cloned graph (green, dashed) — separate objects in memory</p>
+    <svg id="gsvg" viewBox="0 0 620 240"></svg></div>
+  <div class="two">
+    <div class="panel"><p class="ph">mp — unordered_map&lt;Node*, Node*&gt;</p>
+      <table><thead><tr><th>Key: original Node*</th><th>Value: cloned Node*</th></tr></thead><tbody id="mapb"></tbody></table>
+      <div style="margin-top:6px" id="cases"></div>
+      <p class="mem" id="mapnote" style="margin:6px 0 0"></p></div>
+    <div class="panel nb"><p class="ph">neighbors vectors</p><div id="nbl"></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="tabs" role="tablist">
+    <button class="act" data-t="t0">Recursion stack</button><button data-t="t1">Understand the Logic</button><button data-t="t2">Quiz</button>
+  </div>
+  <div class="tp act" id="t0">
+    <p class="ph">Call stack now (top = running)</p><div id="stk"></div>
+    <p class="ph" style="margin-top:10px">Why a return does not delete a clone</p>
+    <p style="margin:0 0 8px">A stack frame holds only local variables (pointers). The clone itself was made with <code>new</code>, so it lives on the heap. When the frame disappears, the clone stays alive because <code>mp</code> and other clones still point to it.</p>
+    <p class="ph">Call history up to this step</p><div class="log mono" id="log"></div>
+  </div>
+  <div class="tp" id="t1"></div>
+  <div class="tp" id="t2"></div>
+</section>
+</main>
+
+<script>
+/* ============================================================
+   1. THE GRAPH. Neighbor order matters: it makes the trace deterministic.
+   ============================================================ */
+const ADJ = {1:[2,3], 2:[1,3], 3:[1,2]};
+const OADDR = {1:"0x10",2:"0x20",3:"0x30"};   // pretend addresses of original nodes
+const CADDR = {1:"0xA1",2:"0xA2",3:"0xA3"};   // pretend addresses of clones (different!)
+const POS = {1:[110,40], 2:[45,185], 3:[175,185]};
+
+/* ============================================================
+   2. THE CODE (line numbers below refer to this array)
+   ============================================================ */
+const CODE = [
+"Node* dfs(Node* node, unordered_map<Node*, Node*>& mp) {",//0
+"    if (node == nullptr)",//1
+"        return nullptr;",//2
+"",//3
+"    if (mp.find(node) != mp.end())",//4
+"        return mp[node];",//5
+"",//6
+"    Node* clone = new Node(node->val);",//7
+"    mp[node] = clone;",//8
+"",//9
+"    for (Node* neighbor : node->neighbors) {",//10
+"        Node* clonedNeighbor = dfs(neighbor, mp);",//11
+"        clone->neighbors.push_back(clonedNeighbor);",//12
+"    }",//13
+"",//14
+"    return clone;",//15
+"}",//16
+"",//17
+"Node* cloneGraph(Node* node) {",//18
+"    if (node == nullptr)",//19
+"        return nullptr;",//20
+"",//21
+"    unordered_map<Node*, Node*> mp;",//22
+"    return dfs(node, mp);",//23
+"}"//24
+];
+
+/* ============================================================
+   3. EXECUTION TRACE.
+   We run the real algorithm once and record a full snapshot of the
+   state (stack, map, clones, clone edges) after every operation.
+   The UI only ever draws snapshots, so Previous/Next are exact.
+   ============================================================ */
+const T = [];            // snapshots
+const EV = [];           // call/return log entries
+const S = {stack:[], map:[], created:[], cn:{1:[],2:[],3:[]}};
+function snap(line, title, why, mem, x={}) {
+  const top = S.stack[S.stack.length-1];
+  T.push({line, title, why, mem, kase:x.kase||0, newClone:x.newClone||0, newEdge:x.newEdge||null,
+          note:x.note||"", callText:x.callText||(top?`dfs(node ${top.n})`:"cloneGraph(node 1)"),
+          retText:x.retText||"—", evN:EV.length, st:JSON.parse(JSON.stringify(S))});
+}
+function dfs(n) {
+  S.stack.push({n, clone:false, nb:null, cnb:null, ret:null});
+  const f = S.stack[S.stack.length-1], d = S.stack.length-1;
+  EV.push(`${"  ".repeat(d)}dfs(node ${n})`);
+  snap(0, `Enter dfs(node ${n})`, `A new frame is pushed on the call stack. Its parameter <code>node</code> points to original node ${n}.`, `Stack grew by one frame: dfs(node ${n}).`);
+  snap(1, `Null check for node ${n}`, `Is <code>node</code> equal to <code>nullptr</code>? No, it points to original node ${n}, so we continue.`, `No memory changes.`);
+  if (S.map.includes(n)) {
+    snap(4, `Map lookup: node ${n} is already a key`, `<code>mp.find(node)</code> found original node ${n}. We cloned it earlier, so we must not create a second clone.`, `No changes. We are only reading the map.`, {kase:4});
+    f.ret = `Clone ${n}`;
+    EV.push(`${"  ".repeat(d)}↩ node ${n} already mapped → returns existing Clone ${n}`);
+    snap(5, `Reuse Clone ${n}`, `<code>return mp[node]</code> hands back the pointer to the clone that already exists. This call ends right away.`, `No new node. The frame will be removed, but Clone ${n} stays on the heap.`, {kase:4, retText:`returns Clone ${n} (existing)`});
+    S.stack.pop();
+    return n;
+  }
+  snap(4, `Map lookup: node ${n} is NOT a key`, `<code>mp.find(node)</code> returned <code>mp.end()</code>, so node ${n} has not been cloned yet.`, `No changes. The map does not contain original ${n}.`, {kase:1});
+  S.created.push(n); f.clone = true;
+  snap(7, `Create Clone ${n}`, `<code>new Node(node->val)</code> allocates a brand-new node on the heap with value ${n}. Its neighbors vector is empty.`, `Clone ${n} now exists at ${CADDR[n]}. It has no edges and is not in the map yet.`, {kase:2, newClone:n});
+  S.map.push(n);
+  snap(8, `Store mapping: original ${n} → Clone ${n}`, `<code>mp[node] = clone</code> records the pair. This happens BEFORE the neighbor loop, so any later visit to node ${n} will find it.`, `Map grew: key ${OADDR[n]} (original ${n}) → value ${CADDR[n]} (Clone ${n}).`, {kase:3, newClone:0, note:`Mapping stored first, loop not started yet. Cycles can no longer cause infinite recursion.`});
+  for (const nb of ADJ[n]) {
+    f.nb = nb; f.cnb = null;
+    snap(10, `Loop: take neighbor ${nb} of node ${n}`, `The range-for picks the next element of <code>node->neighbors</code>. Now <code>neighbor</code> = original node ${nb}.`, `Only the loop variable changed.`);
+    snap(11, `Call dfs(neighbor = node ${nb})`, `We ask dfs for the clone of node ${nb}. Node ${n} pauses here and waits for the answer.`, `Frame for node ${n} stays on the stack, paused at this line.`, {callText:`dfs(node ${nb}) called from dfs(node ${n})`});
+    const r = dfs(nb);
+    f.cnb = r;
+    snap(11, `Back in dfs(node ${n}): clonedNeighbor = Clone ${r}`, `The call for node ${nb} returned. The frame for node ${nb} is gone, and node ${n} resumes at neighbor ${nb}. <code>clonedNeighbor</code> now points to Clone ${r}.`, `Local variable clonedNeighbor = ${CADDR[r]} (Clone ${r}). Nothing was deleted.`, {retText:`received Clone ${r}`});
+    S.cn[n].push(r);
+    snap(12, `push_back: Clone ${n} → Clone ${r}`, `<code>push_back</code> appends the pointer to the end of Clone ${n}'s neighbors vector. We push the CLONED neighbor, never original ${nb}, so the copy never points into the old graph.`, `Clone ${n}.neighbors is now [${S.cn[n].map(v=>"Clone "+v).join(", ")}]. This created an edge.`, {newEdge:[n,r]});
+  }
+  f.nb = null; f.cnb = null;
+  snap(10, `Loop ends for node ${n}`, `Every neighbor of node ${n} has been handled, so the loop exits.`, `No changes.`);
+  f.ret = `Clone ${n}`;
+  EV.push(`${"  ".repeat(d)}↩ return Clone ${n}`);
+  snap(15, `Return Clone ${n}`, `<code>return clone</code> sends the pointer back to the caller. Clone ${n} is complete.`, `The frame is about to be removed. Clone ${n} stays alive on the heap (referenced by mp and by other clones).`, {retText:`returns Clone ${n}`});
+  S.stack.pop();
+  return n;
+}
+(function build(){
+  snap(19, `cloneGraph: null check`, `Is the input <code>nullptr</code>? Here it points to node 1, so we continue. (If it were null, line 20 would return nullptr at once and no graph would be built.)`, `No changes.`);
+  snap(22, `Create the empty map`, `<code>mp</code> is created. It will remember which clone belongs to each original node.`, `mp = {} (empty).`, {kase:0, note:`Key = original Node* pointer. Value = cloned Node* pointer.`});
+  snap(23, `Call dfs(node 1)`, `We start the DFS at the given node.`, `About to push the first dfs frame.`, {callText:`dfs(node 1) called from cloneGraph`});
+  const r = dfs(1);
+  snap(23, `dfs(node 1) returned to cloneGraph`, `The first call finally returns. Its frame is removed and the stack is empty again.`, `cloneGraph receives ${CADDR[r]} (Clone ${r}).`, {retText:`received Clone ${r}`});
+  snap(24, `Done: cloned graph is complete`, `cloneGraph returns Clone 1. Every clone points only to other clones, and the shape matches the original: a triangle.`, `3 clones, 6 directed neighbor pointers (each undirected edge is stored once per side).`, {retText:`returns Clone 1`, note:`Finished. mp is destroyed when cloneGraph ends; the clones stay.`});
+})();
+
+/* ============================================================
+   4. RENDERING (pure function of T[i])
+   ============================================================ */
+let i = 0, timer = null;
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+$("code").innerHTML = CODE.map((l,k)=>{
+  const h = esc(l).replace(/\b(if|for|return|new)\b|\b(nullptr|Node|unordered_map)\b|\b(dfs|cloneGraph|find|end|push_back)\b/g,
+    (m,a,b,c)=> a?`<span class="k">${m}</span>`: b?`<span class="t">${m}</span>`:`<span class="f">${m}</span>`);
+  return `<div class="cl" id="L${k}"><i>${k+1}</i>${h||" "}</div>`;
+}).join("");
+
+function edgeSvg(a, b, off, cls, sx, marker, nw) {
+  const [x1,y1]=POS[a],[x2,y2]=POS[b]; const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,px=-uy*off,py=ux*off,r=marker?27:0;
+  return `<line ${nw?'pathLength="1"':''} class="${cls}${nw?' draw':''}" x1="${x1+sx+ux*r+px}" y1="${y1+uy*r+py}" x2="${x2+sx-ux*r+px}" y2="${y2-uy*r+py}" ${marker?'marker-end="url(#ar)"':''}/>`;
+}
+function drawGraph(s) {
+  const st = s.st, top = st.stack[st.stack.length-1];
+  let h = `<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4ec9a0"/></marker></defs>`;
+  h += `<text x="110" y="16" class="ad" style="fill:#4fa3f7;font-size:12px">ORIGINAL graph</text><text x="410" y="16" class="ad" style="fill:#4ec9a0;font-size:12px">CLONED graph</text>`;
+  h += `<line x1="310" y1="25" x2="310" y2="230" stroke="#3c3c3c" stroke-dasharray="4 4"/>`;
+  for (const [a,b] of [[1,2],[1,3],[2,3]]) h += edgeSvg(a,b,0,"eo",0,false,false).replace('class="eo"','stroke="#4fa3f7" stroke-width="2.5" opacity=".8"');
+  for (const n of [1,2,3]) {
+    const [x,y]=POS[n];
+    h += `<circle cx="${x}" cy="${y}" r="24" class="n-o"/><text x="${x}" y="${y}" class="nt">${n}</text><text x="${x}" y="${y+38}" class="ad">orig @${OADDR[n]}</text>`;
+    if (top && top.n===n) h += `<circle cx="${x}" cy="${y}" r="30" class="ring"/>`;
+    if (top && top.nb===n) h += `<circle cx="${x}" cy="${y}" r="30" class="ring2"/>`;
+  }
+  const X = 300;
+  for (const a of [1,2,3]) st.cn[a].forEach((b,k)=>{
+    const nw = s.newEdge && s.newEdge[0]===a && s.newEdge[1]===b;
+    h += edgeSvg(a,b,5,"",X,true,nw).replace('class="','stroke="#4ec9a0" stroke-width="2.5" class="');
+  });
+  for (const n of [1,2,3]) {
+    const [x,y]=POS[n], cx=x+X;
+    if (!st.created.includes(n)) { h += `<circle cx="${cx}" cy="${y}" r="24" class="n-g"/><text x="${cx}" y="${y+38}" class="ad">not created</text>`; continue; }
+    h += `<g class="${s.newClone===n?'pop':''}"><circle cx="${cx}" cy="${y}" r="24" class="n-c"/><text x="${cx}" y="${y}" class="nt">${n}</text></g><text x="${cx}" y="${y+38}" class="ad">clone @${CADDR[n]}</text>`;
+    if (top && top.n===n && top.clone) h += `<circle cx="${cx}" cy="${y}" r="30" class="ring"/>`;
+    if (top && top.cnb===n || (s.line===5 && top && top.n===n)) h += `<circle cx="${cx}" cy="${y}" r="30" class="ring2"/>`;
+  }
+  $("gsvg").innerHTML = h;
+}
+function render() {
+  const s = T[i], st = s.st;
+  $("prog").textContent = `Step ${i+1} of ${T.length}`;
+  $("bP").disabled = i===0; $("bN").disabled = i===T.length-1;
+  document.querySelectorAll(".cl.on").forEach(e=>e.classList.remove("on"));
+  const L = $("L"+s.line); L.classList.add("on"); L.scrollIntoView({block:"nearest"});
+  $("eT").textContent = s.title; $("eW").innerHTML = s.why; $("eM").innerHTML = "Memory: " + s.mem;
+  const top = st.stack[st.stack.length-1];
+  $("callp").innerHTML = `<b>Running</b><span class="mono">${s.callText}</span><b>Return value</b><span class="mono">${s.retText}</span><b>Stack depth</b><span class="mono">${st.stack.length}</span>` +
+    (top?`<b>Locals</b><span class="mono">node=${OADDR[top.n]}${top.clone?`, clone=${CADDR[top.n]}`:""}${top.nb?`, neighbor=${OADDR[top.nb]}`:""}${top.cnb?`, clonedNeighbor=${CADDR[top.cnb]}`:""}</span>`:"");
+  drawGraph(s);
+  // map table: newest row highlighted only on the step it is inserted (line 8)
+  $("mapb").innerHTML = st.map.length ? st.map.map((n,k)=>`<tr class="${s.line===8&&k===st.map.length-1?'new':''}"><td>Node ${n} <span class="ad">(${OADDR[n]})</span></td><td>Clone ${n} <span class="ad">(${CADDR[n]})</span></td></tr>`).join("") : `<tr><td colspan="2" style="color:var(--dim)">empty</td></tr>`;
+  const cs = ["1 · not in map","2 · new clone created","3 · mapping stored","4 · found, reuse clone"];
+  $("cases").innerHTML = cs.map((c,k)=>`<span class="tag ${s.kase===k+1?'on':''}">${c}</span>`).join("");
+  $("mapnote").innerHTML = s.note || `The map is filled <b>before</b> the neighbor loop starts (line 9 before line 11), so a cycle finds the entry instead of recursing forever.`;
+  $("nbl").innerHTML = [1,2,3].map(n=>{
+    const last = s.newEdge && s.newEdge[0]===n ? s.newEdge[1] : null;
+    return `<div>Original ${n}: [${ADJ[n].map(v=>`<span class="chip">${v}</span>`).join("")}]</div><div>Clone ${n}: ${st.created.includes(n)?"["+st.cn[n].map((v,k)=>`<span class="chip c ${last===v&&k===st.cn[n].length-1?'hot':''}">Clone ${v}</span>`).join("")+"]":"<span style='color:var(--dim)'>not created</span>"}</div><div style="height:4px"></div>`;
+  }).join("");
+  // stack: top first
+  $("stk").innerHTML = st.stack.length ? st.stack.slice().reverse().map((f,k)=>`<div class="fr ${k===0?'top':''} ${f.ret?'ret':''}" style="margin-left:${(st.stack.length-1-k)*10}px"><b class="mono">dfs(node ${f.n})</b> ${k===0?'← active':''}<small>${f.nb?`looping: neighbor ${f.nb}`:(f.clone?'loop finished / not started':'checking map')}${f.cnb?` · got Clone ${f.cnb}`:''}${f.ret?` · returning ${f.ret}`:''}</small></div>`).join("") : `<div class="fr">Stack is empty${s.line<23?" (dfs not called yet)":" (all calls returned)"}</div>`;
+  $("log").innerHTML = EV.slice(0,s.evN).map(e=>`<div>${esc(e)}</div>`).join("") || "<div>(no calls yet)</div>";
+}
+
+/* ============================================================
+   5. CONTROLS. Autoplay is OFF until the user presses Play.
+   ============================================================ */
+function go(k){ i=Math.max(0,Math.min(T.length-1,k)); render(); if(i===T.length-1) stopPlay(); }
+function stopPlay(){ clearInterval(timer); timer=null; $("bPl").textContent="Play (off)"; }
+$("bN").onclick=()=>go(i+1); $("bP").onclick=()=>go(i-1);
+$("bR").onclick=()=>{stopPlay();go(0);};
+$("bPl").onclick=()=>{ if(timer){stopPlay();return;} if(i===T.length-1)go(0); $("bPl").textContent="Pause"; timer=setInterval(()=>go(i+1),1100); };
+document.addEventListener("keydown",e=>{ if(e.key==="ArrowRight")go(i+1); if(e.key==="ArrowLeft")go(i-1); });
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button,.tp").forEach(x=>x.classList.remove("act")); b.classList.add("act"); $(b.dataset.t).classList.add("act"); });
+
+/* ============================================================
+   6. UNDERSTAND THE LOGIC
+   ============================================================ */
+const LOGIC = [
+["Why do we need a map?","Each original node must have exactly one clone. The map answers “do I already have a clone for this node?” and, if yes, gives it back."],
+["Why is the key Node*, not node->val?","The key is the identity of the original object (its address). A pointer says exactly which node we mean. Values could repeat in other problems, and the clone’s pointer is what we need to wire edges."],
+["Why store in the map before visiting neighbors?","Node 1 leads to 2, 2 leads back to 1. If 1 were not in the map yet, dfs(1) would run again, then again, forever. Storing first means the second visit finds the entry and stops."],
+["Why does DFS meet the same node many times?","The graph has cycles and every edge is listed from both ends. Node 1 is reached from the start, from node 2 and from node 3. Only the first visit creates a clone."],
+["Does revisiting mean skipping the edge?","No. Reusing a clone only skips creating a node. The caller still runs push_back, so the edge is still added. Look at steps where Clone 2 → Clone 1 is connected after a reuse."],
+["Why must clones point to cloned neighbors?","A deep copy must be independent. If a clone pointed at an original node, changing the original graph would change the copy. That is why we push clonedNeighbor."],
+["How does recursion return to node 1?","Each call finishes its own loop, then returns. dfs(3) returns to dfs(2), dfs(2) returns to dfs(1), and dfs(1) returns Clone 1 to cloneGraph. Each caller resumes at the neighbor after the one it called."],
+["Creating a node vs creating an edge","Node: <code>new Node(val)</code> plus the map entry. Edge: <code>push_back</code> of a clone pointer. A node can exist with zero edges, as Clone 1 does right after it is created."],
+["What if the input is nullptr?","An empty graph. cloneGraph returns nullptr on line 20 before the map is even made. The same check in dfs keeps it safe if a null pointer ever appears."]
+];
+$("t1").innerHTML = LOGIC.map((x,k)=>`<details ${k===0?'open':''}><summary>${x[0]}</summary><p>${x[1]}</p></details>`).join("");
+
+/* ============================================================
+   7. QUIZ: one question at a time, answers hidden until chosen
+   ============================================================ */
+const Q = [
+{q:"DFS reaches a node that is already in the map. What happens?",o:["It creates a second clone","It returns the existing clone from the map","It returns nullptr"],a:1,e:"The call returns mp[node]. No new node is made, and the caller still adds the edge."},
+{q:"Why do we store the clone in the map before exploring neighbors?",o:["To save memory","So the neighbor loop runs faster","So cycles find the entry and recursion stops"],a:2,e:"Without the early insert, node 1 → 2 → 1 → 2 … would never end."},
+{q:"What does clone->neighbors.push_back(clonedNeighbor) do?",o:["Adds the cloned neighbor’s pointer to the end of the clone’s vector, creating an edge","Creates a new node","Deletes the original neighbor"],a:0,e:"push_back appends one element to the end of the vector. Here the element is a pointer to a clone."},
+{q:"A recursive call returns. What happens to the clone it built?",o:["It is deleted with the frame","It stays on the heap, still referenced by the map and other clones","It is copied back to the original graph"],a:1,e:"Only the stack frame is removed. The clone was created with new, so it lives until deleted."},
+{q:"Why can’t we simply return the original node?",o:["The original is const","That is slower","It would not be a copy; both graphs would share the same objects"],a:2,e:"A deep copy needs brand-new nodes whose neighbors are also new nodes."}
+];
+let qi=0, score=0, answered=false;
+function renderQ(){
+  const box=$("t2");
+  if(qi>=Q.length){ box.innerHTML=`<h2 style="margin-top:0">Score: ${score} / ${Q.length}</h2><p>${score===Q.length?"Perfect. You understand the clone map.":"Step through the trace again, then retry."}</p><button id="qr">Retry quiz</button>`;
+    $("qr").onclick=()=>{qi=0;score=0;renderQ();}; return; }
+  const q=Q[qi]; answered=false;
+  box.innerHTML=`<p class="ph">Question ${qi+1} of ${Q.length}</p><p style="font-size:14px;margin:0 0 8px"><b>${q.q}</b></p>`+
+    q.o.map((t,k)=>`<button class="opt" data-k="${k}">${t}</button>`).join("")+`<div id="qf"></div>`;
+  box.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    if(answered)return; answered=true; const k=+b.dataset.k, ok=k===q.a; if(ok)score++;
+    box.querySelectorAll(".opt").forEach((x,j)=>{ if(j===q.a)x.classList.add("good"); else if(x===b)x.classList.add("bad"); });
+    $("qf").innerHTML=`<div class="fb"><b>${ok?"Correct.":"Not quite."}</b> ${q.e}</div><button id="qn" style="margin-top:8px">${qi===Q.length-1?"See score":"Next question"}</button>`;
+    $("qn").onclick=()=>{qi++;renderQ();};
+  });
+}
+renderQ();
+render();
+</script>
+</body>
+</html>
