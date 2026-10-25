@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeetCode 130 – Surrounded Regions (BFS) Visualizer</title>
+<style>
+:root{--bg:#0d1117;--pn:#161b22;--bd:#30363d;--tx:#e6edf3;--mu:#8b949e;--ac:#58a6ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,Segoe UI,sans-serif}
+header{display:flex;align-items:center;gap:14px;padding:6px 14px;border-bottom:1px solid var(--bd);height:50px;overflow-x:auto;white-space:nowrap}
+header h1{font-size:15px;margin:0;color:var(--ac)}nav{display:flex;gap:4px}
+button,select,input{font:inherit;color:var(--tx);background:#21262d;border:1px solid var(--bd);border-radius:6px;padding:4px 10px;cursor:pointer}
+button:hover{background:#30363d}button.on{background:#1f6feb;border-color:#58a6ff}button.go{background:#238636;border-color:#2ea043}
+input[type=number]{width:52px;cursor:text}input[type=range]{padding:0}
+#boardView{display:grid;grid-template-columns:minmax(380px,1.1fr) minmax(330px,1fr) minmax(380px,1fr);gap:8px;padding:8px;height:calc(100vh - 50px)}
+#boardView>section{overflow-y:auto;display:flex;flex-direction:column;gap:8px;min-height:0}
+body:not([data-mode=bfs]) #colC{display:none}
+body:not([data-mode=bfs]) #boardView{grid-template-columns:minmax(380px,1fr) minmax(380px,1fr)}
+.panel{background:var(--pn);border:1px solid var(--bd);border-radius:8px;padding:9px}
+.panel h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mu)}
+.only-bfs,.only-concept,.only-dirs{display:none}
+body[data-mode=bfs] .only-bfs,body[data-mode=concept] .only-concept,body[data-mode=dirs] .only-dirs{display:block}
+#other{display:none;padding:12px;height:calc(100vh - 50px);overflow:auto}
+body[data-mode=flow] #other,body[data-mode=quiz] #other,body[data-mode=practice] #other,body[data-mode=cx] #other{display:block}
+body[data-mode=flow] #boardView,body[data-mode=quiz] #boardView,body[data-mode=practice] #boardView,body[data-mode=cx] #boardView{display:none}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.muted{color:var(--mu)}
+#board{display:grid;gap:4px;justify-content:center;margin:8px 0}
+.cell{width:var(--cs);height:var(--cs);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;font-weight:700;font-size:calc(var(--cs)*.38);cursor:pointer;position:relative;user-select:none}
+.cell small{font-size:calc(var(--cs)*.22);font-weight:600;line-height:1}
+.cell .co{position:absolute;top:1px;left:3px;font-size:9px;font-weight:400;opacity:.55}
+.x{background:#21262d;color:#6e7681;border:2px solid #484f58}
+.o{background:#30363d;color:#c9d1d9;border:2px dashed #8b949e}
+.safe{background:#14532d;border:2px solid #3fb950}.cur{background:#a16207;border:3px solid #facc15}
+.q{background:#1e3a8a;border:4px double #58a6ff}.cap{background:#7f1d1d;border:2px solid #f85149}
+.bnd{border:3px solid #3fb950}.nb{outline:3px dashed #fff;outline-offset:-5px}.sel{outline:3px solid #fff;outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:12px}.legend span{display:flex;align-items:center;gap:4px}
+.sw{width:18px;height:18px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.bar{height:8px;background:#21262d;border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:#58a6ff}
+.chips{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-height:44px}
+.chip{border:2px solid #58a6ff;background:#1e3a8a;border-radius:6px;padding:2px 8px;font-family:monospace;position:relative}
+.tag{font-size:10px;color:#facc15;display:block;text-align:center;font-family:system-ui}
+table{border-collapse:collapse;width:100%;font-size:12px}td,th{border:1px solid var(--bd);padding:2px 6px;text-align:left;font-family:monospace}
+th{background:#21262d;font-family:system-ui}.vm td{text-align:center;width:30px;height:26px}
+.vm td.hl{background:#a16207;color:#fff}.vm td.v1{color:#3fb950;font-weight:700}.vm td.nbh{outline:2px dashed #fff}
+.code{font:12.5px/1.5 Consolas,Menlo,monospace;background:#0d1117;border-radius:6px;padding:6px 0;overflow:auto;max-height:62vh}
+.code div{padding:0 8px;white-space:pre;cursor:pointer;border-left:3px solid transparent}.code div:hover{background:#21262d}
+.code div.act{background:#3a2f00;border-left-color:#facc15}
+.k{color:#ff7b72}.n{color:#79c0ff}.s{color:#a5d6ff}.cm{color:#8b949e}
+pre{margin:0;background:#0d1117;padding:8px;border-radius:6px;font:12.5px/1.4 Consolas,monospace;overflow:auto}
+.card{border:1px solid var(--bd);border-radius:8px;padding:8px;background:#0d1117}
+.ok{color:#3fb950}.bad{color:#f85149}.warn{color:#d29922}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.flow button{padding:10px 14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
+code{background:#21262d;padding:0 4px;border-radius:3px;font-family:Consolas,monospace}
+.scroll{max-height:150px;overflow:auto}
+</style></head>
+<body data-mode="concept">
+<header><h1>LeetCode 130 · Surrounded Regions · BFS</h1><nav id="tabs"></nav></header>
+
+<main id="boardView">
+ <section id="colA">
+  <div class="panel"><h3>Board</h3>
+   <div class="row">
+    <select id="preset"></select>
+    <label>rows <input type="number" id="rows" min="0" max="8"></label>
+    <label>cols <input type="number" id="cols" min="0" max="8"></label>
+    <button id="apply">Apply size</button>
+    <label><input type="checkbox" id="edit"> Edit cells</label>
+    <button id="resetBoard">Reset Board</button>
+   </div>
+   <div id="board"></div>
+   <div class="legend">
+    <span><i class="sw x">X</i>blocked</span><span><i class="sw o">O</i>open / unvisited (gray ·)</span>
+    <span><i class="sw safe">✓</i>safe O</span><span><i class="sw cur">★</i>current</span>
+    <span><i class="sw q">Q</i>in queue</span><span><i class="sw cap">✗</i>captured → X</span>
+   </div>
+  </div>
+  <div class="panel only-bfs"><h3>Controls</h3>
+   <div class="row">
+    <button id="prev">Previous Step</button><button id="next" class="go">Next Step</button>
+    <button id="play">Play</button><button id="pause">Pause</button>
+    <button id="restart">Restart</button><button id="reset">Reset</button>
+    <button id="nextop">Show Next BFS Operation</button><button id="final">Show Final Result</button>
+   </div>
+   <div class="row" style="margin-top:6px"><label>Speed delay <input type="range" id="speed" min="150" max="2000" value="900"> <span id="spv"></span></label>
+    <span id="stepinfo" class="muted"></span></div>
+   <div class="bar" style="margin-top:6px"><i id="prog"></i></div>
+  </div>
+  <div class="panel only-bfs"><h3>BFS Queue (FIFO)</h3><div id="qop" class="muted"></div><div class="chips" id="queue"></div></div>
+  <div class="panel only-bfs"><h3>Trace table (generated by the same simulation)</h3>
+   <div class="scroll" id="traceBox"><table id="trace"></table></div></div>
+ </section>
+
+ <section id="colB">
+  <div class="panel only-concept"><h3>Problem</h3>
+   <p>Given an <code>m × n</code> board containing <code>X</code> and <code>O</code>, capture all regions surrounded by <code>X</code>.
+   An <code>O</code> is captured if it cannot reach any boundary <code>O</code> by moving horizontally or vertically through other <code>O</code> cells.</p>
+   <div class="grid2" id="rules"></div>
+  </div>
+  <div class="panel only-concept"><h3>Explore</h3>
+   <div class="row"><button id="idea" class="go">Show the idea</button>
+    <button id="revS">Reveal safe regions</button><button id="revC">Reveal captured regions</button><button id="hide">Hide all</button></div>
+   <p id="ideaTxt" class="muted">Click any <b>O</b> cell on the board to inspect it. Nothing is revealed until you choose. (Untick “Edit cells” to inspect.)</p>
+   <div class="card" id="inspect">No cell selected.</div>
+  </div>
+  <div class="panel only-dirs"><h3>Four directions</h3>
+   <pre>vector&lt;int&gt; rs = {1, -1, 0, 0};
+vector&lt;int&gt; js = {0, 0, -1, 1};
+row  = currentRow + rs[i];
+cols = currentCol + js[i];</pre>
+   <p class="muted">Click any cell on the board to choose the “current cell” (untick Edit cells).</p>
+   <div class="row"><button id="dprev">◀ Previous direction</button><button id="dnext" class="go">Next direction ▶</button><button id="dall">Show all four</button></div>
+   <table id="dtab" style="margin-top:8px"></table>
+   <p id="dtxt"></p>
+   <p class="muted">Diagonals are excluded because the problem defines connection only by shared edges. Adding 4 diagonal pairs would let an O “leak” to the border through a corner, giving wrong answers.</p>
+  </div>
+  <div class="panel only-bfs"><h3>Current step explanation</h3><div id="op" class="warn" style="font-weight:700"></div><div id="expl"></div><div id="dirs"></div></div>
+  <div class="panel only-bfs"><h3>Visited matrix vis (0 = not visited, 1 = connected to boundary O)</h3>
+   <table class="vm" id="vm"></table>
+   <div class="row" style="margin-top:6px"><button id="vc">Compare: shared vis (correct)</button><button id="vw">Compare: new vis per bfs() (wrong)</button></div>
+   <div id="vdemo" class="muted" style="margin-top:6px">Why is <code>vis</code> created once in <code>solve()</code> and passed by reference (<code>&amp;</code>) to every <code>bfs()</code>? Press a compare button to see.</div>
+  </div>
+  <div class="panel only-bfs"><h3>Variables (dry run)</h3><table id="vars"></table></div>
+ </section>
+
+ <section id="colC" class="only-bfs-col">
+  <div class="panel"><h3>C++ (click a line to read about it)</h3><div class="code" id="code"></div>
+   <div class="card" id="lineEx" style="margin-top:6px">Click a code line.</div></div>
+ </section>
+</main>
+<main id="other"></main>
+
+<script>
+"use strict";
+/* ============ C++ source shown in the code panel ============ */
+const CODE = `class Solution {
+public:
+    void bfs(vector<vector<char>>& board,
+             int u, int x,
+             vector<vector<int>>& vis) {
+
+        int n = board.size();
+        int m = board[0].size();
+
+        vector<int> rs = {1, -1, 0, 0};
+        vector<int> js = {0, 0, -1, 1};
+
+        queue<pair<int, int>> Q;
+
+        Q.push({u, x});
+        vis[u][x] = 1;
+
+        while (!Q.empty()) {
+            int s = Q.front().first;
+            int c = Q.front().second;
+            Q.pop();
+
+            for (int i = 0; i < 4; i++) {
+                int row = rs[i] + s;
+                int cols = js[i] + c;
+
+                if (row >= 0 && row < n &&
+                    cols >= 0 && cols < m &&
+                    board[row][cols] == 'O' &&
+                    vis[row][cols] == 0) {
+
+                    vis[row][cols] = 1;
+                    Q.push({row, cols});
+                }
+            }
+        }
+    }
+
+    void solve(vector<vector<char>>& board) {
+        if (board.empty() || board[0].empty()) {
+            return;
+        }
+
+        int n = board.size();
+        int m = board[0].size();
+
+        vector<vector<int>> vis(n, vector<int>(m, 0));
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if ((i == 0 || i == n - 1 ||
+                     j == 0 || j == m - 1) &&
+                    board[i][j] == 'O') {
+
+                    if (vis[i][j] == 0) {
+                        bfs(board, i, j, vis);
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (board[i][j] == 'O' && vis[i][j] == 0) {
+                    board[i][j] = 'X';
+                }
+            }
+        }
+    }
+};`.split("\n");
+
+/* Find the index of the nth code line containing a substring */
+function Lf(sub, nth = 0) { let c = 0; for (let i = 0; i < CODE.length; i++) if (CODE[i].includes(sub)) { if (c++ === nth) return i; } return -1; }
+const LN = {
+  empty: Lf("board.empty()"), visDecl: Lf("vector<vector<int>> vis(n"),
+  bnd: [Lf("(i == 0 ||"), Lf("j == 0 ||"), Lf("board[i][j] == 'O') {")],
+  visChk: Lf("if (vis[i][j] == 0)"), call: Lf("bfs(board, i, j, vis);"),
+  push0: Lf("Q.push({u, x});"), mark0: Lf("vis[u][x] = 1;"), wh: Lf("while (!Q.empty())"),
+  front: Lf("Q.front().first"), pop: Lf("Q.pop();"), forD: Lf("for (int i = 0; i < 4"),
+  row: Lf("int row ="), cols: Lf("int cols ="), cRow: Lf("row >= 0"), cCols: Lf("cols >= 0"),
+  cO: Lf("board[row][cols] == 'O'"), cVis: Lf("vis[row][cols] == 0"), mark: Lf("vis[row][cols] = 1;"),
+  push: Lf("Q.push({row, cols});"), flipIf: Lf("board[i][j] == 'O' && vis[i][j] == 0"), flip: Lf("board[i][j] = 'X';")
+};
+/* Explanations shown when a code line is clicked */
+const EXPL = {
+  empty: "Guard clause: an empty board (or empty first row) has nothing to capture, and board[0] would be invalid. Return early.",
+  visDecl: "Creates the n×m visited matrix ONCE, all zeros. Every bfs() call receives this same matrix, so knowledge of safe cells accumulates.",
+  bnd: "Outer-loop test: the cell must be on the border (any of the four ||-joined conditions) AND contain 'O'. Such a cell can never be captured.",
+  visChk: "If vis is already 1, an earlier BFS reached this cell, so starting again would repeat work.",
+  call: "Hands off to bfs(): explores the whole connected group of O cells touching this boundary O, marking vis. Returns void; the result lives in vis.",
+  push0: "Adds the starting coordinate (u, x) to the rear of the queue so it will be expanded.",
+  mark0: "Marks the start cell visited (safe). Doing it right away prevents it from ever being added twice.",
+  wh: "Keep going while the queue still holds cells whose neighbors haven't been examined. Empty queue = this traversal is complete.",
+  front: "Reads (does not remove) the oldest queued coordinate into s (row) and c (column). front() must happen BEFORE pop().",
+  pop: "Removes the front coordinate. FIFO: first in, first out, which gives breadth-first order.",
+  forD: "Loop variable i here is the DIRECTION index 0..3 (different from the outer-loop i in solve()).",
+  row: "row = rs[i] + s: the neighbor's row = current row + the row offset of direction i.",
+  cols: "cols = js[i] + c: the neighbor's column = current column + the column offset of direction i.",
+  cRow: "Bounds test for the row: 0 ≤ row < n. Out-of-grid neighbors are rejected. && short-circuits, so later tests are skipped when this fails.",
+  cCols: "Bounds test for the column: 0 ≤ cols < m. Must pass before touching board[row][cols].",
+  cO: "Only open cells conduct the 'safe' status. An 'X' is a wall.",
+  cVis: "Only unvisited cells: prevents re-adding cells (and infinite loops).",
+  mark: "Mark visited BEFORE enqueueing so no other cell can enqueue the same neighbor while it waits in the queue.",
+  push: "Schedules the valid neighbor so ITS neighbors get explored later.",
+  flipIf: "Second pass: an 'O' that BFS never reached (vis == 0) cannot touch the border.",
+  flip: "Capture: turn the surrounded 'O' into 'X'. Safe O cells and existing X cells stay unchanged."
+};
+const lineEx = {};
+for (const k in EXPL) [].concat(LN[k]).forEach(i => lineEx[i] = EXPL[k]);
+lineEx[Lf("void bfs")] = "bfs returns void: it communicates through the vis matrix, which is passed by reference (&).";
+lineEx[Lf("vector<int> rs")] = "Row offsets for Down, Up, Left, Right.";
+lineEx[Lf("vector<int> js")] = "Column offsets for Down, Up, Left, Right. Pair i of (rs, js) is one direction.";
+lineEx[Lf("queue<pair")] = "A FIFO queue of (row, column) pairs.";
+lineEx[Lf("void solve")] = "The function LeetCode calls. It scans, launches BFS from boundary O cells, then flips.";
+
+/* ============ Boards ============ */
+const PRESETS = {
+  idea: { n: "Example board (from the problem)", b: ["XXXXX", "OOXOX", "XOOOX", "XXXXX"] },
+  encl: { n: "Simple enclosed region", b: ["XXXX", "XOOX", "XOOX", "XXXX"] },
+  conn: { n: "Boundary-connected region", b: ["XXXX", "XOOX", "XOXX", "XOXX"] },
+  multi: { n: "Multiple disconnected regions", b: ["XXXXXX", "XOXOOX", "XXXXXX", "XOOXOO", "XXXXXX"] },
+  edges: { n: "Boundary O in corners & edges", b: ["OXXO", "XOOX", "XOOX", "OXXO"] },
+  diag: { n: "Diagonal does NOT connect", b: ["OXXX", "XOXX", "XXXX"] },
+  empty: { n: "Empty board (0×0)", b: [] }
+};
+const S = { base: [], pk: "idea", mode: "concept", snaps: [], step: 0, timer: null, sel: null, revS: false, revC: false, idea: 0,
+            dir: { r: 1, c: 1, k: -1 }, codeSel: -1, vdemo: 0 };
+const $ = s => document.querySelector(s);
+const P = p => `(${p[0]}, ${p[1]})`, fq = Q => "[" + Q.map(P).join(", ") + "]";
+const RS = [1, -1, 0, 0], JS = [0, 0, -1, 1], DN = ["Down", "Up", "Left", "Right"], AR = ["↓", "↑", "←", "→"];
+
+/* ============ Reference solution helpers (flood fill; used for concept mode & checking) ============ */
+function safeSet(b) {
+  const n = b.length, m = n ? b[0].length : 0, seen = b.map(r => r.map(() => false)), st = [];
+  for (let i = 0; i < n; i++) for (let j = 0; j < m; j++)
+    if ((i == 0 || j == 0 || i == n - 1 || j == m - 1) && b[i][j] == "O" && !seen[i][j]) { seen[i][j] = true; st.push([i, j]); }
+  while (st.length) { const [r, c] = st.pop();
+    for (let d = 0; d < 4; d++) { const a = r + RS[d], e = c + JS[d];
+      if (a >= 0 && a < n && e >= 0 && e < m && b[a][e] == "O" && !seen[a][e]) { seen[a][e] = true; st.push([a, e]); } } }
+  return seen;
+}
+
+/* ============ The simulation: runs the exact C++ algorithm and records a snapshot per operation ============ */
+function simulate(base) {
+  const n = base.length, m = n ? base[0].length : 0, snaps = [];
+  if (!n || !m) { snaps.push({ board: [], vis: [], q: [], lines: [LN.empty], text: "board.empty() || board[0].empty() is true → solve() returns immediately. Nothing to do.", kind: "end", v: {}, cur: null, nb: null, mark: null, dirs: [], phase: "done" }); return snaps; }
+  const board = base.map(r => r.slice()), vis = board.map(r => r.map(() => 0));
+  let Q = [], V = {}, cur = null, nb = null, mark = null, dirs = [], phase = "init";
+  const add = (lines, text, kind, tr) => {
+    snaps.push({ board: board.map(r => r.slice()), vis: vis.map(r => r.slice()), q: Q.map(p => p.slice()), lines: [].concat(lines), text, kind,
+      v: Object.assign({}, V), cur: cur && cur.slice(), nb: nb && nb.slice(), mark, dirs: dirs.map(d => Object.assign({}, d)), phase,
+      tr: tr && { op: tr[0], cur: cur ? P(cur) : "—", nb: nb ? P(nb) : "—", q: fq(Q) } });
+    mark = null;
+  };
+  add(LN.empty, `Board is ${n}×${m}, not empty → continue.`, "init");
+  add(LN.visDecl, `Create vis (${n}×${m}) filled with 0 — ONCE, in solve(). All bfs() calls will share it by reference.`, "init");
+  phase = "scan";
+  for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) {
+    V = { i, j }; cur = [i, j]; nb = null;
+    const b = i == 0 || i == n - 1 || j == 0 || j == m - 1, o = board[i][j] == "O";
+    add(LN.bnd, `Scan (${i}, ${j}): on boundary? ${b ? "yes" : "no"}. Cell is '${board[i][j]}'. ` + (b && o ? "Boundary O → candidate BFS start." : "Condition false (needs boundary AND 'O') → skip."), "scan");
+    if (b && o) {
+      const fresh = vis[i][j] == 0;
+      add(LN.visChk, fresh ? `vis[${i}][${j}] = 0 → not reached before. Start a new BFS.` : `vis[${i}][${j}] = 1 → already reached by an earlier BFS (shared vis!). Skip.`, "scan");
+      if (fresh) {
+        add(LN.call, `Call bfs(board, ${i}, ${j}, vis): u = ${i}, x = ${j}. Same vis matrix is passed by reference.`, "call");
+        phase = "bfs"; V = { i, j, u: i, x: j };
+        Q.push([i, j]);
+        add(LN.push0, `Q.push({${i}, ${j}}) — put the starting coordinate at the rear of the queue.`, "push", ["Q.push start"]);
+        vis[i][j] = 1; mark = [i, j];
+        add(LN.mark0, `vis[${i}][${j}] = 1 — start cell is safe (connected to a boundary O: itself).`, "mark", ["vis[u][x]=1"]);
+        for (;;) {
+          const empty = Q.length == 0;
+          if (empty) { cur = null; nb = null; }
+          add(LN.wh, empty ? "Queue is EMPTY → this BFS traversal is complete." : `Queue has ${Q.length} cell(s) → enter loop body.`, "while", empty ? ["queue empty"] : null);
+          if (empty) break;
+          const [s, c] = Q[0]; V.s = s; V.c = c; V.row = V.cols = V.d = undefined; cur = [s, c]; nb = null; dirs = [];
+          add([LN.front, LN.front + 1], `Q.front() = ${P([s, c])}: the OLDEST queued cell (FIFO) → s = ${s}, c = ${c}. It is only read, not yet removed.`, "front");
+          Q.shift();
+          add(LN.pop, `Q.pop() removes ${P([s, c])} from the front. Now examine its 4 neighbors.`, "pop", ["Q.pop"]);
+          for (let d = 0; d < 4; d++) {
+            V.d = d; V.row = V.cols = undefined; nb = null; V.vis = undefined;
+            add(LN.forD, `Direction loop i = ${d}: ${DN[d]} (rs[${d}] = ${RS[d]}, js[${d}] = ${JS[d]}).`, "dir");
+            const row = RS[d] + s, cols = JS[d] + c;
+            V.row = row; add(LN.row, `row = rs[${d}] + s = ${RS[d]} + ${s} = ${row}.`, "dir");
+            V.cols = cols; nb = [row, cols]; add(LN.cols, `cols = js[${d}] + c = ${JS[d]} + ${c} = ${cols}. Neighbor = ${P(nb)}.`, "dir");
+            let fail = null, why = "";
+            if (row < 0 || row >= n) { fail = LN.cRow; why = `row ${row} is out of bounds`; }
+            else if (cols < 0 || cols >= m) { fail = LN.cCols; why = `column ${cols} is out of bounds`; }
+            else if (board[row][cols] != "O") { fail = LN.cO; why = `board[${row}][${cols}] is 'X' (wall)`; V.vis = vis[row][cols]; }
+            else if (vis[row][cols] != 0) { fail = LN.cVis; why = `vis[${row}][${cols}] is already 1`; V.vis = 1; }
+            else V.vis = 0;
+            if (fail !== null) {
+              dirs.push({ n: DN[d], p: P(nb), r: "rejected: " + why });
+              add(fail, `REJECT ${DN[d]} neighbor ${P(nb)}: ${why}.`, "reject", ["reject " + DN[d]]);
+            } else {
+              dirs.push({ n: DN[d], p: P(nb), r: "valid → visit & enqueue" });
+              add([LN.cRow, LN.cCols, LN.cO, LN.cVis], `ACCEPT ${DN[d]} neighbor ${P(nb)}: in bounds, is 'O', vis = 0.`, "accept");
+              vis[row][cols] = 1; mark = [row, cols]; V.vis = 1;
+              add(LN.mark, `vis[${row}][${cols}] = 1 FIRST — so no other cell can enqueue it again while it waits.`, "mark", ["vis=1"]);
+              Q.push([row, cols]);
+              add(LN.push, `Q.push({${row}, ${cols}}) — added to the rear. Its own neighbors will be checked later.`, "push", ["Q.push neighbor"]);
+            }
+          }
+          nb = null; V.row = V.cols = V.d = V.vis = undefined;
+        }
+        add(LN.call, `bfs() returns void. vis now marks the whole region connected to ${P([i, j])}. Back in solve(), the scan continues.`, "ret", ["bfs returns"]);
+        phase = "scan"; dirs = [];
+      }
+    }
+  }
+  phase = "flip"; cur = null; nb = null; dirs = [];
+  for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) {
+    V = { i, j }; cur = [i, j];
+    const o = board[i][j] == "O", v = vis[i][j];
+    add(LN.flipIf, `Flip scan (${i}, ${j}): board = '${board[i][j]}', vis = ${v}. ` + (o && !v ? "'O' and unvisited → surrounded!" : "Condition false → leave unchanged."), "flipchk");
+    if (o && !v) { board[i][j] = "X"; mark = [i, j]; add(LN.flip, `board[${i}][${j}] = 'X' — captured.`, "flip", ["flip O→X"]); }
+  }
+  cur = null; V = {}; phase = "done";
+  add([], "Done. Every unvisited O was captured; safe O cells and original X cells are unchanged.", "end");
+  return snaps;
+}
+
+/* ============ Rendering the board ============ */
+function drawBoard(info) {
+  const el = $("#board"), n = S.base.length, m = n ? S.base[0].length : 0;
+  if (!n || !m) { el.style.display = "block"; el.innerHTML = "<p class='muted'>Empty board (0×0): solve() returns at <code>board.empty()</code>.</p>"; return; }
+  el.style.display = "grid";
+  const cs = Math.max(34, Math.min(68, Math.floor(440 / Math.max(n, m))));
+  el.style.setProperty("--cs", cs + "px"); el.style.gridTemplateColumns = `repeat(${m},${cs}px)`;
+  let h = "";
+  for (let r = 0; r < n; r++) for (let c = 0; c < m; c++) {
+    const x = info(r, c);
+    h += `<div class="cell ${x.cls}" data-r="${r}" data-c="${c}" title="(${r}, ${c})"><span class="co">${r},${c}</span>${x.ch}<small>${x.bd || "&nbsp;"}</small></div>`;
+  }
+  el.innerHTML = h;
+}
+const same = (a, r, c) => a && a[0] == r && a[1] == c;
+function bfsInfo(sn) {
+  return (r, c) => {
+    const o = S.base[r][c], ex = same(sn.nb, r, c) ? " nb" : "";
+    if (o == "X") return { cls: "x" + ex, ch: "X", bd: ex ? "nb" : "wall" };
+    const qi = sn.q.findIndex(p => p[0] == r && p[1] == c);
+    if (sn.board[r][c] == "X") return { cls: "cap" + ex, ch: "X", bd: "✗ capt." };
+    if (same(sn.cur, r, c)) return { cls: "cur" + ex, ch: "O", bd: "★ now" };
+    if (qi >= 0) return { cls: "q" + ex, ch: "O", bd: "Q#" + qi };
+    if (sn.vis[r][c]) return { cls: "safe" + ex, ch: "O", bd: "✓ safe" };
+    return { cls: "o" + ex, ch: "O", bd: "· ?" };
+  };
+}
+function conceptInfo() {
+  const sf = safeSet(S.base), n = S.base.length, m = n ? S.base[0].length : 0;
+  const showS = S.revS || S.idea >= 2, showC = S.revC || S.idea >= 3;
+  return (r, c) => {
+    const sel = S.sel && S.sel[0] == r && S.sel[1] == c ? " sel" : "";
+    if (S.base[r][c] == "X") return { cls: "x" + sel, ch: "X", bd: "wall" };
+    if (showS && sf[r][c]) return { cls: "safe" + sel, ch: "O", bd: "✓ safe" };
+    if (showC && !sf[r][c]) return { cls: "cap" + sel, ch: "X", bd: "✗ capt." };
+    const b = r == 0 || c == 0 || r == n - 1 || c == m - 1;
+    if (S.idea == 1 && b) return { cls: "o bnd" + sel, ch: "O", bd: "B edge" };
+    return { cls: "o" + sel, ch: "O", bd: "· ?" };
+  };
+}
+function dirsInfo() {
+  const { r: cr, c: cc, k } = S.dir;
+  return (r, c) => {
+    if (r == cr && c == cc) return { cls: (S.base[r][c] == "X" ? "x" : "cur") + " sel", ch: S.base[r][c], bd: "● here" };
+    for (let d = 0; d < 4; d++) if ((k == -1 || k == d) && r == cr + RS[d] && c == cc + JS[d])
+      return { cls: (S.base[r][c] == "X" ? "x" : "o") + " nb", ch: S.base[r][c], bd: AR[d] + " " + DN[d] };
+    return { cls: S.base[r][c] == "X" ? "x" : "o", ch: S.base[r][c], bd: "" };
+  };
+}
+
+/* ============ Rules (concept) ============ */
+const RULES = [
+  ["1. Four directions only", "Up ↑ Down ↓ Left ← Right →"],
+  ["2. Diagonals don't count", "O at (0,0) and O at (1,1) are NOT connected"],
+  ["3. Boundary-connected = safe", "An O touching the border (or linked to one) survives"],
+  ["4. Enclosed region = captured", "A group of O cells fully walled in by X"],
+  ["5. Capturing", "Captured O cells are changed into X"]
+];
+$("#rules").innerHTML = RULES.map(r => `<div class="card"><b>${r[0]}</b><br><span class="muted">${r[1]}</span></div>`).join("");
+
+/* ============ Concept mode ============ */
+function inspect(r, c) {
+  const b = S.base, n = b.length, m = b[0].length, box = $("#inspect");
+  S.sel = [r, c];
+  if (b[r][c] == "X") { box.innerHTML = `<b>(${r}, ${c}) is X</b>: a blocked cell. Nothing to decide; X cells never change.`; return; }
+  // BFS from all boundary O cells with parents, to explain *why* it is safe
+  const par = {}, seen = b.map(a => a.map(() => false)), q = [];
+  for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) if ((i == 0 || j == 0 || i == n - 1 || j == m - 1) && b[i][j] == "O") { seen[i][j] = true; par[i + "," + j] = null; q.push([i, j]); }
+  for (let h = 0; h < q.length; h++) { const [a, e] = q[h];
+    for (let d = 0; d < 4; d++) { const x = a + RS[d], y = e + JS[d];
+      if (x >= 0 && x < n && y >= 0 && y < m && b[x][y] == "O" && !seen[x][y]) { seen[x][y] = true; par[x + "," + y] = [a, e]; q.push([x, y]); } } }
+  if (seen[r][c]) {
+    const path = []; let p = [r, c]; while (p) { path.push(P(p)); p = par[p[0] + "," + p[1]]; }
+    box.innerHTML = `<b class="ok">(${r}, ${c}) is SAFE ✓</b><br>It reaches a boundary O by moving up/down/left/right only through O cells:<br><code>${path.join(" → ")}</code>`;
+  } else {
+    const reg = [], vs = {}, st = [[r, c]]; vs[r + "," + c] = 1;
+    while (st.length) { const [a, e] = st.pop(); reg.push(P([a, e]));
+      for (let d = 0; d < 4; d++) { const x = a + RS[d], y = e + JS[d];
+        if (x >= 0 && x < n && y >= 0 && y < m && b[x][y] == "O" && !vs[x + "," + y]) { vs[x + "," + y] = 1; st.push([x, y]); } } }
+    let dg = ""; for (const k of reg) { const [a, e] = k.match(/\d+/g).map(Number);
+      for (const [dx, dy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { const x = a + dx, y = e + dy;
+        if (x >= 0 && x < n && y >= 0 && y < m && b[x][y] == "O" && !vs[x + "," + y]) dg += ` ${P([x, y])}`; } }
+    box.innerHTML = `<b class="bad">(${r}, ${c}) is CAPTURED ✗</b><br>Its region has ${reg.length} cell(s): <code>${reg.join(" ")}</code>. None lies on the border, and every other side touches X or this region, so it cannot reach a boundary O. It becomes X.` + (dg ? `<br><span class="warn">Diagonal O cell(s)${dg} exist, but diagonals do not count as a connection.</span>` : "");
+  }
+}
+
+/* ============ BFS panels ============ */
+function renderBfs() {
+  const sn = S.snaps[S.step], tot = S.snaps.length, n = S.base.length;
+  $("#stepinfo").textContent = `Step ${S.step + 1} / ${tot} · phase: ${sn.phase}`;
+  $("#prog").style.width = (tot > 1 ? S.step / (tot - 1) * 100 : 100) + "%";
+  $("#spv").textContent = $("#speed").value + " ms";
+  // queue
+  const lab = { push: "push →", pop: "pop ←", front: "front()", mark: "vis ← 1" };
+  const lastOp = sn.kind == "pop" ? `pop removed ${sn.cur ? P(sn.cur) : ""}` : sn.kind == "push" ? "push added to REAR" : sn.kind == "front" ? `front() reads ${sn.cur ? P(sn.cur) : ""}` : "";
+  $("#qop").innerHTML = `Front → ${fq(sn.q)} ← Rear` + (lastOp ? ` &nbsp; <b class="warn">${lab[sn.kind]} ${lastOp}</b>` : "");
+  $("#queue").innerHTML = sn.q.length ? sn.q.map((p, i) => `<span class="chip">${i == 0 ? '<span class="tag">front</span>' : '<span class="tag">&nbsp;</span>'}${P(p)}${i == sn.q.length - 1 ? '<span class="tag">rear</span>' : '<span class="tag">&nbsp;</span>'}</span>`).join("") :
+    `<span class="muted">∅ queue empty</span>` + (sn.kind == "while" ? ` <b class="ok">✔ BFS traversal complete</b>` : "");
+  // explanation
+  $("#op").textContent = `${sn.kind.toUpperCase()} · ${sn.lines.length ? CODE[sn.lines[0]].trim() : "end"}`;
+  $("#expl").textContent = sn.text;
+  $("#dirs").innerHTML = sn.dirs.length ? "<table><tr><th>Dir</th><th>Neighbor</th><th>Result</th></tr>" + sn.dirs.map(d => `<tr><td>${d.n}</td><td>${d.p}</td><td class="${d.r[0] == "r" ? "bad" : "ok"}">${d.r}</td></tr>`).join("") + "</table>" : "";
+  // visited matrix
+  if (n) $("#vm").innerHTML = sn.vis.map((row, r) => "<tr>" + row.map((v, c) => `<td class="${v ? "v1" : ""}${same(sn.mark, r, c) || same(sn.cur, r, c) ? " hl" : ""}${same(sn.nb, r, c) ? " nbh" : ""}">${v}</td>`).join("") + "</tr>").join("");
+  else $("#vm").innerHTML = "<tr><td>(empty)</td></tr>";
+  // variables
+  const v = sn.v, f = x => x === undefined ? "?" : x;
+  $("#vars").innerHTML = [["i (outer loop, solve)", v.i], ["j (outer loop, solve)", v.j], ["u, x (bfs args)", v.u === undefined ? "?" : `${v.u}, ${v.x}`], ["s (front row)", v.s], ["c (front col)", v.c],
+    ["i (direction loop, bfs)", v.d], ["row = rs[i] + s", v.row], ["cols = js[i] + c", v.cols], ["vis[row][cols]", v.vis], ["Q", fq(sn.q)]].map(a => `<tr><td>${a[0]}</td><td>${f(a[1])}</td></tr>`).join("");
+  // trace
+  let rows = ""; for (let k = 0; k <= S.step; k++) { const t = S.snaps[k].tr; if (t) rows += `<tr><td>${t.op}</td><td>${t.cur}</td><td>${t.nb}</td><td>${t.q}</td></tr>`; }
+  $("#trace").innerHTML = "<tr><th>Operation</th><th>Current cell</th><th>Neighbor</th><th>Queue after operation</th></tr>" + rows;
+  const tb = $("#traceBox"); tb.scrollTop = tb.scrollHeight;
+  // code
+  const cd = $("#code");
+  if (!cd.children.length) cd.innerHTML = CODE.map((l, i) => `<div data-l="${i}">${hl(l)}</div>`).join("");
+  [...cd.children].forEach((d, i) => d.classList.toggle("act", sn.lines.includes(i)));
+  if (sn.lines.length) cd.children[sn.lines[0]].scrollIntoView({ block: "nearest" });
+}
+function hl(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/(\/\/.*)|\b(class|public|void|int|for|while|if|return|vector|queue|pair|char)\b|(\b\d+\b)|('[OX]')/g,
+      (a, c, k, n, q) => c ? `<span class="cm">${a}</span>` : k ? `<span class="k">${a}</span>` : n ? `<span class="n">${a}</span>` : `<span class="s">${a}</span>`);
+}
+
+/* ============ Compare shared vs per-call vis ============ */
+function showVisDemo(which) {
+  const fin = S.snaps[S.snaps.length - 1].board, n = S.base.length;
+  if (!n) { $("#vdemo").textContent = "Empty board: nothing to compare."; return; }
+  const wrong = S.base.map(r => r.map(ch => ch == "O" ? "X" : ch));   // solve()'s vis stays all 0 → every O flips
+  const g = b => "<pre>" + b.map(r => r.join(" ")).join("\n") + "</pre>";
+  const bad = wrong.some((r, i) => r.some((ch, j) => ch != fin[i][j]));
+  $("#vdemo").innerHTML = which ?
+    `<b class="ok">Correct: one shared vis.</b> bfs() writes 1s into the matrix that solve() later reads, so safe cells survive.${g(fin)}` :
+    `<b class="bad">Wrong: new vis inside each bfs().</b> Each call fills its own private copy, which is destroyed on return. solve()'s vis stays all 0, so the final loop sees every O as unvisited and flips them all.${g(wrong)}` +
+    (bad ? `<span class="bad">Safe cells were wrongly captured on this board!</span>` : `<span class="warn">On this board no O is safe, so it looks the same. Try a preset with boundary O cells.</span>`) +
+    `<br>It also forgets visited cells between BFS calls, so regions can be re-explored.`;
+}
+
+/* ============ Directions mode ============ */
+function renderDirs() {
+  const { r, c, k } = S.dir, n = S.base.length, m = n ? S.base[0].length : 0;
+  if (!n) { $("#dtab").innerHTML = ""; $("#dtxt").textContent = "Empty board."; return; }
+  $("#dtab").innerHTML = "<tr><th>i</th><th>Dir</th><th>rs[i]</th><th>js[i]</th><th>row = rs[i] + s</th><th>cols = js[i] + c</th><th>Neighbor</th><th>Status</th></tr>" +
+    [0, 1, 2, 3].filter(d => k == -1 || k == d).map(d => { const a = r + RS[d], e = c + JS[d], ib = a >= 0 && a < n && e >= 0 && e < m;
+      return `<tr><td>${d}</td><td>${AR[d]} ${DN[d]}</td><td>${RS[d]}</td><td>${JS[d]}</td><td>${RS[d]} + ${r} = ${a}</td><td>${JS[d]} + ${c} = ${e}</td><td>(${a}, ${e})</td><td>${ib ? "in bounds, '" + S.base[a][e] + "'" : "<span class='bad'>out of bounds</span>"}</td></tr>`; }).join("");
+  $("#dtxt").innerHTML = `Current cell: s = ${r}, c = ${c}. ` + (k == -1 ? "All four neighbors are marked with arrows." : `Direction i = ${k}: ${DN[k]} → <code>(${r + RS[k]}, ${c + JS[k]})</code>.`);
+}
+
+/* ============ Main render ============ */
+function render() {
+  document.body.dataset.mode = S.mode;
+  [...$("#tabs").children].forEach(b => b.classList.toggle("on", b.dataset.m == S.mode));
+  $("#rows").value = S.base.length; $("#cols").value = S.base.length ? S.base[0].length : 0;
+  if (["concept", "bfs", "dirs"].includes(S.mode)) {
+    const sn = S.snaps[S.step];
+    drawBoard(S.mode == "bfs" ? bfsInfo(sn) : S.mode == "concept" ? conceptInfo() : dirsInfo());
+    if (S.mode == "bfs") renderBfs(); if (S.mode == "dirs") renderDirs();
+  } else renderOther();
+}
+function rebuild() { stop(); S.snaps = simulate(S.base); S.step = 0; S.sel = null; S.idea = 0; S.revS = S.revC = false; $("#inspect").textContent = "No cell selected."; $("#ideaTxt").textContent = "Click any O cell on the board to inspect it. Nothing is revealed until you choose."; $("#idea").textContent = "Show the idea"; $("#vdemo").textContent = "Press a compare button to see why vis must be shared."; S.dir = { r: Math.min(1, Math.max(0, S.base.length - 1)), c: Math.min(1, Math.max(0, (S.base[0] || []).length - 1)), k: -1 }; render(); }
+function loadPreset(k) { S.pk = k; S.base = PRESETS[k].b.map(r => r.split("")); $("#preset").value = k; rebuild(); }
+function stop() { if (S.timer) { clearInterval(S.timer); S.timer = null; } }
+
+/* ============ Events ============ */
+$("#tabs").innerHTML = [["concept", "Understand"], ["bfs", "BFS Visualizer"], ["dirs", "Directions"], ["flow", "solve() vs bfs()"], ["quiz", "Common Mistakes"], ["practice", "Practice"], ["cx", "Complexity"]]
+  .map(t => `<button data-m="${t[0]}">${t[1]}</button>`).join("");
+$("#tabs").onclick = e => { const m = e.target.dataset.m; if (m) { stop(); S.mode = m; render(); } };
+$("#preset").innerHTML = Object.keys(PRESETS).map(k => `<option value="${k}">${PRESETS[k].n}</option>`).join("");
+$("#preset").onchange = e => loadPreset(e.target.value);
+$("#resetBoard").onclick = () => loadPreset(S.pk);
+$("#apply").onclick = () => {
+  const r = Math.max(0, Math.min(8, +$("#rows").value | 0)), c = Math.max(0, Math.min(8, +$("#cols").value | 0));
+  S.base = (!r || !c) ? [] : Array.from({ length: r }, (_, i) => Array.from({ length: c }, (_, j) => (S.base[i] && S.base[i][j]) || "X")); rebuild();
+};
+$("#board").onclick = e => {
+  const t = e.target.closest(".cell"); if (!t) return; const r = +t.dataset.r, c = +t.dataset.c;
+  if ($("#edit").checked) { S.base[r][c] = S.base[r][c] == "X" ? "O" : "X"; const keep = S.mode; rebuild(); S.mode = keep; render(); return; }
+  if (S.mode == "concept") { inspect(r, c); render(); }
+  else if (S.mode == "dirs") { S.dir.r = r; S.dir.c = c; render(); }
+};
+$("#idea").onclick = () => {
+  const T = ["", "Step 1 — Look at the border. Every O on the edge (marked B) already touches the outside: it is safe.", "Step 2 — Safe spreads: any O connected (up/down/left/right) to a safe O is also safe (green).", "Step 3 — Every O still unmarked is trapped by X, so it is captured and becomes X (red)."];
+  if (S.idea == 0) loadPresetKeepIdea(); S.idea = (S.idea + 1) % 4; if (S.idea == 0) { $("#idea").textContent = "Show the idea"; $("#ideaTxt").textContent = "Idea reset."; } else { $("#idea").textContent = S.idea < 3 ? "Next idea step" : "Restart idea"; $("#ideaTxt").textContent = T[S.idea]; } render();
+};
+function loadPresetKeepIdea() { S.pk = "idea"; S.base = PRESETS.idea.b.map(r => r.split("")); $("#preset").value = "idea"; S.snaps = simulate(S.base); S.step = 0; S.sel = null; S.revS = S.revC = false; }
+$("#revS").onclick = () => { S.revS = true; render(); };
+$("#revC").onclick = () => { S.revC = true; render(); };
+$("#hide").onclick = () => { S.revS = S.revC = false; S.idea = 0; $("#idea").textContent = "Show the idea"; render(); };
+$("#next").onclick = () => { if (S.step < S.snaps.length - 1) S.step++; render(); };
+$("#prev").onclick = () => { if (S.step > 0) S.step--; render(); };
+$("#play").onclick = () => { if (S.timer) return; S.timer = setInterval(() => { if (S.step >= S.snaps.length - 1) { stop(); return; } S.step++; render(); }, +$("#speed").value); };
+$("#pause").onclick = stop;
+$("#restart").onclick = () => { stop(); S.step = 0; render(); };
+$("#reset").onclick = () => loadPreset(S.pk);
+$("#nextop").onclick = () => { stop(); let k = S.step + 1; while (k < S.snaps.length && S.snaps[k].kind != "pop") k++; S.step = Math.min(k, S.snaps.length - 1); render(); };
+$("#final").onclick = () => { stop(); S.step = S.snaps.length - 1; render(); };
+$("#speed").oninput = () => { $("#spv").textContent = $("#speed").value + " ms"; if (S.timer) { stop(); $("#play").click(); } };
+$("#code").onclick = e => { const d = e.target.closest("[data-l]"); if (!d) return; const i = +d.dataset.l;
+  $("#lineEx").innerHTML = `<code>${CODE[i].trim().replace(/</g, "&lt;") || "(blank)"}</code><br>` + (lineEx[i] || "Structural line (braces, signature or declaration). Click a highlighted operation for details."); };
+$("#vc").onclick = () => showVisDemo(true);
+$("#vw").onclick = () => showVisDemo(false);
+$("#dnext").onclick = () => { S.dir.k = S.dir.k >= 3 ? 0 : S.dir.k + 1; render(); };
+$("#dprev").onclick = () => { S.dir.k = S.dir.k <= 0 ? 3 : S.dir.k - 1; render(); };
+$("#dall").onclick = () => { S.dir.k = -1; render(); };
+
+/* ============ Other tabs ============ */
+const FLOW = [["solve()", "The main function LeetCode calls. Creates vis once, scans the border, later flips surrounded cells."],
+  ["finds boundary O", "Outer loops test (i==0 || i==n-1 || j==0 || j==m-1) && board[i][j]=='O' and vis==0."],
+  ["calls bfs()", "bfs(board, i, j, vis): explores ONE connected component of O cells. board and vis are passed by reference."],
+  ["marks safe O cells", "Every O reached gets vis = 1 (visited when enqueued)."],
+  ["returns to solve()", "bfs returns void: the result is stored in vis, which solve() owns. Scanning continues with other boundary O cells."],
+  ["flips surrounded O", "Second loop: board == 'O' && vis == 0 → 'X'."]];
+let flowSel = 0;
+const QZ = [
+ ["Using && between boundary conditions", "if ((i == 0 && i == n-1 && j == 0 && j == m-1) && board[i][j]=='O')", ["Join the four tests with ||", "Replace 'O' with 'X'", "Use & instead of &&"], 0, "A cell can't be on the top AND bottom AND left AND right edge at once. You need ANY edge, so use ||.", "4×4 board: with && no cell qualifies → no BFS → every O is flipped."],
+ ["Checking only the four corners", "if ((i==0||i==n-1) && (j==0||j==m-1) && board[i][j]=='O')", ["Use (i==0 || i==n-1 || j==0 || j==m-1)", "Check the center cell only", "Loop only over row 0"], 0, "Edge cells that aren't corners can also hold a safe O. The test must cover all four edges.", "XOX / XOX / XXX: the O at (0,1) is on the top edge, not a corner."],
+ ["Creating vis inside bfs()", "void bfs(...) {\n  vector<vector<int>> vis(n, vector<int>(m, 0));", ["Create vis once in solve(), pass by reference", "Make vis a char matrix", "Pass board by value"], 0, "A vis local to bfs() dies on return; solve() never sees it, so every O is flipped. One shared vis accumulates results.", "Use the 'compare vis' buttons in the BFS tab."],
+ ["Forgetting to enqueue a neighbor", "vis[row][cols] = 1;\n// (nothing else)", ["Add Q.push({row, cols});", "Add Q.pop();", "Add vis[row][cols] = 0;"], 0, "Marked cells must be queued, otherwise their own neighbors are never explored and part of the safe region is missed.", "XOOOX with start at the left O: the far O would never be visited."],
+ ["Forgetting to check vis[row][cols] == 0", "if (inBounds && board[row][cols] == 'O') {\n  vis[row][cols] = 1; Q.push({row, cols}); }", ["Add && vis[row][cols] == 0", "Remove the bounds check", "Swap rs and js"], 0, "Without it, two neighboring cells re-add each other forever: duplicates and possibly an endless loop.", "Two adjacent O cells ping-pong in the queue."],
+ ["Marking visited only after popping", "Q.push({row, cols});   // vis set later, after Q.pop()", ["Set vis = 1 when pushing", "Never set vis", "Set vis after the whole BFS"], 0, "Until it is popped, a waiting cell still looks unvisited, so other cells can enqueue it again (duplicates, wasted work).", "A 2×2 block of O cells: each cell is queued multiple times."],
+ ["Allowing diagonal movement", "rs = {1,-1,0,0,1,1,-1,-1};\njs = {0,0,-1,1,1,-1,1,-1};", ["Keep only the 4 orthogonal pairs", "Add more diagonals", "Use one array"], 0, "The problem connects cells only through shared edges. Diagonals would wrongly save enclosed O cells.", "Use the 'Diagonal does NOT connect' preset."],
+ ["Flipping every O", "if (board[i][j] == 'O') board[i][j] = 'X';", ["Also require vis[i][j] == 0", "Flip only X", "Flip only boundary cells"], 0, "Visited O cells are safe; they must stay 'O'. Only unvisited O cells are captured.", "Boundary-connected presets would lose their safe cells."],
+ ["Flipping without checking board == 'O'", "if (vis[i][j] == 0) board[i][j] = 'X';", ["Test board[i][j] == 'O' && vis[i][j] == 0", "Test vis == 1", "Remove the loop"], 0, "Here the result happens to be correct (X → X), but the condition expresses the wrong intent: unvisited ≠ open. It touches wall cells needlessly and would break if the fill value differed.", "Existing X cells must remain unchanged by design."],
+ ["Reading front() after pop()", "Q.pop();\nint s = Q.front().first;", ["Read front() first, then pop()", "Use Q.back()", "Use Q.top()"], 0, "pop() destroys the front element; calling front() afterwards reads the NEXT element (or is undefined behavior if the queue is empty).", "Queue [(0,1),(1,1)]: after pop, front() is (1,1), not (0,1)."],
+ ["Incorrect bounds for rows/columns", "if (row >= 0 && row < m && cols >= 0 && cols < n)", ["row < n and cols < m (n rows, m columns)", "row <= n and cols <= m", "Remove all bounds"], 0, "n = number of rows and m = number of columns. Swapping them (or using <=) reads outside the matrix on non-square boards.", "A 2×5 board breaks when row is compared with 5."],
+ ["Forgetting the empty-board early return", "int n = board.size();\nint m = board[0].size();   // no guard above", ["First: if (board.empty() || board[0].empty()) return;", "Use board.size() - 1", "Allocate vis first"], 0, "board[0] on an empty vector is invalid and crashes. Guard first.", "Pick the 'Empty board (0×0)' preset in the board toolbar."]];
+let qi = 0; const qDone = {};
+const EX1 = ["XXXXO", "XOXXO", "XOOXX", "XXXOX"].map(r => r.split(""));
+let ex1sel = {}, ex1h = 0, ex2h = 0, ex3h = 0;
+const EX2 = ["XOXX", "OOOX", "XOXX", "XXXX"].map(r => r.split(""));
+function ex2Answer() {
+  const sn = simulate(EX2), pops = sn.map((s, i) => s.kind == "pop" ? i : -1).filter(i => i >= 0), k = pops[1];
+  const after = sn.slice(k + 1).find(s => s.kind == "while");
+  return { cell: sn[k].cur, q: after.q };
+}
+function renderOther() {
+  const o = $("#other"), M = S.mode;
+  if (M == "flow") {
+    o.innerHTML = `<h2>solve() vs bfs()</h2><div class="flow">${FLOW.map((f, i) => `<button data-f="${i}" class="${i == flowSel ? "on" : ""}">${f[0]}</button>${i < 5 ? "→" : ""}`).join("")}</div>
+    <div class="card" style="margin:10px 0"><b>${FLOW[flowSel][0]}</b><br>${FLOW[flowSel][1]}</div>
+    <div class="grid2"><div class="card"><b>solve()</b> is the entry point LeetCode calls.</div><div class="card"><b>bfs()</b> explores one connected component of O cells.</div>
+    <div class="card"><b>vis</b> is created once in solve() and passed to every bfs() by reference (<code>&amp;</code>).</div><div class="card"><b>void</b>: bfs() returns nothing because it updates vis instead of returning a value.</div></div>`;
+    o.onclick = e => { const f = e.target.dataset.f; if (f !== undefined) { flowSel = +f; renderOther(); } };
+  } else if (M == "quiz") {
+    const q = QZ[qi], d = qDone[qi];
+    o.innerHTML = `<h2>Common mistakes (${Object.keys(qDone).length}/12 answered)</h2><div class="row">${QZ.map((x, i) => `<button data-q="${i}" class="${i == qi ? "on" : ""}">${i + 1}${qDone[i] !== undefined ? (qDone[i] ? " ✓" : " ✗") : ""}</button>`).join("")}</div>
+    <div class="card" style="margin-top:10px"><h3>${qi + 1}. ${q[0]}</h3><pre>${q[1].replace(/</g, "&lt;")}</pre><p>Which fix is correct?</p>
+    ${q[2].map((t, i) => `<div><button data-a="${i}">${"ABC"[i]}. ${t}</button></div>`).join("")}
+    <div id="qfb" style="margin-top:8px"></div></div>`;
+    if (d !== undefined) $("#qfb").innerHTML = qfb(q, d);
+    o.onclick = e => { const t = e.target.closest("button"); if (!t) return;
+      if (t.dataset.q !== undefined) { qi = +t.dataset.q; renderOther(); }
+      else if (t.dataset.a !== undefined) { const ok = +t.dataset.a == q[3]; if (ok || qDone[qi] === undefined) qDone[qi] = ok; $("#qfb").innerHTML = qfb(q, ok); if (ok) renderOther(); } };
+  } else if (M == "practice") {
+    const a2 = ex2Answer();
+    o.innerHTML = `<h2>Practice</h2><div class="grid2">
+    <div class="card"><h3>Exercise 1 — Predict the result</h3><p>Click the O cells that will become X.</p><div id="e1" style="display:grid;gap:4px;grid-template-columns:repeat(5,44px)">${EX1.map((r, i) => r.map((ch, j) => `<div class="cell ${ch == "X" ? "x" : ex1sel[i + "," + j] ? "cap" : "o"}" style="--cs:44px" data-e="${i},${j}">${ch}</div>`).join("")).join("")}</div>
+    <div class="row" style="margin-top:6px"><button id="e1h">Hint</button><button id="e1c" class="go">Check</button></div><div id="e1f"></div></div>
+    <div class="card"><h3>Exercise 2 — Predict the queue</h3><pre>${EX2.map(r => r.join(" ")).join("\n")}</pre>
+    <p>BFS starts at the boundary O (0, 1). The 2nd cell popped is ${P(a2.cell)}. After all 4 directions of that cell are processed, what is the queue (front first)?</p>
+    <input id="e2i" style="width:100%" placeholder="e.g. (0, 0), (1, 2)"><div class="row" style="margin-top:6px"><button id="e2h">Hint</button><button id="e2c" class="go">Check</button></div><div id="e2f"></div></div>
+    <div class="card"><h3>Exercise 3 — Debug the code</h3><pre>if (row >= 0 &amp;&amp; row &lt; n &amp;&amp; cols >= 0 &amp;&amp; cols &lt; m &amp;&amp;
+    board[row][cols] == 'O' &amp;&amp; vis[row][cols] == 0) {
+    Q.push({row, cols});
+}</pre><p>What is the bug?</p>
+    <div><button data-b="0">A. vis is never set to 1 for the neighbor</button></div><div><button data-b="1">B. The bounds check is wrong</button></div><div><button data-b="2">C. Q.push should be Q.pop</button></div>
+    <div class="row" style="margin-top:6px"><button id="e3h">Hint</button></div><div id="e3f"></div></div></div>`;
+    const H1 = ["Find the boundary O cells first. They are safe.", "Spread from each safe O using up/down/left/right only. Careful with diagonals!", "Anything left over among the O cells in the interior is captured."];
+    const H2 = ["Trace the start: queue = [(0, 1)]. Pop it and add its valid neighbors.", "Pop (0, 1) → push (1, 1). Now pop (1,1) and test Down, Up, Left, Right in that order.", "Directions are checked in order Down, Up, Left, Right; each valid one is pushed to the rear."];
+    const H3 = ["Look at what happens to a neighbor after the test passes.", "Visited cells must never be accepted twice. What stops that?", "Compare with the original code: one statement is missing before Q.push."];
+    o.onclick = e => { const t = e.target.closest("[data-e],[data-b],button"); if (!t) return;
+      if (t.dataset.e) { if (EX1[+t.dataset.e.split(",")[0]][+t.dataset.e.split(",")[1]] == "O") { ex1sel[t.dataset.e] = !ex1sel[t.dataset.e]; renderOther(); } return; }
+      if (t.id == "e1h") $("#e1f").innerHTML = `<p class="warn">Hint: ${H1[ex1h++ % 3]}</p>`;
+      if (t.id == "e1c") { const sf = safeSet(EX1), miss = [], extra = [];
+        EX1.forEach((r, i) => r.forEach((ch, j) => { if (ch == "O") { const cap = !sf[i][j], pick = !!ex1sel[i + "," + j]; if (cap && !pick) miss.push(P([i, j])); if (!cap && pick) extra.push(P([i, j])); } }));
+        $("#e1f").innerHTML = !miss.length && !extra.length ? `<p class="ok">Correct! (1,1), (2,1), (2,2) are enclosed; (3,3) is on the border, and (2,2)–(3,3) is only diagonal.</p>` : `<p class="bad">Not yet.${miss.length ? " Missed captured: " + miss.join(" ") + "." : ""}${extra.length ? " These are actually safe: " + extra.join(" ") + "." : ""} Try the hint.</p>`; }
+      if (t.id == "e2h") $("#e2f").innerHTML = `<p class="warn">Hint: ${H2[ex2h++ % 3]}</p>`;
+      if (t.id == "e2c") { const nums = ($("#e2i").value.match(/\d+/g) || []).map(Number), got = []; for (let i = 0; i + 1 < nums.length; i += 2) got.push([nums[i], nums[i + 1]]);
+        const exp = a2.q, eq = got.length == exp.length && got.every((p, i) => p[0] == exp[i][0] && p[1] == exp[i][1]);
+        const sameSet = got.length == exp.length && got.every(p => exp.some(x => x[0] == p[0] && x[1] == p[1]));
+        $("#e2f").innerHTML = eq ? `<p class="ok">Correct: ${fq(exp)}. Down, Up, Left, Right order gives that FIFO order.</p>` : sameSet ? `<p class="warn">Right cells, wrong order. Queue order follows the direction order Down, Up, Left, Right.</p>` : `<p class="bad">Not quite. Re-trace the pops and use the hint.</p>`; }
+      if (t.id == "e3h") $("#e3f").innerHTML = `<p class="warn">Hint: ${H3[ex3h++ % 3]}</p>`;
+      if (t.dataset.b !== undefined) $("#e3f").innerHTML = t.dataset.b == "0" ? `<p class="ok">Correct! Without vis[row][cols] = 1 the cell stays unvisited, so it gets re-queued repeatedly and BFS may never end.</p>` : `<p class="bad">Not that one. Bounds and Q.push are fine. Use the hint.</p>`; };
+  } else if (M == "cx") {
+    const sn = S.snaps, pushes = sn.filter(s => s.kind == "push").length, pops = sn.filter(s => s.kind == "pop").length, n = S.base.length, m = n ? S.base[0].length : 0;
+    const checks = sn.filter(s => s.kind == "reject" || s.kind == "accept").length;
+    o.innerHTML = `<h2>Complexity</h2><div class="grid2">
+    <div class="card"><h3>Time: O(n × m)</h3><p>Each cell is marked visited at most once, so it is pushed and popped at most once. Each popped cell checks exactly 4 neighbors (constant work). The two full-board scans are n×m each. Total ∝ n×m.</p></div>
+    <div class="card"><h3>Auxiliary space: O(n × m)</h3><p>The <code>vis</code> matrix has n×m entries. In the worst case (all O, connected to the border) the queue can hold a number of cells proportional to n×m.</p></div>
+    <div class="card"><h3>Live counts for your current board (${n}×${m} = ${n * m} cells)</h3><p>Cells enqueued: <b>${pushes}</b> · popped: <b>${pops}</b> · neighbor checks: <b>${checks}</b> (= 4 × pops = ${4 * pops})<br>Counts come from the same simulation as the visualizer. Pushes never exceed the number of O cells, because vis blocks repeats.</p></div></div>`;
+    o.onclick = null;
+  }
+}
+function qfb(q, ok) { return ok ? `<p class="ok">✓ Correct. ${q[4]}</p><div class="card"><b>Small example:</b> ${q[5]}</div>` : `<p class="bad">✗ Not quite. Think about what this change would do on a small board, then try another option.</p>`; }
+
+/* ============ Start (no autoplay) ============ */
+loadPreset("idea");
+$("#spv").textContent = $("#speed").value + " ms";
+</script>
+</body></html>
