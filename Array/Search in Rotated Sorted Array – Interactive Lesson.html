@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Search in Rotated Sorted Array – Interactive Lesson</title>
+<style>
+:root{--bg:#0f1218;--card:#181d27;--card2:#212838;--tx:#e6e9f0;--mut:#8b94a8;--bd:#2c3446;--L:#4da3ff;--M:#ffb84d;--R:#ff6b9d;--ok:#3ecf8e;--tg:#b78cff;--bad:#ff5c5c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:18px 20px 6px;max-width:1100px;margin:auto}h1{margin:0;font-size:22px}header p{margin:4px 0 0;color:var(--mut)}
+nav{display:flex;gap:6px;overflow-x:auto;max-width:1100px;margin:10px auto;padding:0 20px}
+nav button{white-space:nowrap}
+button,select,input{font:inherit;color:var(--tx);background:var(--card2);border:1px solid var(--bd);border-radius:8px;padding:7px 12px;cursor:pointer;transition:.15s}
+button:hover{border-color:var(--L)}button.on{background:var(--L);color:#07101c;border-color:var(--L);font-weight:600}
+button:disabled{opacity:.4;cursor:not-allowed}input{width:80px;cursor:text}
+main{max-width:1100px;margin:auto;padding:0 20px 40px}section{display:none}section.show{display:block}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h3{margin:0 0 6px;font-size:16px}.mut{color:var(--mut)}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.grid{display:grid;grid-template-columns:1.25fr 1fr;gap:14px}@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.arr{display:flex;gap:6px;overflow-x:auto;padding:6px 2px}.cell{display:flex;flex-direction:column;align-items:center;min-width:46px}
+.cell small{color:var(--mut);font-size:12px}
+.box{width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;background:var(--card2);border:2px solid var(--bd);border-radius:8px;transition:.25s}
+.box.sorted{border-color:var(--ok);background:#173a2c}.box.dim{opacity:.22}
+.box.tgt{box-shadow:0 0 0 2px var(--tg);color:var(--tg)}
+.ptr{height:22px;display:flex;gap:2px;margin-top:3px}.ptr b{font-size:12px;padding:0 5px;border-radius:5px;color:#08101a}
+.L{background:var(--L)}.M{background:var(--M)}.R{background:var(--R)}
+.leg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:6px}.leg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.note{background:var(--card2);border-left:3px solid var(--M);padding:10px 12px;border-radius:6px;margin-top:8px}
+.why{border-left-color:var(--ok)}.bad{border-left-color:var(--bad)}.good{border-left-color:var(--ok)}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:5px 8px;border-bottom:1px solid var(--bd);text-align:left}th{color:var(--mut);font-weight:500}
+pre{margin:0;font:13px/1.65 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto}
+.ln{display:block;padding:0 8px;border-left:3px solid transparent;white-space:pre}.ln.act{background:#2a3350;border-left-color:var(--M)}
+.kw{color:#ff8fb1}.nm{color:#8fd3ff}.ty{color:#9be59b}
+.bars{display:flex;align-items:flex-end;gap:4px;height:130px;overflow-x:auto}.bar{background:var(--L);min-width:26px;border-radius:4px 4px 0 0;font-size:11px;text-align:center;color:#07101c;transition:.25s}
+details summary{cursor:pointer;color:var(--L)}code{background:var(--card2);padding:1px 5px;border-radius:4px}
+</style></head><body>
+<header><h1>Search in Rotated Sorted Array <span class="mut">· LeetCode 33</span></h1>
+<p>Learn it by clicking. Nothing moves until you press a button.</p></header>
+<nav id="nav"></nav>
+<main>
+<section id="s0"><div class="card"><h3>A. Why normal binary search is not enough</h3>
+<p class="mut">Binary search relies on one fact: <em>the order tells you which side the target is on</em>. Pick a scenario.</p>
+<div class="row" id="b0"></div><div id="v0"></div><div class="note" id="n0"></div></div></section>
+
+<section id="s1"><div class="card"><h3>B. Which half is sorted?</h3>
+<p class="mut">Test: <code>nums[left] &lt;= nums[mid]</code>. Try the scenarios and watch the green half.</p>
+<div class="row" id="b1"></div><div id="v1"></div><div class="note" id="n1"></div>
+<details><summary>Why is checking only one condition enough?</summary><p>At least one half of any range is always sorted, because the array has only one drop (the rotation point) and it can sit in just one half. So we ask one question. If the answer is “left is sorted” we use it. Otherwise the drop is on the left, so the right half is guaranteed sorted. If there is no drop at all, both halves are sorted and picking the left one is still correct.</p></details></div></section>
+
+<section id="s2"><div class="card"><h3>C. Does the target belong to the sorted half?</h3>
+<p class="mut">A sorted half is a trustworthy ruler: if the target is between its two ends, it must be inside. If not, it must be in the other half.</p>
+<div class="row" id="b2"></div><div id="v2"></div><div class="note" id="n2"></div></div></section>
+
+<section id="s3"><div class="card"><h3>D. Moving the pointers</h3>
+<p class="mut">After the decision, one whole half plus the mid is thrown away. Faded boxes are eliminated.</p>
+<div class="row" id="b3"></div><div id="v3"></div><div class="note" id="n3"></div>
+<details><summary>Why mid ± 1 and not just mid?</summary><p><code>mid</code> was already compared with the target and failed, so it can never be the answer. Moving to <code>mid + 1</code> or <code>mid - 1</code> removes it and guarantees the range always shrinks (no infinite loop).</p></details></div></section>
+
+<section id="s4"><div class="card"><h3>E. Found it, and why <code>left &lt;= right</code></h3>
+<div class="row" id="b4"></div><div id="v4"></div><div class="note" id="n4"></div></div></section>
+
+<section id="s5">
+<div class="grid"><div>
+<div class="card"><div class="row" id="exb"></div><div id="dv"></div>
+<div class="leg"><span><i class="L"></i>left</span><span><i class="M"></i>mid</span><span><i class="R"></i>right</span><span><i style="background:#173a2c;border:1px solid var(--ok)"></i>sorted half</span><span><i style="background:#555;opacity:.4"></i>eliminated</span><span><i style="box-shadow:0 0 0 2px var(--tg)"></i>target value</span></div></div>
+<div class="card"><div class="row"><button id="prev">◀ Previous Step</button><button id="next" class="on">Next Step ▶</button><button id="reset">Reset</button><button id="auto">Auto Play: off</button></div>
+<div class="row mut" id="cnt"></div><div class="note" id="dtxt"></div>
+<div class="row"><button id="shw">Show Explanation</button><button id="hid">Hide Explanation</button></div><div class="note why" id="dwhy" style="display:none"></div></div>
+<div class="card"><h3>This iteration</h3><table id="tb"></table></div></div>
+<div><div class="card"><h3>Your C++ (reference)</h3><pre id="code"></pre>
+<p class="mut" style="font-size:13px">The highlighted line is the line the computer is executing for the current step.</p></div></div></div></section>
+
+<section id="s6"><div class="card"><div class="row" id="pb"></div><div id="pv"></div>
+<div class="row mut" id="pinfo"></div></div>
+<div class="card" id="pform"><h3>Dry-run this iteration</h3>
+<table><tr><td>1. mid index</td><td><input id="f1" type="number"></td></tr>
+<tr><td>2. Sorted half</td><td><select id="f2"><option value="">choose…</option><option value="L">Left half</option><option value="R">Right half</option></select></td></tr>
+<tr><td>3. Target in that half?</td><td><select id="f3"><option value="">choose…</option><option value="Y">Yes</option><option value="N">No</option></select></td></tr>
+<tr><td>4. Pointer to update</td><td><select id="f4"><option value="">choose…</option><option value="L">left</option><option value="R">right</option></select></td></tr>
+<tr><td>5. New pointer value</td><td><input id="f5" type="number"></td></tr></table>
+<div class="row"><button class="on" id="chk">Submit &amp; Check</button><button id="pnext" style="display:none">Continue ▶</button></div>
+<div class="note" id="fb" style="display:none"></div></div></section>
+
+<section id="s7"><div class="card"><h3>Complexity</h3>
+<p class="mut">Choose the array size n. Each bar is how many elements are still possible after each iteration.</p>
+<div class="row"><span id="nl"></span><input type="range" id="nr" min="1" max="20" value="4" style="width:240px"></div>
+<div class="bars" id="bars"></div><div class="note" id="cn"></div>
+<div class="note why"><b>Space O(1):</b> we only store <code>left</code>, <code>mid</code>, <code>right</code> and <code>target</code>. No copy of the array, no recursion stack, so memory does not grow with n.</div></div></section>
+</main>
+<script>
+/* ===== helpers ===== */
+const $=s=>document.querySelector(s);
+const TABS=['A. Why rotate?','B. Sorted half','C. Target check','D. Pointers','E. Found & loop','Dry Run','Practice','Complexity'];
+TABS.forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;b.onclick=()=>tab(i);$('#nav').append(b)});
+function tab(i){document.querySelectorAll('section').forEach((s,j)=>s.classList.toggle('show',i===j));document.querySelectorAll('nav button').forEach((b,j)=>b.classList.toggle('on',i===j));if(i!==5)stopAuto()}
+/* draw array: o.l/m/r pointers, o.t target, o.sorted [a,b], o.keep [a,b] (others fade) */
+function render(el,arr,o){let h='<div class="arr">';arr.forEach((v,i)=>{const c=['box'];
+ if(o.keep&&(i<o.keep[0]||i>o.keep[1]))c.push('dim');if(o.sorted&&i>=o.sorted[0]&&i<=o.sorted[1])c.push('sorted');if(v===o.t)c.push('tgt');
+ let p='';if(i===o.l)p+='<b class="L">L</b>';if(i===o.m)p+='<b class="M">M</b>';if(i===o.r)p+='<b class="R">R</b>';
+ h+=`<div class="cell"><small>${i}</small><div class="${c.join(' ')}">${v}</div><div class="ptr">${p}</div></div>`});
+ el.innerHTML=h+'</div>'}
+function decide(a,l,m,r,t){const sl=a[l]<=a[m],lo=sl?a[l]:a[m],hi=sl?a[m]:a[r],inn=lo<=t&&t<=hi;let nl=l,nr=r;
+ if(sl){inn?nr=m-1:nl=m+1}else{inn?nl=m+1:nr=m-1}return{sl,lo,hi,inn,nl,nr,sr:sl?[l,m]:[m,r]}}
+/* concept tabs: list of scenarios -> buttons -> render+text */
+function mk(k,list,fn){const b=$('#b'+k);list.forEach((s,i)=>{const x=document.createElement('button');x.textContent=s.n;x.onclick=()=>{[...b.children].forEach(c=>c.classList.remove('on'));x.classList.add('on');const r=fn(s);render($('#v'+k),s.a,r.o);$('#n'+k).innerHTML=r.t};b.append(x)});b.children[0].click()}
+const R1=[6,7,8,1,2,3,4,5],R2=[4,5,6,7,0,1,2];
+mk(0,[{n:'Sorted array, target 3',a:[1,2,3,4,5,6,7,8],t:3},{n:'Rotated array, target 7',a:R1,t:7}],s=>{const a=s.a,m=3;
+ return{o:{l:0,m,r:7,t:s.t},t:a[0]===1?`<b>nums[mid] = 4 &gt; 3.</b> The array is sorted, so everything to the right of mid is at least 4. The target must be on the LEFT. This reasoning is always safe.`:`<b>nums[mid] = 1 &lt; 7.</b> Normal binary search would say “mid is small, so go right”. But 7 is at index 1, on the LEFT! The rotation broke the rule “small ⇒ go right”. We need a new trick: first find a half that <i>is</i> still sorted, and trust only that.`}});
+mk(1,[{n:'Drop on the right',a:R1,l:0,r:7},{n:'Drop on the left',a:R2,l:0,r:6},{n:'No rotation',a:[1,2,3,4,5,6,7],l:0,r:6},{n:'Narrowed range [4..7]',a:R1,l:4,r:7}],s=>{const m=(s.l+s.r)>>1,a=s.a,sl=a[s.l]<=a[m];
+ let t=sl?`<b>nums[left]=${a[s.l]} &lt;= nums[mid]=${a[m]}</b> → going from left to mid never drops, so the LEFT half [${s.l}..${m}] is sorted.`:`<b>nums[left]=${a[s.l]} &gt; nums[mid]=${a[m]}</b> → the numbers fell somewhere between left and mid (the rotation point). So the drop is on the left and the RIGHT half [${m}..${s.r}] must be sorted.`;
+ if(a[s.l]<=a[s.r])t+=`<br>This range has no rotation, so both halves are sorted. Choosing the left is still correct.`;
+ return{o:{l:s.l,m,r:s.r,sorted:sl?[s.l,m]:[m,s.r]},t}});
+const CK=[[R2,5],[R2,0],[R1,3],[R1,7]].map(([a,t])=>({n:`${a===R1?'Rotated A':'Rotated B'}, target ${t}`,a,t,l:0,r:a.length-1}));
+const ckTxt=(s,d,m,after)=>{const a=s.a,side=d.sl?'left':'right';let t=`Sorted half = <b>${side}</b>. Check <code>${d.lo} &lt;= ${s.t} &lt;= ${d.hi}</code> → <b>${d.inn?'TRUE':'FALSE'}</b>.<br>`;
+ t+=d.inn?`The target fits between the ends of the sorted half, so it must be in there. Throw away the <b>other</b> half.`:`The target does not fit in the sorted half, so it cannot be there. Throw that half away and search the other (the unsorted one still contains the target, if it exists).`;
+ if(after)t+=`<br><b>Update:</b> <code>${d.nl!==s.l?`left = mid + 1 = ${d.nl}`:`right = mid - 1 = ${d.nr}`}</code>. Faded boxes (including mid) cannot hold the target.`;return t};
+mk(2,CK,s=>{const m=(s.l+s.r)>>1,d=decide(s.a,s.l,m,s.r,s.t);return{o:{l:s.l,m,r:s.r,t:s.t,sorted:d.sr},t:ckTxt(s,d,m,false)}});
+mk(3,CK,s=>{const m=(s.l+s.r)>>1,d=decide(s.a,s.l,m,s.r,s.t);return{o:{l:d.nl,m,r:d.nr,t:s.t,keep:[d.nl,d.nr],sorted:d.sr},t:ckTxt(s,d,m,true)}});
+mk(4,[{n:'Found at mid',a:R2,l:0,r:6,t:7},{n:'One element left',a:R2,l:4,r:4,t:0}],s=>{const m=(s.l+s.r)>>1;
+ return{o:{l:s.l,m,r:s.r,t:s.t,keep:[s.l,s.r]},t:s.l===s.r?`Only one element remains: left = right = mid = 4. Because the loop is <code>left &lt;= right</code>, it still runs once and checks <code>nums[4] == 0</code> → found. With <code>left &lt; right</code> the loop would quit and we would miss the answer. When the range really becomes empty (<code>left &gt; right</code>) we return -1.`:`<code>nums[mid] == target</code> (${s.a[m]} = ${s.t}) → return ${m} immediately. Nothing else needs to be checked.`}});
+
+/* ===== dry run ===== */
+const CODE=['int search(vector<int>& nums, int target) {','    int left = 0, right = nums.size() - 1;','    while (left <= right) {','        int mid = left + (right - left) / 2;','        if (nums[mid] == target) return mid;','        if (nums[left] <= nums[mid]) {','            if (nums[left] <= target && target <= nums[mid]) right = mid - 1;','            else left = mid + 1;','        } else {','            if (nums[mid] <= target && target <= nums[right]) left = mid + 1;','            else right = mid - 1;','        }','    }','    return -1;','}'];
+const hl=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\b(while|if|else|return)\b/g,'<span class="kw">$1</span>').replace(/\b(int|vector)\b/g,'<span class="ty">$1</span>').replace(/\b(\d+)\b/g,'<span class="nm">$1</span>');
+const EX=[{a:R1,t:3},{a:R2,t:0},{a:[8,9,10,2,3,4,5,6,7],t:9}];
+function gen(a,t){const S=[];let l=0,r=a.length-1,f={};const P=o=>S.push({...o,f:{...f}});
+ P({l,r,m:null,ln:1,txt:`Start: left = 0, right = ${r}. The whole array is the search range.`,why:'Before the loop, nothing is eliminated, so the range is everything.'});
+ while(l<=r){f={};const m=l+((r-l)>>1);f.m=`${m} (value ${a[m]})`;
+  P({l,r,m,ln:3,txt:`left ${l} &lt;= right ${r} → loop continues. mid = ${l} + (${r} - ${l}) / 2 = ${m}. nums[mid] = ${a[m]}.`,why:'mid is an INDEX. The value is nums[mid]. Writing left + (right-left)/2 avoids overflow for huge indices.'});
+  if(a[m]===t){P({l,r,m,ln:4,found:1,txt:`nums[${m}] = ${a[m]} equals target ${t} → <b>return ${m}</b>. Done!`,why:'A match at mid is an immediate answer; no further reasoning is required.'});return S}
+  P({l,r,m,ln:4,txt:`nums[mid] = ${a[m]} is not ${t}, so mid is not the answer. Keep going.`,why:'We check mid first so that later we can safely skip it (mid ± 1).'});
+  const sl=a[l]<=a[m];f.s=sl?'Left half':'Right half';
+  P({l,r,m,sorted:sl?[l,m]:[m,r],ln:sl?5:8,txt:sl?`nums[left] = ${a[l]} &lt;= nums[mid] = ${a[m]} → LEFT half [${l}..${m}] is sorted.`:`nums[left] = ${a[l]} &gt; nums[mid] = ${a[m]} → RIGHT half [${m}..${r}] is sorted.`,why:sl?'No drop between left and mid, so those numbers are in increasing order.':'A drop exists between left and mid, so the single rotation point is on the left; the right half cannot contain another drop.'});
+  const lo=sl?a[l]:a[m],hi=sl?a[m]:a[r],inn=lo<=t&&t<=hi;f.i=inn?`Yes (${lo} ≤ ${t} ≤ ${hi})`:`No (${t} outside ${lo}..${hi})`;
+  P({l,r,m,sorted:sl?[l,m]:[m,r],ln:sl?6:9,txt:`Is ${lo} &lt;= ${t} &lt;= ${hi}? <b>${inn?'Yes':'No'}</b>.`,why:inn?'The sorted half is a reliable ruler: target is inside its ends, so it can only be in there.':'The sorted half\u2019s ends do not cover the target, so it cannot be inside; the other half must be where it hides.'});
+  let nl=l,nr=r,ln,tx,why;
+  if(sl&&inn){nr=m-1;ln=6;tx=`right = mid - 1 = ${nr}`;why=`Target is in the left half, so everything from mid (${m}) to old right (${r}) is eliminated.`}
+  else if(sl){nl=m+1;ln=7;tx=`left = mid + 1 = ${nl}`;why=`Target is not in the sorted left half, so indices ${l}..${m} are eliminated.`}
+  else if(inn){nl=m+1;ln=9;tx=`left = mid + 1 = ${nl}`;why=`Target is in the right half, so indices ${l}..${m} are eliminated.`}
+  else{nr=m-1;ln=10;tx=`right = mid - 1 = ${nr}`;why=`Target is not in the sorted right half, so indices ${m}..${r} are eliminated.`}
+  f.c=tx;l=nl;r=nr;P({l,r,m,keep:1,ln,chg:1,txt:`Update: <b>${tx}</b>.`,why});}
+ P({l,r,m:null,ln:13,nf:1,txt:`left ${l} &gt; right ${r} → the range is empty. <b>return -1</b> (target not present).`,why:'Every element has been eliminated or checked.'});return S}
+let ex=0,si=0,STEPS=[],timer=null,showW=false;
+EX.forEach((e,i)=>{const b=document.createElement('button');b.textContent=`Example ${i+1}: target ${e.t}`;b.onclick=()=>{ex=i;si=0;stopAuto();draw()};b.id='ex'+i;$('#exb').append(b)});
+$('#code').innerHTML=CODE.map((c,i)=>`<span class="ln" id="c${i}">${hl(c)}</span>`).join('');
+function draw(){const e=EX[ex];STEPS=gen(e.a,e.t);const s=STEPS[si],a=e.a;
+ EX.forEach((_,i)=>$('#ex'+i).classList.toggle('on',i===ex));
+ render($('#dv'),a,{l:s.l,m:s.m,r:s.r,t:e.t,sorted:s.sorted,keep:[s.l,s.r]});
+ $('#cnt').innerHTML=`Array: [${a.join(', ')}] · target <b style="color:var(--tg)">${e.t}</b> · step ${si+1} / ${STEPS.length}`;
+ $('#dtxt').innerHTML=s.txt;$('#dwhy').innerHTML='<b>Why?</b> '+s.why;$('#dwhy').style.display=showW?'block':'none';
+ document.querySelectorAll('.ln').forEach((x,i)=>x.classList.toggle('act',i===s.ln));
+ const v=i=>i==null||i<0||i>=a.length?'—':a[i];
+ $('#tb').innerHTML=`<tr><th></th><th>index</th><th>value</th></tr><tr><td style="color:var(--L)">left</td><td>${s.l}</td><td>${v(s.l)}</td></tr><tr><td style="color:var(--M)">mid</td><td>${s.m==null?'—':s.m}</td><td>${v(s.m)}</td></tr><tr><td style="color:var(--R)">right</td><td>${s.r}</td><td>${v(s.r)}</td></tr>
+ <tr><td>Sorted half</td><td colspan="2">${s.f.s||'—'}</td></tr><tr><td>Target in it?</td><td colspan="2">${s.f.i||'—'}</td></tr><tr><td>Pointer change</td><td colspan="2">${s.f.c||'—'}</td></tr>`;
+ $('#prev').disabled=si===0;$('#next').disabled=si===STEPS.length-1;if(si===STEPS.length-1)stopAuto()}
+$('#next').onclick=()=>{if(si<STEPS.length-1){si++;draw()}};$('#prev').onclick=()=>{if(si>0){si--;draw()}};
+$('#reset').onclick=()=>{si=0;stopAuto();draw()};$('#shw').onclick=()=>{showW=true;draw()};$('#hid').onclick=()=>{showW=false;draw()};
+function stopAuto(){clearInterval(timer);timer=null;$('#auto').textContent='Auto Play: off'}
+$('#auto').onclick=()=>{if(timer)return stopAuto();if(si>=STEPS.length-1)si=0;$('#auto').textContent='Auto Play: on';timer=setInterval(()=>{if(si<STEPS.length-1){si++;draw()}else stopAuto()},1400);draw()};
+
+/* ===== practice ===== */
+const PR=[{a:R2,t:0},{a:[3,4,5,1,2],t:1},{a:R1,t:2},{a:[5,1,3],t:3},{a:[8,9,10,2,3,4,5,6,7],t:7},{a:[4,5,6,7,8,1,2,3],t:9}];
+let pi=0,pl,pr,pdone,pend,ptr=0;
+PR.forEach((_,i)=>{const b=document.createElement('button');b.textContent='Problem '+(i+1);b.id='pp'+i;b.onclick=()=>startP(i);$('#pb').append(b)});
+function startP(i){pi=i;pl=0;pr=PR[i].a.length-1;pend=false;ptr=0;pdraw()}
+function pdraw(){const p=PR[pi];PR.forEach((_,i)=>$('#pp'+i).classList.toggle('on',i===pi));
+ render($('#pv'),p.a,{l:pl<=pr?pl:null,r:pl<=pr?pr:null,t:p.t,keep:[pl,pr]});
+ $('#pinfo').innerHTML=`Target: <b style="color:var(--tg)">${p.t}</b> · left = <b style="color:var(--L)">${pl}</b> · right = <b style="color:var(--R)">${pr}</b> · mid is for you to find. Use mid = left + (right - left) / 2 (round down).`;
+ ['f1','f2','f3','f4','f5'].forEach(f=>$('#'+f).value='');$('#fb').style.display='none';$('#pnext').style.display='none';$('#chk').disabled=false}
+function fb(msg,cls){const n=$('#fb');n.className='note '+cls;n.innerHTML=msg;n.style.display='block'}
+$('#chk').onclick=()=>{const p=PR[pi],a=p.a,t=p.t,l=pl,r=pr,m=l+((r-l)>>1),v=id=>$('#'+id).value;
+ if(v('f1')===''){return fb('Start with step 1: enter a mid index.','bad')}
+ if(+v('f1')!==m)return fb(`<b>mid is not ${v('f1')}.</b> mid is an index, not a value. Hint: compute (${l} + ${r}) / 2 and round DOWN. Make sure you used the current left and right shown above.`,'bad');
+ if(a[m]===t){pend=true;$('#chk').disabled=true;$('#pnext').style.display='';$('#pnext').textContent=pi<PR.length-1?'Next problem ▶':'Restart ▶';return fb(`<b>Correct, and you can stop!</b> nums[${m}] = ${a[m]} equals the target, so the answer is index ${m}. Always compare nums[mid] with the target first.`,'good')}
+ if(!v('f2'))return fb(`mid ${m} is right ✔ (nums[mid] = ${a[m]} is not the target). Now pick the sorted half.`,'good');
+ const sl=a[l]<=a[m];if((v('f2')==='L')!==sl)return fb(`<b>Wrong half.</b> Compare nums[left] = ${a[l]} with nums[mid] = ${a[m]}. ${sl?'Left is not greater than mid, so there is no drop on the left; the left half is sorted.':'Left is greater than mid, so a drop sits on the left; the right half must be the sorted one.'} Hint: apply <code>nums[left] &lt;= nums[mid]</code>.`,'bad');
+ const lo=sl?a[l]:a[m],hi=sl?a[m]:a[r],inn=lo<=t&&t<=hi;
+ if(!v('f3'))return fb('Sorted half ✔. Now: does the target fit between the ends of that half?','good');
+ if((v('f3')==='Y')!==inn)return fb(`<b>Check the range again.</b> The sorted half runs from ${lo} to ${hi}. Is ${lo} &lt;= ${t} &lt;= ${hi}? ${inn?'Yes, it is.':'No, the target is outside it.'} Hint: both comparisons must hold.`,'bad');
+ const d=decide(a,l,m,r,t),want=d.nl!==l?'L':'R';
+ if(!v('f4'))return fb('Target check ✔. Which pointer moves?','good');
+ if(v('f4')!==want)return fb(`<b>Wrong pointer.</b> ${inn?'The target is inside the sorted half, so we keep that half and discard the other.':'The target is not in the sorted half, so we discard the sorted half and keep the other.'} The sorted half is the ${sl?'left':'right'} one. Hint: the discarded half is the one that lies ${(sl===inn)?'to the right of':'to the left of'} what we keep, so move the pointer on the side of the discarded half.`,'bad');
+ const nv=want==='L'?m+1:m-1;
+ if(v('f5')==='')return fb('Pointer choice ✔. Enter its new value.','good');
+ if(+v('f5')!==nv)return fb(`<b>Off by one.</b> mid itself was already checked, so it is also eliminated. ${want==='L'?'left = mid + 1':'right = mid - 1'} with mid = ${m}. Hint: do the arithmetic again.`,'bad');
+ pl=d.nl;pr=d.nr;$('#chk').disabled=true;$('#pnext').style.display='';$('#pnext').textContent=pl>pr?'Finish ▶':'Next iteration ▶';
+ fb(`<b>Perfect iteration!</b> ${want==='L'?'left':'right'} = ${nv}. ${pl>pr?'Now left &gt; right, so the range is empty.':'The range has shrunk. Continue.'}`,'good')};
+$('#pnext').onclick=()=>{if(pend)return startP((pi+1)%PR.length);if(pl>pr){pend=true;render($('#pv'),PR[pi].a,{t:PR[pi].t,keep:[1,0]});$('#chk').disabled=true;$('#pnext').textContent=pi<PR.length-1?'Next problem ▶':'Restart ▶';return fb(`<b>Target not found: return -1.</b> left (${pl}) &gt; right (${pr}), so nothing is left to search.`,'good')}pdraw()};
+
+/* ===== complexity ===== */
+function cx(){const n=2**(+$('#nr').value);let s=[],x=n;while(x>0){s.push(x);x=x>>1}
+ $('#nl').innerHTML='n = <b>'+n.toLocaleString()+'</b>';const shown=s.slice(0,24),mx=s[0];
+ $('#bars').innerHTML=shown.map(v=>`<div class="bar" style="height:${Math.max(6,v/mx*100)}%">${v>999?'':v}</div>`).join('');
+ $('#cn').innerHTML=`Each iteration throws away mid and one whole half, so the range roughly halves: ${s.slice(0,5).join(' → ')}${s.length>5?' → …':''} → 1. Halving n down to 1 takes about log₂(n) steps, here <b>${s.length}</b> iterations at most. Doubling n adds just one more step, so the time is <b>O(log n)</b>.`}
+$('#nr').oninput=cx;
+tab(0);draw();startP(0);cx();
+</script></body></html>
