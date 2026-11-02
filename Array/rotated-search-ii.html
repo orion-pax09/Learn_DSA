@@ -1,0 +1,199 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Rotated Array Search II: a thinking guide</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0d1117;--p:#161b22;--b:#30363d;--t:#e6edf3;--m:#8b949e;--L:#4cc9f0;--M:#ffb703;--R:#f72585;--T:#80ed99;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+.w{max-width:920px;margin:auto;padding:14px}h2{margin:6px 0;font-size:22px}h3{margin:10px 0 4px;font-size:17px}p{margin:6px 0}.m{color:var(--m)}
+.card{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:16px;margin:12px 0}
+code,pre{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}code{background:#21262d;padding:1px 6px;border-radius:5px}
+button{background:#21262d;color:var(--t);border:1px solid var(--b);border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer;transition:background .2s,border-color .2s}
+button:hover:not(:disabled){background:#30363d;border-color:#6e7681}button:focus-visible,input:focus-visible{outline:2px solid var(--L)}button:disabled{opacity:.4;cursor:default}
+.pri{background:#238636;border-color:#2ea043}.sel{border-color:var(--M);background:#3a2e0a}.good{color:var(--T)}.bad{color:var(--R)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}.tabs button{white-space:nowrap;padding:6px 10px;font-size:13px}.tabs .on{border-color:var(--L);color:var(--L)}
+.bar{height:6px;background:#21262d;border-radius:4px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:var(--L);transition:width .35s}
+.arr{display:flex;gap:6px;overflow-x:auto;padding:6px 2px 8px;justify-content:safe center}.col{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ps{min-height:20px;display:flex;gap:2px}.ps b{font-size:11px;padding:1px 5px;border-radius:5px;color:#0d1117}.pL{background:var(--L)}.pM{background:var(--M)}.pR{background:var(--R)}
+.cell{width:clamp(38px,10vw,56px);height:clamp(38px,10vw,56px);display:grid;place-items:center;font:600 18px ui-monospace,monospace;border:2px solid var(--b);border-radius:9px;background:#0d1117;transition:opacity .35s,border-color .35s,background .35s}
+.cell.el{opacity:.2}.cell.hl{border-color:var(--T);background:#12261a}.cell.tg{color:var(--T)}.cell.fd{background:var(--T);color:#0d1117;box-shadow:0 0 14px var(--T)}.ix{font-size:12px;color:var(--m)}
+.info{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--m);font-size:14px}.info b{color:var(--t)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}.chips i{font-style:normal;font-size:12px;padding:2px 8px;border:1px solid var(--b);border-radius:20px;color:var(--m)}.chips i.on{color:var(--M);border-color:var(--M)}
+.ask{color:var(--M)}.why{border-left:3px solid var(--L);padding-left:10px}.ctl{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.ed{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}input{background:#0d1117;color:var(--t);border:1px solid var(--b);border-radius:8px;padding:7px 10px;font:inherit}
+.ed input.ia{flex:1;min-width:140px}.leg span{margin-right:14px;font-size:13px;color:var(--m)}.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.two{grid-template-columns:1fr}}
+pre{background:#0d1117;border:1px solid var(--b);border-radius:8px;padding:10px 0;overflow-x:auto;margin:8px 0}.ln{display:block;padding:0 14px;opacity:.45;white-space:pre}.ln.on{opacity:1;background:#1f2a3a;box-shadow:inset 3px 0 var(--L)}
+.nav{display:flex;justify-content:space-between;gap:8px;margin:14px 0 30px}
+</style></head><body><div class="w">
+<h1>LeetCode 81 · Search in Rotated Sorted Array II</h1>
+<div class="bar"><i id="pg"></i></div><div class="m" id="lc"></div>
+<div class="tabs" id="tabs"></div><main id="main"></main>
+<div class="nav"><button id="pv">◀ Previous lesson</button><button id="rs">Reset lesson</button><button id="nx" class="pri">Next lesson ▶</button></div></div>
+<script>
+const $=(s,e=document)=>e.querySelector(s),esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const PH=['Middle','Found?','Duplicates?','Sorted half','Target in half?','Move'];
+function arr(a,o={}){return '<div class="arr">'+a.map((v,i)=>{let p='';if(o.l===i)p+='<b class="pL">L</b>';if(o.m===i)p+='<b class="pM">M</b>';if(o.r===i)p+='<b class="pR">R</b>';
+const c=['cell'];if(o.l!=null&&(i<o.l||i>o.r))c.push('el');if(o.hl&&i>=o.hl[0]&&i<=o.hl[1])c.push('hl');if(v===o.t)c.push('tg');if(o.found===i)c.push('fd');
+return `<div class="col"><div class="ps">${p}</div><div class="${c.join(' ')}">${v}</div><div class="ix">${i}</div></div>`}).join('')+'</div>'}
+function iterate(a,t){let l=0,r=a.length-1;const out=[];while(l<=r){const m=l+((r-l)>>1),it={l,r,m,v:a[m]};
+if(a[m]==t){it.k='found';out.push(it);return out}
+if(a[l]==a[m]&&a[m]==a[r]){it.k='dup';l++;r--}
+else if(a[m]>=a[l]){it.k='left';it.ok=a[l]<=t&&t<a[m];if(it.ok)r=m-1;else l=m+1}
+else{it.k='right';it.ok=a[m]<t&&t<=a[r];if(it.ok)l=m+1;else r=m-1}
+it.nl=l;it.nr=r;out.push(it)}return out}
+function exp(it,a,t){const{l,r,m,v}=it;if(it.k=='found')return `nums[${m}] = ${v} equals ${t}, so return true.`;
+let s=it.k=='dup'?`nums[L], nums[M], nums[R] are all ${v}: no half is provably sorted. None of them is the target, so L++ and R−−.`
+:it.k=='left'?`${v} ≥ ${a[l]} so the left half is sorted. Is ${a[l]} ≤ ${t} < ${v}? ${it.ok?'Yes → R = M − 1.':'No → L = M + 1.'}`
+:`${v} < ${a[l]} so the pivot is in the left half and the right half is sorted. Is ${v} < ${t} ≤ ${a[r]}? ${it.ok?'Yes → L = M + 1.':'No → R = M − 1.'}`;
+if(it.nl>it.nr)s+=` Now L > R: nothing left, return false.`;return s}
+function frames(a,t){const F=[],n=a.length,I=iterate(a,t);
+F.push({p:-1,l:0,r:n-1,ti:'Start',ask:'Before stepping: where will the first M land?',why:`The whole array [0..${n-1}] is suspect. We hunt for ${t}.`});
+for(const it of I){const{l,r,m,v}=it,b={l,r,m};
+F.push({...b,p:0,ti:'Calculate the middle',ask:`L=${l}, R=${r}. Predict M.`,why:`M = L + (R − L)/2 = ${l} + (${r} − ${l})/2 = ${m}, so nums[M] = ${v}. (This form avoids integer overflow.)`});
+if(it.k=='found'){F.push({...b,p:1,found:m,ti:'Found it',ask:`Is nums[M] equal to ${t}?`,why:`nums[${m}] = ${v} = target → return true.`});return F}
+F.push({...b,p:1,ti:'Not the middle',ask:`Is nums[M] equal to ${t}?`,why:`${v} ≠ ${t}. M is ruled out for good, which is why later steps can skip it.`});
+if(it.k=='dup'){F.push({...b,p:2,ti:'Ambiguous: all three equal',ask:'Are nums[L], nums[M], nums[R] all the same?',why:`All three are ${v}. We can’t tell which half is sorted. Since ${v} ≠ ${t}, neither L nor R can be the target: drop both ends.`});
+F.push({l:it.nl,r:it.nr,m,p:5,ti:'L++ and R−−',ask:'Which pointers move?',why:`L → ${it.nl}, R → ${it.nr}. We removed only two elements, which is the O(n) worst case.`});continue}
+F.push({...b,p:2,ti:'Not ambiguous',ask:'Are nums[L], nums[M], nums[R] all the same?',why:`They are ${a[l]}, ${v}, ${a[r]}: not all equal, so one half is provably sorted.`});
+const lf=it.k=='left',hl=lf?[l,m]:[m,r];
+F.push({...b,hl,p:3,ti:lf?'Left half is sorted':'Right half is sorted',ask:`Is nums[M] ≥ nums[L]? (${v} vs ${a[l]})`,why:lf?`${v} ≥ ${a[l]}: no drop between L and M, so L..M is sorted.`:`${v} < ${a[l]}: the drop (the pivot) lies inside L..M, so M..R must be the sorted half.`});
+F.push({...b,hl,p:4,ti:'Does the target belong?',ask:`Does ${t} fit inside the green half’s range?`,why:lf?`Is ${a[l]} ≤ ${t} < ${v}? ${it.ok?'Yes':'No'}.`:`Is ${v} < ${t} ≤ ${a[r]}? ${it.ok?'Yes':'No'}.`});
+F.push({l:it.nl,r:it.nr,m,p:5,ti:'Move a pointer',ask:'Which pointer moves, and to where?',why:exp(it,a,t).split('? ').pop()+(lf?(it.ok?' The target is inside the sorted part, so keep it.':' The target can’t be in the sorted part, so discard it.'):(it.ok?' The target is inside the sorted part, so keep it.':' The target can’t be in the sorted part, so discard it.'))})}
+const e=I[I.length-1];F.push({p:-1,l:e.nl,r:e.nr,ti:'Range is empty',ask:'Is anything left to search?',why:'L > R: every element was eliminated, so return false.'});return F}
+function mountSim(el,a,t,o={}){let F,i=0,rv=new Set();
+function load(A,T){a=A;t=T;F=frames(a,t);i=0;rv.clear();draw()}
+function draw(){const f=F[i],N=F.length,{l,r}=f;
+el.innerHTML=`${o.edit?`<div class="ed">Array <input class="ia" value="${a}"> Target <input class="it" size="3" value="${t}"> <button class="ld">Load</button></div>`:''}
+<div class="info"><span>Target <b style="color:var(--T)">${t}</b></span><span>Range <b>${l>r?'empty':`[${l}..${r}] (${r-l+1} left)`}</b></span><span>Step <b>${i+1}/${N}</b></span></div>
+<div class="chips">${PH.map((p,j)=>`<i class="${j==f.p?'on':''}">${j+1}. ${p}</i>`).join('')}</div>
+${arr(a,{l,r,m:f.m,t,hl:f.hl,found:f.found})}<div class="bar"><i style="width:${(i+1)/N*100}%"></i></div>
+<h3>${f.ti}</h3><p class="ask">🤔 ${f.ask}</p>${rv.has(i)||!o.think?`<p class="why">${f.why}</p>`:'<button class="rv">Reveal why</button>'}
+<div class="ctl"><button class="pv" ${i?'':'disabled'}>◀ Previous step</button><button class="nx pri" ${i<N-1?'':'disabled'}>Next step ▶</button><button class="rs">Reset</button></div>`;
+const q=s=>el.querySelector(s);q('.pv').onclick=()=>{i--;draw()};q('.nx').onclick=()=>{i++;draw()};q('.rs').onclick=()=>{i=0;rv.clear();draw()};
+if(q('.rv'))q('.rv').onclick=()=>{rv.add(i);draw()};
+if(q('.ld'))q('.ld').onclick=()=>{const A=q('.ia').value.split(',').map(s=>s.trim()).filter(s=>s!=='').map(Number),T=Number(q('.it').value);if(A.length&&A.length<=14&&!A.some(isNaN)&&!isNaN(T))load(A,T)}}
+load(a,t);return load}
+function sim(root,a,t,o){const d=document.createElement('div');d.className='card';root.appendChild(d);return mountSim(d,a,t,o)}
+const add=(root,h)=>root.insertAdjacentHTML('beforeend',h);
+
+function L1(r){add(r,`<h2>1 · The simulator</h2><p class="m">Step manually. Each step asks a question first: answer in your head, then reveal. Edit the array and target to experiment (use a rotated sorted array).</p>
+<div class="leg"><span><b class="pL ps" style="padding:1px 5px;border-radius:5px;color:#0d1117">L</b> left</span><span><b class="pM" style="padding:1px 5px;border-radius:5px;color:#0d1117">M</b> middle</span><span><b class="pR" style="padding:1px 5px;border-radius:5px;color:#0d1117">R</b> right</span><span style="color:var(--T)">green digits = equals target</span><span>faded = eliminated</span><span style="color:var(--T)">green box = sorted half</span></div>`);
+sim(r,[4,5,6,7,0,1,2],6,{edit:1,think:1})}
+function L2(r){add(r,`<h2>2 · Guided search</h2><p class="m"><code>nums = [2,5,6,0,0,1,2]</code>. Each loop runs the same six checks (the chips). With target 0 the first M hits a 0 immediately, so try the other targets too.</p>`);
+const ld=sim(r,[2,5,6,0,0,1,2],0,{think:1}),d=document.createElement('div');d.className='row';
+[[0,'target 0 (lucky)'],[1,'target 1'],[3,'target 3 (absent)']].forEach(([T,n])=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>ld([2,5,6,0,0,1,2],T);d.appendChild(b)});r.appendChild(d)}
+function L3(r){add(r,`<h2>3 · Duplicates: the ambiguous case</h2>
+<pre style="padding:10px 14px">if (nums[middle] == nums[l] &amp;&amp; nums[r] == nums[l]) { l++; r--; continue; }</pre>
+<p><b>Why we’re stuck.</b> Both arrays below are valid rotations, with the same L, M, R values (1, 1, 1). Yet the 0 hides on different sides.</p>
+<div class="two card"><div>${arr([1,0,1,1,1],{l:0,m:2,r:4,t:0})}<p class="m">0 is in the left half</p></div><div>${arr([1,1,1,0,1],{l:0,m:2,r:4,t:0})}<p class="m">0 is in the right half</p></div></div>
+<p>Comparing <code>nums[M] ≥ nums[L]</code> would say “left sorted” for both. For the second array that’s a lie, so we can’t trust any comparison.</p>
+<p><b>Why shrinking is safe.</b> We already know <code>nums[M] ≠ target</code>. L and R hold the same value as M, so they ≠ target too. Removing two non-answers can’t remove the answer. After that, the new L or R usually sits next to the real pivot, and the ambiguity disappears.</p>
+<p class="ask">Predict: after the first shrink on <code>[1,0,1,1,1]</code>, which half will be sorted?</p>`);
+sim(r,[1,0,1,1,1],0,{think:1})}
+function L4(r){add(r,`<h2>4 · Which half is sorted?</h2><p class="m">Rule (once the duplicate case is excluded): <code>nums[M] ≥ nums[L]</code> → left sorted, otherwise right sorted.</p><h3>Case A: left half is sorted</h3>
+<p><code>nums[M] ≥ nums[L]</code>: values only climb from L to M. A rotation has just one drop; if it were between L and M, nums[M] would be below nums[L]. The <code>=</code> case is safe too: equal L and M with a different R can’t hide a drop.</p>`);
+sim(r,[2,3,4,5,0,1],0,{think:1});
+add(r,`<h3>Case B: right half is sorted</h3><p>If <code>nums[M] &lt; nums[L]</code>, the drop is somewhere in L..M. A rotated array has only one drop, so M..R cannot contain another. That’s why “else” means right sorted. It’s only trustworthy because duplicates were handled first.</p>`);
+sim(r,[6,7,0,1,2,3,4],3,{think:1})}
+const BC={L:{a:[4,5,6,7,0,1,2],ts:[[4,'= nums[L]'],[5,'inside'],[7,'= nums[M]'],[2,'= nums[R]'],[1,'outside']]},R:{a:[5,6,7,0,1,2,3],ts:[[0,'= nums[M]'],[1,'inside'],[3,'= nums[R]'],[5,'= nums[L]'],[6,'outside']]}};
+function L5(root){add(root,`<h2>5 · Why &lt; here and ≤ there?</h2><p class="m">Rule of thumb: <b>M is already checked, so it gets strict &lt;. L and R haven’t been checked inside the range test, so they get ≤.</b> Pick an array and a target, predict the branch, then see it.</p>`);
+const d=document.createElement('div');d.className='card';root.appendChild(d);let c='L',ti=1,pr=null;
+function draw(){const{a,ts}=BC[c],l=0,r=6,m=3,t=ts[ti][0],v=a[m],lf=c=='L';let kind,c1,c2,txt,nl=l,nr=r;
+if(t==v)kind=0;else{c1=lf?a[l]<=t:v<t;c2=lf?t<v:t<=a[r];const ok=c1&&c2;kind=ok?1:2;if(lf){ok?nr=m-1:nl=m+1}else{ok?nl=m+1:nr=m-1}}
+const n={'= nums[L]':lf?'L isn’t checked yet. With &lt; instead of ≤ we’d wrongly throw the answer away.':'L is outside the sorted right half, so the test fails and we go left.','= nums[R]':lf?'R is outside the sorted left half, so the test fails.':'R isn’t checked yet. With &lt; instead of ≤ we’d lose the answer.','= nums[M]':'Caught by the earlier <code>==</code> check, so this branch never runs. That’s why the M side can be strict.','inside':'Both clauses true: the target is inside the sorted half.','outside':'A clause fails: the target can’t be in the sorted half.'}[ts[ti][1]];
+d.innerHTML=`<div class="row"><button data-c="L" class="${lf?'sel':''}">Left half sorted</button><button data-c="R" class="${lf?'':'sel'}">Right half sorted</button></div>
+${arr(a,{l:pr!=null?nl:l,r:pr!=null?nr:r,m,t,hl:lf?[l,m]:[m,r],found:pr!=null&&kind==0?m:undefined})}<p class="m">Green box = sorted half. Target:</p><div class="row">${ts.map((x,i)=>`<button data-t="${i}" class="${i==ti?'sel':''}">${x[0]} <span class="m">${x[1]}</span></button>`).join('')}</div>
+<p class="ask">🤔 Predict what executes for target ${t}:</p><div class="row">${['Return true (found at M)','Keep the sorted half','Jump to the other half'].map((x,i)=>`<button data-p="${i}" class="${pr===i?'sel':''}">${x}</button>`).join('')}</div>
+${pr==null?'':`<p class="${pr==kind?'good':'bad'}">${pr==kind?'✓ Correct.':'✗ Not quite.'}</p><div class="why"><p><code>${lf?`nums[L] ≤ t &amp;&amp; t &lt; nums[M]`:`nums[M] &lt; t &amp;&amp; t ≤ nums[R]`}</code></p>
+${kind?`<p>${lf?`${a[l]} ≤ ${t}`:`${v} &lt; ${t}`} → ${c1?'✓':'✗'} &nbsp; ${lf?`${t} &lt; ${v}`:`${t} ≤ ${a[r]}`} → ${c2?'✓':'✗'}</p><p><b>${kind==1?'Condition true':'Condition false → else'}:</b> ${lf?(kind==1?'R = M − 1':'L = M + 1'):(kind==1?'L = M + 1':'R = M − 1')}</p>`:'<p><b>nums[M] == target → return true.</b></p>'}<p>${n}</p></div>`}`;
+d.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{c=b.dataset.c;ti=1;pr=null;draw()});d.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ti=+b.dataset.t;pr=null;draw()});d.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{pr=+b.dataset.p;draw()})}draw()}
+const DB=[{c:`// right-sorted branch\nif (nums[middle] < target && target <= nums[middle])\n    l = middle + 1;\nelse\n    r = middle - 1;`,q:'What does this condition evaluate to?',o:['Always false','Always true','Depends on the target'],a:0,A:[5,6,7,0,1,2,3],t:2,
+x:`Nothing is strictly greater than nums[middle] <i>and</i> ≤ nums[middle]: the test can never pass. So we always run <code>r = middle - 1</code> and throw the right half away, even when the target lives there. Here M=3 (value 0), the right half is sorted and holds the 2, yet we discard it. Fix: lower bound against M, upper bound against R: <code>nums[middle] &lt; target &amp;&amp; target &lt;= nums[r]</code>.`},
+{c:`// left-sorted branch (nums[middle] >= nums[l])\nif (nums[middle] < target && target <= nums[r])\n    l = middle + 1;\nelse\n    r = middle - 1;`,q:'This test is the right-half range check. Where does it break?',o:['In the right-sorted branch','In the left-sorted branch','Nowhere'],a:1,A:[4,5,6,7,0,1,2],t:1,
+x:`On its own it’s the correct right-half test (nums[M], nums[R]]. The bug is using it when the <i>left</i> half is the sorted one: the side (M, R] contains the pivot, so it isn’t a clean range and the test proves nothing. Here 7 &lt; 1 fails, we set R=2, and the 1 is lost. Also note why <code>nums[middle] &lt; target</code> matters: with only <code>target &lt;= nums[r]</code>, searching 0 in [6,7,0,1,2,3,4] gives M=3 (1) and 0 ≤ 4 is true, so we’d go right while the 0 is at index 2.`},
+{c:`if (nums[middle] >= nums[l] && target < nums[middle])\n    r = middle - 1;`,q:'Which target slips through this check wrongly?',o:['A target smaller than nums[L] (lives in the rotated part)','A target larger than nums[M]','A target equal to nums[M]'],a:0,A:[4,5,6,7,0,1,2],t:0,
+x:`“Left half is sorted and target &lt; nums[M]” isn’t enough. A target can be below M because it’s below nums[L], meaning it lives in the rotated right part. Being smaller than M doesn’t put it inside L..M: you also need <code>nums[l] &lt;= target</code>. Here 0 &lt; 7 sends us to R=2 and the 0 at index 4 is discarded.`}];
+function L6(root){add(root,`<h2>6 · Debug the mistakes</h2><p class="m">Read the code, pick the bug, then see the explanation and a failing case.</p>`);
+DB.forEach((x,k)=>{const d=document.createElement('div');d.className='card';root.appendChild(d);
+d.innerHTML=`<h3>Mistake ${k+1}</h3><pre style="padding:10px 14px">${esc(x.c)}</pre><p class="ask">🤔 ${x.q}</p><div class="row">${x.o.map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div><div class="out"></div>`;
+d.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;d.querySelector('.out').innerHTML=`<p class="${i==x.a?'good':'bad'}">${i==x.a?'✓ Right.':'✗ Not that one. Right answer: '+x.o[x.a]}</p><div class="why"><p>${x.x}</p></div>${arr(x.A,{l:0,r:6,m:3,t:x.t})}<p class="m">Searching ${x.t} in this array (L=0, M=3, R=6).</p>`})})}
+const EX=[{a:[4,5,6,7,0,1,2],t:1,g:'Rotated, no duplicates'},{a:[1,1,0,1,1,1,1],t:0,g:'Many duplicates'},{a:[6,7,0,1,2,4,5],t:6,g:'Target at first index'},{a:[3,4,5,6,7,1,2],t:2,g:'Target at last index'},{a:[4,5,6,7,0,1,2],t:3,g:'Target not present'}].map(x=>({...x,I:iterate(x.a,x.t)}));
+const HQ={found:'nums[M] is the target',dup:'Ambiguous: L, M, R equal',left:'Left half sorted',right:'Right half sorted'},MQ={T:'Return true',B:'L++ and R−−',L:'L = M + 1',R:'R = M − 1'};
+const mk=it=>it.k=='found'?'T':it.k=='dup'?'B':(it.k=='left')==it.ok?'R':'L';
+function L7(root){add(root,`<h2>7 · Practice</h2><p class="m">For each loop iteration: find M, name the sorted half, choose the move. Submit before you see anything.</p>`);
+const d=document.createElement('div');d.className='card';root.appendChild(d);let e=0,k=0,s={},ok=0,tot=0,ans=false;
+function draw(){if(e>=EX.length){d.innerHTML=`<h3>Done</h3><p>${ok} of ${tot} iterations fully correct.</p><button class="rs">Restart</button>`;d.querySelector('.rs').onclick=()=>{e=k=ok=tot=0;s={};ans=false;draw()};return}
+const x=EX[e],it=x.I[k],{a,t}=x;
+d.innerHTML=`<div class="info"><span>Exercise <b>${e+1}/5</b>: ${x.g}</span><span>Iteration <b>${k+1}</b></span><span>Target <b style="color:var(--T)">${t}</b></span></div><div class="bar"><i style="width:${e/5*100}%"></i></div>
+${arr(a,{l:it.l,r:it.r,t,m:ans?it.m:undefined,found:ans&&it.k=='found'?it.m:undefined})}<p class="m">L = ${it.l}, R = ${it.r} (faded boxes are already eliminated)</p>
+<p><b>1.</b> What is the index of M? <input class="qm" type="number" size="3" style="width:70px" ${ans?'disabled':''} value="${s.m??''}"></p>
+<p><b>2.</b> What do you find?</p><div class="row">${Object.entries(HQ).map(([k2,v])=>`<button data-q="h" data-v="${k2}" class="${s.h==k2?'sel':''}" ${ans?'disabled':''}>${v}</button>`).join('')}</div>
+<p><b>3.</b> What happens next?</p><div class="row">${Object.entries(MQ).map(([k2,v])=>`<button data-q="mv" data-v="${k2}" class="${s.mv==k2?'sel':''}" ${ans?'disabled':''}>${v}</button>`).join('')}</div>
+${ans?`<div class="why"><p class="${s.m==it.m?'good':'bad'}">${s.m==it.m?'✓':'✗'} M = ${it.m} (nums[M] = ${it.v})</p><p class="${s.h==it.k?'good':'bad'}">${s.h==it.k?'✓':'✗'} ${HQ[it.k]}</p><p class="${s.mv==mk(it)?'good':'bad'}">${s.mv==mk(it)?'✓':'✗'} ${MQ[mk(it)]}</p><p>${exp(it,a,t)}</p></div><div class="ctl"><button class="go pri">${it.k=='found'||k+1>=x.I.length?'Next exercise ▶':'Next iteration ▶'}</button></div>`
+:`<p class="bad msg"></p><div class="ctl"><button class="sub pri">Submit prediction</button></div>`}`;
+d.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{s[b.dataset.q]=b.dataset.v;s.m=d.querySelector('.qm').value;draw()});
+if(d.querySelector('.sub'))d.querySelector('.sub').onclick=()=>{s.m=d.querySelector('.qm').value;if(s.m===''||!s.h||!s.mv){d.querySelector('.msg').textContent='Answer all three questions first.';return}
+tot++;if(+s.m==it.m&&s.h==it.k&&s.mv==mk(it))ok++;ans=true;draw()};
+if(d.querySelector('.go'))d.querySelector('.go').onclick=()=>{if(it.k=='found'||k+1>=x.I.length){e++;k=0}else k++;s={};ans=false;draw()}}draw()}
+const CODE=`class Solution {
+public:
+    bool search(vector<int>& nums, int target) {
+        int l = 0;
+        int r = nums.size() - 1;
+
+        while (l <= r) {
+            int middle = l + (r - l) / 2;
+
+            if (nums[middle] == target)
+                return true;
+
+            if (nums[l] == nums[middle] &&
+                nums[middle] == nums[r]) {
+                l++;
+                r--;
+                continue;
+            }
+
+            if (nums[middle] >= nums[l]) {
+                if (nums[l] <= target &&
+                    target < nums[middle]) {
+                    r = middle - 1;
+                }
+                else {
+                    l = middle + 1;
+                }
+            }
+            else {
+                if (nums[middle] < target &&
+                    target <= nums[r]) {
+                    l = middle + 1;
+                }
+                else {
+                    r = middle - 1;
+                }
+            }
+        }
+
+        return false;
+    }
+};`.split('\n');
+const CH=[[2,4,'Set up the range','L and R cover the whole array. The range is inclusive, so the loop runs while <code>l &lt;= r</code>.','Viz: L on the first box, R on the last.'],
+[6,7,'Pick the middle','<code>l + (r - l) / 2</code> lands between L and R and can’t overflow.','Viz: the amber M pointer appears.'],
+[9,10,'Is M the answer?','Check this first. If M isn’t the target, it’s ruled out forever, which allows strict &lt; later.','Viz: green “found” glow.'],
+[12,17,'Duplicate ambiguity','All three equal means no half can be proven sorted. None is the target, so shrink both ends and re-loop (<code>continue</code> skips the sorted-half logic).','Viz: L and R each step inward; two boxes fade.'],
+[19,19,'Which half is sorted?','Past the check above, ≥ means the left half climbs from L to M. Otherwise the pivot is on the left, so the right half is sorted.','Viz: the green sorted-half outline.'],
+[20,26,'Left sorted: is the target inside?','<code>nums[l] &lt;= target &lt; nums[middle]</code> keeps L (unchecked, ≤) and excludes M (checked, &lt;). Yes → <code>r = middle - 1</code>. No → <code>l = middle + 1</code>.','Viz: the whole other side fades.'],
+[28,36,'Right sorted: is the target inside?','Mirror image: <code>nums[middle] &lt; target &lt;= nums[r]</code> excludes M, keeps R. Yes → <code>l = middle + 1</code>. No → <code>r = middle - 1</code>.','Viz: again one side fades, one side stays.'],
+[39,39,'Not found','The loop ended with L &gt; R: every box is faded, so the target was never present.','Viz: all boxes faded.']];
+function L8(root){add(root,`<h2>8 · Code walkthrough</h2><p class="m">Step through the code in chunks. The line in focus is highlighted.</p>`);const d=document.createElement('div');d.className='card';root.appendChild(d);let i=0;
+function draw(){const c=CH[i];d.innerHTML=`<div class="bar"><i style="width:${(i+1)/CH.length*100}%"></i></div><pre>${CODE.map((s,n)=>`<span class="ln ${n>=c[0]&&n<=c[1]?'on':''}">${esc(s)||' '}</span>`).join('')}</pre>
+<h3>${c[2]} <span class="m">(${i+1}/${CH.length})</span></h3><p class="why">${c[3]}</p><p class="m">${c[4]}</p><div class="ctl"><button class="pv" ${i?'':'disabled'}>◀ Previous</button><button class="nx pri" ${i<CH.length-1?'':'disabled'}>Next ▶</button><button class="rs">Reset</button></div>`;
+d.querySelector('.pv').onclick=()=>{i--;draw()};d.querySelector('.nx').onclick=()=>{i++;draw()};d.querySelector('.rs').onclick=()=>{i=0;draw()}}draw();
+add(root,`<div class="card"><h3>Complexity</h3><p><b>Space:</b> O(1): only L, R and M.</p><p><b>Time:</b> O(log n) when values are distinct, since each loop discards about half. <b>Worst case O(n):</b> with duplicates the ambiguous branch removes only two elements per loop. For <code>[1,1,1,1,1,1,1,1]</code> with target 2, every loop is ambiguous, so about n/2 loops run. Equal values can hide the pivot, so no comparison-based search can reliably do better in the worst case.</p></div>`)}
+const LS=[['Simulator',L1],['Guided search',L2],['Duplicates',L3],['Sorted half',L4],['Boundaries',L5],['Debug',L6],['Practice',L7],['C++ code',L8]];let cur=0;
+function show(){$('#pg').style.width=(cur+1)/LS.length*100+'%';$('#lc').textContent=`Lesson ${cur+1} of ${LS.length}`;
+$('#tabs').innerHTML=LS.map((x,i)=>`<button class="${i==cur?'on':''}" data-i="${i}">${i+1}. ${x[0]}</button>`).join('');
+$('#tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{cur=+b.dataset.i;show()});
+const c=$('#main');c.innerHTML='';LS[cur][1](c);$('#pv').disabled=!cur;$('#nx').disabled=cur==LS.length-1}
+$('#pv').onclick=()=>{cur--;show()};$('#nx').onclick=()=>{cur++;show()};$('#rs').onclick=show;show();
+</script></body></html>
