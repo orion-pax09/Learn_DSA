@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BFS Bipartite Simulator · LeetCode 785</title>
+<style>
+:root{--bg:#0d1117;--pn:#161b22;--p2:#1c2330;--bd:#30363d;--tx:#e6edf3;--mu:#8b949e;--rd:#e5534b;--bl:#388bfd;--gy:#6e7681;--yl:#f2cc60;--gn:#3fb950;--cf:#ff2d2d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+code,.m{font-family:ui-monospace,Consolas,Menlo,monospace}code{background:#2a3140;padding:1px 5px;border-radius:4px;font-size:.9em}
+header,main{max-width:1500px;margin:auto;padding:14px 16px}header{padding-bottom:0}
+h1{margin:0;font-size:1.3rem}h2{font-size:1rem;margin:0 0 8px}.sub{color:var(--mu)}
+.card{background:var(--pn);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:12px}
+button,select,input,textarea{font:inherit;background:var(--p2);color:var(--tx);border:1px solid var(--bd);border-radius:7px;padding:6px 11px}
+button{cursor:pointer;transition:.15s}button:hover:not(:disabled){border-color:var(--bl);background:#243049}button:disabled{opacity:.4;cursor:default}
+button.on,.go{background:var(--bl);border-color:var(--bl);color:#fff}
+.bar,.tabs{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.tabs{margin:10px 0}
+.main{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.3fr) minmax(0,.95fr);gap:12px;align-items:start}
+@media(max-width:1100px){.main{grid-template-columns:1fr}.c2{order:1}.c3{order:2}.c1{order:3}header,main{padding:10px}}
+#code{font-size:12.5px;line-height:1.7;overflow-x:auto}
+.ln{display:flex;white-space:pre;border-left:3px solid transparent;cursor:pointer}
+.ln:hover{background:#1d2530}.ln i{width:26px;text-align:right;color:#586069;font-style:normal;flex:none}
+.ln b{width:18px;flex:none;color:var(--yl);text-align:center}
+.ln.blk{background:rgba(56,139,253,.09)}
+.ln.cur{background:rgba(242,204,96,.2);border-left-color:var(--yl)}
+.ln.cur.bad{background:rgba(255,45,45,.3);border-left-color:var(--cf)}
+.k{color:#ff7b72}.t{color:#79c0ff}.n{color:#d2a8ff}
+svg{width:100%;height:auto;display:block;background:#0f141b;border-radius:8px}
+.e{stroke:#4a5361;stroke-width:3;transition:.3s}.e.act{stroke:var(--yl);stroke-width:5}
+.e.bad{stroke:var(--cf);stroke-width:6;animation:fl2 .5s infinite alternate}@keyframes fl2{to{stroke:#fff}}
+circle.nd{fill:var(--gy);stroke:#0f141b;stroke-width:3;transition:fill .7s,stroke .3s;transform-box:fill-box;transform-origin:center}
+circle.c0{fill:var(--rd)}circle.c1{fill:var(--bl)}
+circle.cur{stroke:var(--yl);stroke-width:6;filter:drop-shadow(0 0 6px var(--yl))}
+circle.nb{stroke:#fff;stroke-width:4;stroke-dasharray:5 3}circle.hov{stroke:var(--gn);stroke-width:5}
+circle.conf{stroke:var(--cf);stroke-width:7;animation:pu .5s infinite alternate}@keyframes pu{to{stroke-width:2}}
+circle.pop{animation:pop .7s}@keyframes pop{40%{transform:scale(1.35)}}
+circle.rip{fill:none;stroke:#fff;stroke-width:3;transform-box:fill-box;transform-origin:center;animation:rip .9s forwards}
+@keyframes rip{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(2.2)}}
+svg text{fill:#fff;font:700 17px ui-monospace,monospace;text-anchor:middle;pointer-events:none}
+svg text.s{font-size:11px;font-weight:400;fill:#c9d1d9}
+svg text.f{font-size:12px;paint-order:stroke;stroke:#0f141b;stroke-width:4px;animation:fl 2s forwards}
+@keyframes fl{from{opacity:0;transform:translateY(8px)}20%{opacity:1}to{opacity:1;transform:translateY(-6px)}}
+.leg{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin-top:6px}
+.leg b{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-right:3px}
+.ex{border-left:4px solid var(--yl);background:#1b212b;border-radius:0 8px 8px 0;padding:5px 11px;margin:6px 0;font-size:14px}
+.ex.w{border-color:#58a6ff}.ex.y{border-color:var(--gn)}.ex.c{border-color:#d2a8ff}
+.ex h3{margin:0;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.expr{font:14px ui-monospace,monospace;background:#11161d;border:1px solid var(--bd);border-radius:8px;padding:7px 10px;margin:8px 0;min-height:36px}
+.warn{background:#6b1d1d;border:2px solid var(--cf);border-radius:8px;padding:6px 10px;margin:8px 0;font-weight:700;animation:pu2 .6s infinite alternate}@keyframes pu2{to{background:#a02020}}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-height:48px}.lab{color:var(--mu);font-size:12px;font-weight:700}
+.chip{min-width:42px;height:42px;border-radius:8px;border:2px solid var(--bd);background:var(--p2);display:flex;align-items:center;justify-content:center;font:700 16px ui-monospace,monospace}
+.chip.in{animation:in .6s}@keyframes in{from{transform:translateX(50px);opacity:0;background:var(--gn)}}
+.chip.hl{border-color:var(--yl);box-shadow:0 0 0 3px rgba(242,204,96,.3)}
+.chip.out{border-color:var(--yl);animation:out .9s forwards}@keyframes out{to{transform:translateX(-70px);opacity:0}}
+.cell{width:48px;text-align:center;border:2px solid var(--bd);border-radius:8px;overflow:hidden;cursor:default}
+.cell small{display:block;font-size:11px;color:var(--mu);background:#11161d}.cell b{display:block;padding:5px 0;font:700 16px ui-monospace,monospace;background:var(--gy)}
+.cell.v0 b{background:var(--rd)}.cell.v1 b{background:var(--bl)}.cell.ch{border-color:var(--yl);animation:up .7s}@keyframes up{40%{transform:translateY(-7px) scale(1.1)}}
+.chip.st{border-radius:50%}.chip.cu{border-color:var(--yl);background:#4a3f12}.chip.dn{opacity:.55}.chip.sk{border-style:dashed}
+.vars{display:flex;gap:6px;flex-wrap:wrap}.vars span{background:#11161d;border:1px solid var(--bd);border-radius:6px;padding:1px 8px;font:13px ui-monospace,monospace}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.res{font-weight:700;padding:7px 11px;border-radius:8px;margin-top:8px}.res.t{background:#1d5a2e}.res.f{background:#6b1d1d}
+.pb{height:12px;background:#11161d;border-radius:6px;overflow:hidden;margin:2px 0 8px}.pb div{height:100%;background:var(--bl);transition:.4s}
+details{background:var(--p2);border-radius:8px;padding:8px 12px;margin:6px 0}summary{cursor:pointer;font-weight:600}
+.q{margin-bottom:14px}.q p{margin:0 0 5px;font-weight:600}.opt{display:block;width:100%;text-align:left;margin:4px 0}
+.opt.ok{background:#1d5a2e;border-color:var(--gn)}.opt.no{background:#6b1d1d;border-color:var(--cf)}
+pre{background:#11161d;padding:8px;border-radius:8px;overflow-x:auto;font-size:12px;margin:6px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:800px){.two{grid-template-columns:1fr}}
+</style></head><body>
+<header><h1>LeetCode 785 · Is Graph Bipartite? <span class="sub">— BFS simulator (your C++)</span></h1>
+<div class="tabs" id="tabs"></div></header>
+<main>
+<div class="main">
+ <div class="c1"><div class="card"><h2>C++ — click any line to learn what it does</h2><div id="code"></div><div class="ex w" id="lnx" style="display:none"></div></div></div>
+ <div class="c2">
+  <div class="card">
+   <div class="bar"><button id="bp">◀ Previous</button><button id="bn" class="go">Next ▶</button><button id="bpl">▶ Play</button><button id="bpa">⏸ Pause</button><button id="br">⟲ Restart</button><button id="bi">⏭ Next important</button>
+   <select id="sp"><option value=2>0.5x</option><option value=1 selected>1x</option><option value=.67>1.5x</option><option value=.5>2x</option></select><span class="sub" id="cnt"></span></div>
+   <div id="cust" style="display:none;margin-top:8px"><div class="bar"><button id="vm">− vertex</button><span id="vn" class="m"></span><button id="vp">+ vertex</button>
+    <input id="ed" size="26" value="0-1, 1-2, 2-3, 3-0" aria-label="edges"><button id="rn" class="go">Build &amp; run</button><button id="rs">Reset</button></div><div class="sub" id="er" style="font-size:13px"></div><pre id="adj"></pre></div>
+   <div style="margin:8px 0"><span id="phase" class="badge"></span> <span class="sub" id="starts"></span></div>
+   <svg id="svg" viewBox="0 0 400 240"></svg>
+   <div class="leg"><span><b style="background:var(--rd)"></b>Color 0</span><span><b style="background:var(--bl)"></b>Color 1</span><span><b style="background:var(--gy)"></b>Unvisited -1</span><span><b style="border:2px solid var(--yl)"></b>Current x</span><span><b style="border:2px dashed #fff"></b>Neighbor it</span><span><b style="border:2px solid var(--cf)"></b>Conflict</span></div>
+   <div class="warn" id="cf" style="display:none"></div><div class="expr" id="expr"></div>
+  </div>
+  <div class="card"><div class="ex"><h3>A · WHAT IS HAPPENING?</h3><b id="ta"></b> <span id="da"></span></div>
+   <div class="ex w"><h3>B · WHY?</h3><span id="yb"></span></div>
+   <div class="ex y"><h3>C · WHAT CHANGED?</h3><span id="cc"></span></div>
+   <div class="ex c"><h3>D · WHAT HAPPENS NEXT?</h3><span id="nd"></span></div></div>
+ </div>
+ <div class="c3">
+  <div class="card"><h2>Execution state</h2>
+   <div class="vars" id="vars"></div><p style="margin:8px 0 4px"><span class="lab">OPERATION</span> <code id="op"></code></p>
+   <div class="lab">QUEUE (FIFO) — leaves FRONT, joins REAR</div>
+   <div class="row"><span class="lab">FRONT →</span><span class="row" id="qs"></span><span class="lab">← REAR</span></div>
+   <div class="lab">vis[] (hover a cell to find its node)</div><div class="row" id="vs"></div>
+   <div class="lab">OUTER LOOP INDEX i</div><div class="row" id="os"></div>
+   <div id="res"></div></div>
+  <div class="card"><h2>Complexity on this graph</h2><div id="cx"></div>
+   <p class="sub" style="font-size:13px"><b>O(V+E) time:</b> each vertex is pushed/popped once (a vertex is pushed only while <code>vis==-1</code>), each adjacency entry is scanned once (2E entries). <b>O(V) space:</b> <code>vis</code> has V ints; the queue never holds more than V nodes.</p></div>
+ </div>
+</div>
+
+<div class="two"><div class="card"><h2>Why the outer for loop exists</h2>
+<p><b>Outer <code>for</code></b> = visits every vertex and starts a BFS at each one that is still <code>-1</code> → covers every <b>connected component</b>.<br><b>Inner <code>while</code></b> = BFS inside <i>one</i> component.</p>
+<p>Open <b>C: Disconnected</b> and press Next: BFS starts at 0 (colors 0,1), the loop skips 1, starts at 2 (colors 2,3), skips 3, then starts at 4 (isolated). If you only ran BFS from node 0, vertices 2, 3, 4 would stay uncolored, and a hidden odd cycle there (e.g. a triangle on 2-3-4) would be missed — the function would wrongly return <code>true</code>.</p></div>
+<div class="card"><h2>Deep concepts</h2>
+<details><summary>What is a bipartite graph?</summary>Vertices can be split into two groups so that every edge joins different groups. Colors 0 and 1 are the two groups; a valid coloring is a proof.</details>
+<details><summary>Why does an odd cycle cause a conflict?</summary>Colors must alternate around a cycle. After an odd number of steps you return to the start with the <i>other</i> color, so one edge always joins equal colors. Watch it: <button onclick="tab(1)">triangle</button> <button onclick="tab(3)">5-cycle</button></details>
+<details><summary>Why are even cycles fine?</summary>Alternating colors around an even cycle lands back on the starting color. Compare <button onclick="tab(0)">square</button> with the triangle.</details>
+<details><summary>Why BFS?</summary>BFS handles a node’s neighbors together, then their neighbors: level by level. Levels naturally alternate colors (level 0 = 1, level 1 = 0, …), which is exactly what <code>1 - vis[x]</code> produces.</details>
+<details><summary>Why color on discovery, not on pop?</summary>If we waited for <code>pop</code>, a node still has <code>-1</code> while waiting in the queue, so another neighbor could push it again (triangle: node 2 would be pushed by both 0 and 1). Coloring when pushed marks it “seen” immediately, so each vertex enters the queue once.</details></div></div>
+
+<div class="card"><h2>Knowledge check <span class="sub" id="score"></span></h2><div id="quiz"></div></div>
+</main>
+<script>
+const CODE=["class Solution {","public:","    bool isBipartite(vector<vector<int>>& graph) {","        int size = graph.size();","        vector<int> vis(size, -1);","        queue<int> Q;","","        for (int i = 0; i < size; i++) {","            if (vis[i] == -1) {","                Q.push(i);","                vis[i] = 1;","","                while (!Q.empty()) {","                    int x = Q.front();","                    Q.pop();","","                    for (auto it : graph[x]) {","                        if (vis[it] == -1) {","                            vis[it] = 1 - vis[x];","                            Q.push(it);","                        }","                        else if (vis[it] == vis[x]) {","                            return false;","                        }","                    }","                }","            }","        }","        return true;","    }","};"];
+const L={fn:2,size:3,vis:4,Q:5,for:7,if:8,p0:9,c0:10,wh:12,fr:13,pop:14,ea:16,nw:17,as:18,pu:19,ei:21,rf:22,rt:28};
+const BLK=[[7,27],[8,26],[12,25],[16,24]];
+const Y={2:"The input is an adjacency list: <code>graph[u]</code> is the list of u’s neighbors.",3:"We need the vertex count to size arrays and bound the loop.",
+4:"-1 means <b>unvisited</b>. 0 and 1 are the two real colors, so a third value is needed — a default of 0 would look like “already red”.",5:"BFS needs first-in-first-out order so that nodes are processed level by level.",
+7:"The graph may be disconnected. Every vertex must be examined as a possible start so that no component is missed.",8:"<code>vis[i]==-1</code> means no earlier BFS reached i, so i is in a new component. If already colored, we must not restart (that would recolor it).",
+9:"A BFS must begin with the start node waiting in the queue.",10:"The start node can take either color; only the <i>difference</i> between neighbors matters. We choose 1, so its neighbors become 0.",
+12:"While the queue has nodes, some colored vertex still has neighbors that haven’t been examined.",13:"<code>front()</code> only <b>reads</b> the oldest element — it doesn’t remove it. We store it in <code>x</code> to work with it.",
+14:"<code>pop()</code> removes the element we just read (FIFO). Without it we would process the same node forever.",16:"We must look at every edge leaving x. The range-for gives each neighbor, one at a time, in <code>it</code>.",
+17:"<code>-1</code> = never seen: this is the first time we reach <code>it</code>, so it needs a color. This also prevents pushing it twice.",18:"Adjacent vertices must have different colors. <code>1 - vis[x]</code> flips 1→0 and 0→1, giving the opposite of x’s color.",
+19:"The new node’s own neighbors still need checking, so it waits at the REAR of the queue.",21:"<code>it</code> was already colored. If its color equals x’s color, two adjacent vertices match — the rule is broken. If it differs, the edge is consistent.",
+22:"Equal colors on an edge mean an odd cycle exists, so no valid 2-coloring can exist. We can stop immediately.",28:"Every component was colored and no edge ever joined equal colors, so the graph is bipartite."};
+const PN=[[[1,3],[0,2],[1,3],[0,2]],[[90,50],[310,50],[310,190],[90,190]]];
+const circ=n=>Array.from({length:n},(_,i)=>[200+95*Math.cos(2*Math.PI*i/n-Math.PI/2),122+95*Math.sin(2*Math.PI*i/n-Math.PI/2)]);
+const GR=[{n:"A: 4-cycle ✓",g:PN[0],p:PN[1]},{n:"B: Triangle ✗",g:[[1,2],[0,2],[0,1]],p:[[200,35],[100,195],[300,195]]},
+{n:"C: Disconnected ✓",g:[[1],[0],[3],[2],[]],p:[[60,60],[170,60],[60,170],[170,170],[320,115]]},
+{n:"5-cycle ✗",g:[[1,4],[0,2],[1,3],[2,4],[3,0]],p:circ(5)},{n:"Custom graph",g:[[1,3],[0,2],[1,3],[0,2]],p:circ(4),cu:1}];
+const $=id=>document.getElementById(id),esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+let G,S,k=0,T,tm=null,ai=0,cn=4;
+function build(g){const n=g.length,S=[];let vis=[],q=[],i=null,x=null,it=null,st=[];
+ const P=(line,t,d,o)=>S.push({line,t,d,vis:[...vis],q:[...q],i,x,it,st:[...st],ev:null,col:null,conf:false,res:null,drop:null,ph:"i",e:"",lbl:"",...o});
+ P(L.fn,"Function called","<code>graph</code> has "+n+" vertices.",{ph:"n"});P(L.size,"size = "+n,"Store the vertex count.",{ph:"n"});
+ vis=Array(n).fill(-1);P(L.vis,"vis = ["+vis+"]","Create "+n+" ints, all -1 (unvisited).",{ev:"init",ph:"n",e:"vector&lt;int&gt; vis("+n+", -1)"});
+ P(L.Q,"Create empty queue Q","Q starts empty.",{ph:"n"});
+ for(i=0;i<n;i++){x=null;it=null;
+  P(L.for,"Outer loop: i = "+i,"Does vertex "+i+" start a new component?",{ph:"o",e:"i = "+i+"; i &lt; "+n+" → true"});
+  if(vis[i]!==-1){P(L.if,"vis["+i+"] = "+vis[i]+" ≠ -1 → skip BFS","Vertex "+i+" was colored by an earlier BFS, so its component is done.",{ph:"o",e:"vis["+i+"] == -1 → "+vis[i]+" == -1 → <b>false</b> (skip)"});continue}
+  P(L.if,"vis["+i+"] == -1 → true","Never reached: a new component (#"+(st.length+1)+") begins.",{ph:"o",e:"vis["+i+"] == -1 → -1 == -1 → <b>true</b>"});
+  st.push(i);q.push(i);P(L.p0,"Q.push("+i+")","Put start node "+i+" at the rear.",{ev:"push",ph:"o",e:"Q.push("+i+")"});
+  vis[i]=1;P(L.c0,"vis["+i+"] = 1","Start node gets color 1 (blue).",{col:i,ph:"o",lbl:"vis["+i+"] = 1",e:"vis["+i+"] = <b>1</b>"});
+  for(;;){x=null;it=null;
+   P(L.wh,q.length?"while(!Q.empty()) → true":"while(!Q.empty()) → false: BFS ends","Queue holds "+q.length+" node(s)."+(q.length?"":" This component is finished; the outer loop moves on."),{e:"!Q.empty() → size "+q.length+" → <b>"+!!q.length+"</b>"});
+   if(!q.length)break;
+   x=q[0];P(L.fr,"x = Q.front() → "+x,"Read the front (node "+x+") — still in the queue.",{ev:"front",e:"int x = Q.front() → <b>"+x+"</b>"});
+   q.shift();P(L.pop,"Q.pop()","Now remove node "+x+" from the queue.",{ev:"pop",drop:x,e:"Q.pop() removes "+x});
+   for(const nb of g[x]){it=nb;
+    P(L.ea,"it = "+nb,"Next neighbor of "+x+" from graph["+x+"] = ["+g[x]+"].",{e:"for (auto it : graph["+x+"]) → it = <b>"+nb+"</b>"});
+    if(vis[nb]===-1){P(L.nw,"vis["+nb+"] == -1 → true","Neighbor "+nb+" is unvisited.",{e:"vis["+nb+"] == -1 → -1 == -1 → <b>true</b>"});
+     const o=vis[x];vis[nb]=1-o;P(L.as,"vis["+nb+"] = 1 - vis["+x+"] = "+vis[nb],"x has color "+o+", so "+nb+" gets "+vis[nb]+".",{col:nb,lbl:"vis["+nb+"] = 1 - vis["+x+"] = "+vis[nb],e:"vis["+nb+"] = 1 - vis["+x+"] = 1 - "+o+" = <b>"+vis[nb]+"</b>"});
+     q.push(nb);P(L.pu,"Q.push("+nb+")","Node "+nb+" joins the rear of the queue.",{ev:"push",e:"Q.push("+nb+")"})}
+    else{P(L.nw,"vis["+nb+"] == -1 → false","Neighbor "+nb+" already has color "+vis[nb]+".",{e:"vis["+nb+"] == -1 → "+vis[nb]+" == -1 → <b>false</b>"});
+     const eq=vis[nb]===vis[x],ex="vis["+nb+"] == vis["+x+"] → "+vis[nb]+" == "+vis[x]+" → <b>"+eq+"</b>";
+     if(eq){P(L.ei,"vis["+nb+"] == vis["+x+"] → TRUE","Adjacent vertices "+x+" and "+nb+" both have color "+vis[x]+".",{conf:true,e:ex});
+      P(L.rf,"return false","Conflict: vertices "+x+" and "+nb+" are adjacent and share color "+vis[x]+".",{conf:true,res:false,ph:"x",e:"return <b>false</b>"});return S}
+     P(L.ei,"vis["+nb+"] == vis["+x+"] → false","Different colors: the edge is consistent.",{e:ex})}}
+   it=null;P(L.ea,"No neighbors left for "+x,"The range-for ends; jump back to the while condition.",{e:"end of graph["+x+"]"})}}
+ x=null;it=null;i=n;P(L.for,"i = "+n+" → i &lt; size false","The outer loop is finished.",{ph:"o",e:"i &lt; "+n+" → <b>false</b>"});
+ P(L.rt,"return true","All components colored, no conflict.",{res:true,ph:"d",e:"return <b>true</b>"});S.forEach(s=>s.imp=s.col!==null||s.ev=="push"||s.ev=="pop"||s.conf||s.res!==null);return S}
+const hl=s=>s.replace(/\b(class|public|bool|int|for|if|else|while|return|auto|true|false)\b/g,"<span class=k>$1</span>").replace(/\b(vector|queue)\b/g,"<span class=t>$1</span>").replace(/\b(\d+)\b/g,"<span class=n>$1</span>");
+$("code").innerHTML=CODE.map((l,i)=>`<div class="ln" id="L${i}" onclick="lx(${i})"><i>${i+1}</i><b id="a${i}"></b>${hl(esc(l))||" "}</div>`).join("");
+function lx(i){const w=Y[i];$("lnx").style.display="block";$("lnx").innerHTML=`<b>Line ${i+1}: <code>${esc(CODE[i].trim())||"(blank)"}</code></b><br>${w||"Structure line — braces / declarations with no runtime action."}`}
+$("tabs").innerHTML=GR.map((g,i)=>`<button data-i="${i}">${g.n}</button>`).join("");$("tabs").onclick=e=>{if(e.target.dataset.i!=null)tab(+e.target.dataset.i)};
+function tab(a){stop();G=GR[a];$("cust").style.display=G.cu?"block":"none";if(G.cu)cadj();setup();[...$("tabs").children].forEach((b,i)=>b.classList.toggle("on",i==a));window.scrollTo({top:0,behavior:"smooth"})}
+function setup(){S=build(G.g);k=0;const E=[];G.g.forEach((ns,u)=>ns.forEach(v=>{if(u<v)E.push([u,v])}));G.E=E;
+ let h=`<g id="eg">`+E.map(([u,v])=>`<line class="e" id="e${u}_${v}" x1="${G.p[u][0]}" y1="${G.p[u][1]}" x2="${G.p[v][0]}" y2="${G.p[v][1]}"/>`).join("")+`</g>`;
+ h+=G.p.map((p,i)=>`<circle class="nd" id="c${i}" cx="${p[0]}" cy="${p[1]}" r="22"/><text x="${p[0]}" y="${p[1]+6}">${i}</text><text class="s" id="t${i}" x="${p[0]}" y="${p[1]+38}"></text>`).join("")+`<g id="fx"></g>`;
+ $("svg").innerHTML=h;T={V:G.g.length,E:E.length,pops:S.filter(s=>s.ev=="pop").length,chk:S.filter(s=>s.line==L.ea&&s.it!==null).length,mq:Math.max(...S.map(s=>s.q.length))};render()}
+function chg(a,b){const o=[];if(!a)return"Initial state.";b.vis.forEach((v,i)=>{if(v!==a.vis[i])o.push(`<code>vis[${i}]</code>: ${a.vis[i]} → <b>${v}</b> (node ${i} turns ${["red","blue"][v]})`)});
+ if(a.q.join()!==b.q.join())o.push(`Queue: [${a.q}] → <b>[${b.q}]</b>`);if(a.x!==b.x)o.push(`x: ${a.x??"–"} → ${b.x??"–"}`);if(a.it!==b.it)o.push(`it: ${a.it??"–"} → ${b.it??"–"}`);if(a.i!==b.i)o.push(`i: ${a.i??"–"} → ${b.i??"–"}`);
+ if(b.ev=="front")o.push("Queue unchanged: front() only <i>reads</i>.");return o.join("<br>")||"Nothing changed — this line only tests/reads values."}
+function render(){const s=S[k],pv=k?S[k-1]:null,last=k==S.length-1,R=(a,b)=>a>=b[0]&&a<=b[1];
+ CODE.forEach((_,i)=>{const e=$("L"+i);e.className="ln";$("a"+i).textContent=""});
+ const bl=BLK.filter(b=>R(s.line,b)).pop();if(bl)for(let i=bl[0];i<=bl[1];i++)$("L"+i).classList.add("blk");
+ $("L"+s.line).classList.add("cur");if(s.conf&&s.line==L.rf)$("L"+s.line).classList.add("bad");$("a"+s.line).textContent="▶";$("L"+s.line).scrollIntoView({block:"nearest"});
+ $("cnt").textContent=`step ${k+1}/${S.length}`;$("bp").disabled=k==0;$("bn").disabled=last;$("bi").disabled=last;
+ const ph={n:["Setup","#2a3140"],o:["OUTER for loop — scanning for components","#3b2f6b"],i:["INNER while — BFS in one component","#17426b"],d:["Finished: true","#1d5a2e"],x:["Stopped: false","#6b1d1d"]}[s.ph];
+ $("phase").textContent=ph[0];$("phase").style.background=ph[1];$("starts").textContent=s.st.length?`BFS started at: [${s.st}] (${s.st.length} component${s.st.length>1?"s":""})`:"";
+ $("ta").innerHTML=s.t;$("da").innerHTML=s.d;$("yb").innerHTML=Y[s.line]||"";$("cc").innerHTML=chg(pv,s);
+ $("nd").innerHTML=last?"Execution finished. Press Restart to run again.":"Next: <b>"+S[k+1].t+"</b> — "+S[k+1].d;
+ $("expr").innerHTML=s.e?"<span class=sub>line "+(s.line+1)+" ▸</span> "+s.e:"<span class=sub>line "+(s.line+1)+"</span>";
+ $("cf").style.display=s.conf?"block":"none";if(s.conf)$("cf").innerHTML=`⚠ COLOR CONFLICT DETECTED — vertices ${s.x} and ${s.it} are adjacent and both have color ${s.vis[s.x]}. A 2-coloring is impossible: this edge closes an odd cycle.`;
+ $("vars").innerHTML=`<span>i=${s.i??"–"}</span><span>x=${s.x??"–"}</span><span>it=${s.it??"–"}</span><span>Q.size()=${s.q.length}</span>`;$("op").innerHTML=s.t;
+ $("qs").innerHTML=(s.ev=="pop"?`<div class="chip out">${s.drop}</div>`:"")+s.q.map((v,j)=>`<div class="chip ${s.ev=="push"&&j==s.q.length-1?"in":""} ${s.ev=="front"&&j==0?"hl":""}">${v}</div>`).join("")||'<span class="sub">(empty)</span>';
+ $("vs").innerHTML=s.vis.map((v,j)=>`<div class="cell v${v} ${s.col===j?"ch":""}" onmouseenter="hv(${j},1)" onmouseleave="hv(${j},0)"><small>[${j}]</small><b>${v}</b></div>`).join("");
+ $("os").innerHTML=s.vis.map((_,j)=>{const done=s.i!==null&&j<s.i,sk=done&&!s.st.includes(j);return `<div class="chip st ${s.i===j?"cu":""} ${done?"dn":""} ${sk?"sk":""}" title="${s.st.includes(j)?"BFS started here":sk?"skipped (already visited)":""}">${j}</div>`}).join("")+`<span class="sub" style="font-size:12px">dashed = skipped · BFS starts: ${s.st.length}</span>`;
+ $("res").innerHTML=s.res===null?"":`<div class="res ${s.res?"t":"f"}">Result: ${s.res}</div>`;
+ G.p.forEach((_,j)=>{const c=$("c"+j),v=s.vis[j];c.setAttribute("class","nd c"+v+(s.x===j?" cur":"")+(s.it===j&&s.x!==null?" nb":"")+(s.conf&&(s.x===j||s.it===j)?" conf":"")+(s.col===j?" pop":""));$("t"+j).textContent="vis="+v});
+ G.E.forEach(([u,v])=>{const on=s.x!==null&&s.it!==null&&((s.x==u&&s.it==v)||(s.x==v&&s.it==u));$(`e${u}_${v}`).setAttribute("class","e"+(on?(s.conf?" bad":" act"):""))});
+ let f="";if(s.x!==null&&s.it!==null){const A=G.p[s.x],B=G.p[s.it];f+=`<circle r="6" fill="#f2cc60"><animate attributeName="cx" from="${A[0]}" to="${B[0]}" dur="1s" repeatCount="indefinite"/><animate attributeName="cy" from="${A[1]}" to="${B[1]}" dur="1s" repeatCount="indefinite"/></circle>`}
+ if(s.col!==null){const p=G.p[s.col];f+=`<circle class="rip" cx="${p[0]}" cy="${p[1]}" r="22"/><text class="f" x="${p[0]}" y="${p[1]-50}" fill="#f2cc60" style="fill:#f2cc60">Discovered!</text><text class="f" x="${Math.min(300,Math.max(100,p[0]))}" y="${p[1]-34}">${s.lbl}</text>`}
+ $("fx").innerHTML=f;cx()}
+function hv(j,on){$("c"+j).classList.toggle("hov",!!on)}
+function cx(){const p=S.slice(0,k+1).filter(s=>s.ev=="pop").length,c=S.slice(0,k+1).filter(s=>s.line==L.ea&&s.it!==null).length;
+ $("cx").innerHTML=`<div class="m">V=${T.V} E=${T.E} 2E=${2*T.E}</div>Pops: <b>${p}</b>/${T.pops}<div class="pb"><div style="width:${T.pops?p/T.pops*100:0}%"></div></div>Neighbor checks: <b>${c}</b>/${T.chk}<div class="pb"><div style="width:${T.chk?c/T.chk*100:0}%"></div></div>Peak queue size: <b>${T.mq}</b> ≤ V`}
+function stop(){clearTimeout(tm);tm=null;$("bpl").disabled=false;$("bpa").disabled=true}
+function play(){if(tm||k>=S.length-1)return;$("bpl").disabled=true;$("bpa").disabled=false;const go=()=>{if(k>=S.length-1){stop();return}k++;render();tm=setTimeout(go,(S[k].conf?2600:1100)*$("sp").value)};tm=setTimeout(go,300*$("sp").value)}
+$("bn").onclick=()=>{stop();if(k<S.length-1){k++;render()}};$("bp").onclick=()=>{stop();if(k>0){k--;render()}};$("br").onclick=()=>{stop();k=0;render()};
+$("bpl").onclick=play;$("bpa").onclick=stop;$("bi").onclick=()=>{stop();let j=k+1;while(j<S.length-1&&!S[j].imp)j++;k=Math.min(j,S.length-1);render()};
+addEventListener("keydown",e=>{if(e.target.tagName=="INPUT")return;if(e.key=="ArrowRight")$("bn").click();if(e.key=="ArrowLeft")$("bp").click()});
+// custom graph
+function cadj(){$("vn").textContent="V = "+cn;$("adj").textContent="vector<vector<int>> graph = {\n"+G.g.map(a=>"    {"+a.join(", ")+"}").join(",\n")+"\n};"}
+function cb(){const er=$("er");er.textContent="";const g=Array.from({length:cn},()=>[]);const t=$("ed").value.trim();
+ for(const part of t?t.split(/[,;\n]+/):[]){const m=part.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/);if(!m){er.textContent="Bad edge “"+part.trim()+"”. Use u-v, e.g. 0-1, 1-2.";return}
+  const u=+m[1],v=+m[2];if(u>=cn||v>=cn){er.textContent="Edge "+u+"-"+v+" uses a vertex ≥ V ("+cn+").";return}if(u==v){er.textContent="Self-loops are not allowed (vertex "+u+").";return}
+  if(!g[u].includes(v)){g[u].push(v);g[v].push(u)}}
+ g.forEach(a=>a.sort((x,y)=>x-y));GR[4]={n:"Custom graph",g,p:circ(cn),cu:1};G=GR[4];cadj();stop();setup()}
+$("rn").onclick=cb;$("rs").onclick=()=>{cn=4;$("ed").value="0-1, 1-2, 2-3, 3-0";cb()};
+$("vp").onclick=()=>{if(cn<10){cn++;cb()}};$("vm").onclick=()=>{if(cn>1){cn--;$("ed").value=$("ed").value.split(/[,;\n]+/).filter(p=>{const m=p.match(/(\d+)\s*-\s*(\d+)/);return!m||(+m[1]<cn&&+m[2]<cn)}).join(", ");cb()}};
+// quiz
+const QZ=[["Scenario A (square 0-1-2-3). After <code>Q.push(0); vis[0]=1;</code> and processing x=0 completely, what is <code>vis</code>?",["[1, 0, -1, 0]","[1, 1, -1, 1]","[1, 0, 0, 0]"],0,"x=0 has neighbors 1 and 3, each getting 1 - 1 = 0. Node 2 hasn’t been reached yet."],
+["In that same moment, what does the queue look like (FRONT → REAR)?",["[0, 1, 3]","[1, 3]","[3, 1]"],1,"0 was popped; 1 and 3 were pushed in the order of graph[0] = {1, 3}. FIFO keeps that order."],
+["Triangle (Scenario B): when does the conflict appear?",["While x=0, it=1","While x=1, it=2","While x=2, it=0"],1,"0→1, 2 both get 0. Then x=1 looks at neighbor 2 which is already 0 = vis[1] → conflict."],
+["Scenario C has vertices 0–4 with edges 0-1 and 2-3. How many times does the outer loop start a BFS?",["1","2","3"],2,"Starts at 0, 2 and 4. Nodes 1 and 3 are skipped because they’re already colored; 4 is isolated but still a component."],
+["A graph has a component {0,1} and a separate triangle {2,3,4}. If we ran BFS only from node 0, what would be returned?",["false (correct)","true (wrong)","The code would crash"],1,"The triangle is never visited, so its conflict is never found. That’s why the outer loop matters."],
+["Which graph is NOT bipartite?",["A path of 5 vertices","A 6-cycle","A 7-cycle"],2,"Odd cycles can’t be 2-colored; paths and even cycles can."],
+["A square (4-cycle) vs a 5-cycle: why does only one conflict?",["Even cycles return to the start color after alternating; odd ones return to the opposite color","BFS runs slower on 5 nodes","5 is prime"],0,"After n alternations you’re at the start color iff n is even."],
+["Why is the time complexity O(V + E) and not O(V × E)?",["The queue is small","Each vertex is popped once and each adjacency entry is scanned once","vis is a vector"],1,"Vertices are pushed only while -1, and every edge appears in two adjacency lists, so work is V pops + 2E checks."]];
+let sc=0,an=0;$("quiz").innerHTML=QZ.map((z,i)=>`<div class="q"><p>${i+1}. ${z[0]}</p>${z[1].map((o,j)=>`<button class="opt" onclick="pk(${i},${j},this)">${o}</button>`).join("")}<div class="sub" id="f${i}"></div></div>`).join("");
+function pk(i,j,b){const z=QZ[i],p=b.parentNode;if(p.dataset.d)return;p.dataset.d=1;an++;[...p.querySelectorAll(".opt")].forEach((o,n)=>{if(n==z[2])o.classList.add("ok");else if(n==j)o.classList.add("no")});
+ if(j==z[2])sc++;$("f"+i).innerHTML=(j==z[2]?"✅ Correct. ":"❌ Not quite. ")+z[3];$("score").textContent=`— ${sc}/${an} correct`}
+$("bpa").disabled=true;tab(0);
+</script></body></html>
