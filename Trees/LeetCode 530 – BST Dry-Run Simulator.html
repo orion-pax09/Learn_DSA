@@ -1,0 +1,145 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>LeetCode 530 – BST Dry-Run Simulator</title>
+<style>
+:root{--bg:#1e1e1e;--pn:#252526;--bd:#3c3c3c;--tx:#d4d4d4;--mu:#8b8b8b;--cur:#f5a623;--prv:#4fc1ff;--ok:#4ec9b0;--bad:#f48771;--ac:#569cd6;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+code,pre,.mono{font-family:Consolas,Menlo,monospace}code{background:#333;padding:1px 5px;border-radius:4px;color:#ce9178}
+pre{background:#161616;padding:10px;border-radius:6px;overflow-x:auto;margin:8px 0}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:#181818;border-bottom:1px solid var(--bd);padding:8px 14px;z-index:5}
+header b{color:var(--ac)}.bar{height:5px;background:#333;border-radius:3px;margin:6px 0}.bar i{display:block;height:100%;background:var(--ok);border-radius:3px;transition:width .4s}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{font-size:13px}.tabs .on{background:var(--ac);color:#fff;border-color:var(--ac)}
+main{max-width:1180px;margin:0 auto;padding:14px}
+button{background:#333;color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:7px 12px;cursor:pointer;font:inherit}button:hover:not(:disabled){background:#444}button:disabled{opacity:.4;cursor:default}
+button.pri{background:#0e639c;border-color:#0e639c;color:#fff}
+.card{background:var(--pn);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:12px}h2{margin:.2em 0 .5em}h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mu)}
+.grid{display:grid;grid-template-columns:1.1fr 1fr;gap:12px}@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.L{display:none}.L.on{display:block}svg{width:100%;max-height:300px}
+.nd circle{fill:#2d2d2d;stroke:#666;stroke-width:2;transition:fill .5s,stroke .5s}.nd text{fill:var(--tx);font:600 15px Consolas,monospace;text-anchor:middle;dominant-baseline:central}
+.nd .tg{font-size:10px;fill:var(--mu)}.nd.vis circle{fill:#1f4d43;stroke:var(--ok)}.nd.prv circle{fill:#124b6b;stroke:var(--prv)}.nd.cur circle{fill:var(--cur);stroke:#fff}.nd.cur text:not(.tg){fill:#111}
+line{stroke:#555;stroke-width:2}
+.chips span{display:inline-block;background:#1f4d43;color:var(--ok);border-radius:12px;padding:1px 10px;margin:2px;font-family:Consolas,monospace}
+.lg span{margin-right:12px;font-size:12px;color:var(--mu)}.lg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+.tr{display:flex;justify-content:space-between;padding:5px 8px;border-radius:5px;font-family:Consolas,monospace;font-size:14px}.tr b{color:#b5cea8}.chg{animation:fl 1.2s}@keyframes fl{from{background:#f5a62366}to{background:transparent}}
+.fr{padding:5px 10px;margin:3px 0;border:1px solid var(--bd);border-radius:5px;font-family:Consolas,monospace;font-size:13px;background:#2d2d2d}.fr.top{border-color:var(--cur);background:#4a3510}.fr.nul.top{border-color:var(--bad);background:#4a2018}.fr small{color:var(--mu)}
+.ln{font:13px/1.6 Consolas,monospace;white-space:pre;cursor:pointer;padding-right:8px}.ln i{display:inline-block;width:26px;color:#666;font-style:normal;text-align:right;margin-right:12px}.ln.on{background:#3a3d1f;box-shadow:inset 3px 0 var(--cur)}
+.k{color:#569cd6}.t{color:#4ec9b0}.f{color:#dcdcaa}.n{color:#b5cea8}#code{overflow-x:auto}
+#exp{margin-top:8px;padding:8px;background:#162a38;border-radius:6px;font-size:14px}
+table{border-collapse:collapse;width:100%;font:13px Consolas,monospace}td,th{border:1px solid var(--bd);padding:4px 8px;text-align:center}tr.dn td{background:#1f4d43}
+.nav{display:flex;justify-content:space-between;margin-top:6px}input{background:#1a1a1a;color:var(--tx);border:1px solid var(--bd);border-radius:5px;padding:6px;width:90px;font:inherit}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.two{grid-template-columns:1fr}}
+.good{color:var(--ok)}.bad{color:var(--bad)}
+</style></head><body>
+<header><b>LeetCode 530</b> · Minimum Absolute Difference in BST — <span id="lt"></span><div class="bar"><i id="pb"></i></div><div class="tabs" id="tabs"></div></header>
+<main>
+<section class="L" id="L0"><div class="card"><h2>1 · The big idea</h2>
+<p><b>Problem:</b> in a Binary Search Tree (BST), find the smallest difference between the values of any two nodes.</p>
+<p><b>BST rule:</b> for every node, everything in its left subtree is <i>smaller</i> and everything in its right subtree is <i>bigger</i>.</p>
+<p><b>Inorder traversal</b> visits <code>Left → Root → Right</code>. Because left values are smaller and right values are bigger, we always meet the values <b>in sorted order</b>. Press the button and watch.</p></div>
+<div class="card"><svg id="svg0"></svg><div class="mono" style="min-height:34px">Sorted output: <span id="srt" class="chips"></span></div>
+<button class="pri" id="i0n">Visit next (inorder)</button> <button id="i0r">Reset</button> <p id="i0m" style="color:var(--mu)">Press the button: go as far left as possible first.</p></div>
+<div class="card"><h3>The plan</h3><ol><li>Walk the tree inorder (Left → Root → Right).</li><li>Keep a pointer <code>prev</code> = the node visited just before.</li><li>At each node, compute <code>root->val - prev->val</code>.</li><li>Keep the smallest one in <code>minimum</code>.</li><li>Set <code>prev = root</code> and continue.</li></ol><p>The smallest gap between sorted numbers is always between <b>neighbours</b>. That is all this algorithm checks.</p></div></section>
+
+<section class="L" id="L1"><div class="grid"><div>
+<div class="card"><svg id="svg1"></svg><div class="lg"><span><i style="background:var(--cur)"></i>current (root)</span><span><i style="background:var(--prv)"></i>prev</span><span><i style="background:var(--ok)"></i>visited</span></div><div class="mono">Traversal order: <span class="chips" id="ord"></span></div></div>
+<div class="card"><button id="bp">◀ Previous Step</button> <button class="pri" id="bn">Next Step ▶</button> <button id="br">Reset</button> <button id="bf">Show Full Dry Run</button> <button id="bpl">▶ Play</button><p id="msg" style="margin-bottom:0"></p></div>
+<div class="card" id="full" hidden></div></div>
+<div><div class="card"><h3>Live variables</h3><div id="trk"></div></div>
+<div class="card"><h3>Recursion call stack (top = active call)</h3><div id="stk"></div><p style="font-size:13px;color:var(--mu);margin-bottom:0"><code>root</code> is the node of the <b>active call</b>, not always the tree’s top node.</p></div>
+<div class="card"><h3>C++ code · click a line to read about it</h3><div id="code"></div><div id="exp"></div></div></div></div></section>
+
+<section class="L" id="L2"><div class="card"><h2>3 · Six key lessons</h2><div class="tabs" id="ctabs"></div><div id="cbody" style="margin-top:10px"></div></div></section>
+
+<section class="L" id="L3"><div class="card"><h2>4 · Practice: predict the difference</h2><div class="tabs" id="ptabs"></div></div>
+<div class="grid"><div class="card"><svg id="svgP"></svg></div><div><div class="card"><h3>Tracker</h3><div id="ptr"></div></div><div class="card" id="pq"></div></div></div></section>
+
+<section class="L" id="L4"><div class="card"><h2>5 · Complexity</h2>
+<p><b>n</b> = number of nodes. <b>h</b> = height = number of levels from the top node down to the deepest node.</p>
+<p><b>Time O(n):</b> every node is visited exactly once, and each visit does one subtraction and one comparison.</p>
+<p><b>Space O(h):</b> we create no list. Only the recursion call stack uses memory, and it holds at most one call per level (plus one last <code>nullptr</code> call).</p></div>
+<div class="two"><div class="card"><h3>Balanced · n = 7, h = 3</h3><svg id="c1"></svg><p>Stack never deeper than ~3 calls → O(log n).</p></div><div class="card"><h3>Skewed (a “stick”) · n = 4, h = 4</h3><svg id="c2"></svg><p>Stack as deep as the node count → worst case O(n).</p></div></div></section>
+
+<div class="nav"><button id="lp">◀ Previous lesson</button><button class="pri" id="ln">Next lesson ▶</button></div>
+</main>
+<script>
+const $=id=>document.getElementById(id),N=(v,l,r)=>({v,l:l||null,r:r||null});
+const T0=N(50,N(30,N(20),N(40)),N(70,N(60),N(80)));
+function layout(t){let i=0,m=0;(function f(n,d){if(!n)return;f(n.l,d+1);n.x=i++;n.y=d;m=Math.max(m,d);f(n.r,d+1)})(t,0);return{n:i,h:m+1}}
+function ino(t,a=[]){if(t){ino(t.l,a);a.push(t);ino(t.r,a)}return a}
+function build(svg,t){const L=layout(t),X=n=>36+n.x*56,Y=n=>32+n.y*68;svg.setAttribute('viewBox',`0 0 ${L.n*56+16} ${L.h*68+16}`);let s='';
+(function e(n){[n.l,n.r].forEach(c=>{if(c){s+=`<line x1="${X(n)}" y1="${Y(n)}" x2="${X(c)}" y2="${Y(c)}"/>`;e(c)}})})(t);
+ino(t).forEach(n=>s+=`<g class="nd" data-x="${n.x}"><circle cx="${X(n)}" cy="${Y(n)}" r="21"/><text x="${X(n)}" y="${Y(n)}">${n.v}</text><text class="tg" x="${X(n)}" y="${Y(n)-27}"></text></g>`);svg.innerHTML=s}
+function update(svg,s){svg.querySelectorAll('.nd').forEach(g=>{const x=+g.dataset.x,c=s.cur&&s.cur.x==x,p=s.prev&&s.prev.x==x;g.setAttribute('class','nd'+(c?' cur':p?' prv':s.vis.some(n=>n.x==x)?' vis':''));g.querySelector('.tg').textContent=c&&p?'cur=prev':c?'cur':p?'prev':''})}
+// ---------- tabs / lessons
+const LS=['Idea','Dry Run','Concepts','Practice','Complexity'];let cl=0;
+function show(k){cl=k;document.querySelectorAll('.L').forEach((s,i)=>s.classList.toggle('on',i==k));$('lt').textContent=`Lesson ${k+1} of 5: ${LS[k]}`;$('pb').style.width=(k+1)*20+'%';
+document.querySelectorAll('#tabs button').forEach((b,i)=>b.classList.toggle('on',i==k));$('lp').disabled=!k;$('ln').disabled=k==4;scrollTo(0,0)}
+LS.forEach((n,i)=>{const b=document.createElement('button');b.textContent=`${i+1}. ${n}`;b.onclick=()=>show(i);$('tabs').append(b)});
+$('lp').onclick=()=>show(cl-1);$('ln').onclick=()=>show(cl+1);
+// ---------- lesson 1
+build($('svg0'),T0);const IO=ino(T0);let k0=0;
+function r0(){update($('svg0'),{cur:IO[k0-1],prev:null,vis:IO.slice(0,k0-1)});$('srt').innerHTML=IO.slice(0,k0).map(n=>`<span>${n.v}</span>`).join('');$('i0n').disabled=k0>=IO.length;
+$('i0m').textContent=k0==0?'Press the button: go as far left as possible first.':k0<IO.length?`Visited ${IO[k0-1].v}. Output so far is increasing every time!`:'Done: 20 30 40 50 60 70 80 is perfectly sorted. That is why neighbours are enough.'}
+$('i0n').onclick=()=>{k0++;r0()};$('i0r').onclick=()=>{k0=0;r0()};r0();
+// ---------- event generator
+const MAX=2147483647;
+function gen(t){const E=[],R=[],st=[];let prev=null,min=null,diff=null,vis=[];
+const em=(line,txt)=>E.push({line,txt,cur:st.length?st[st.length-1].n:null,prev,min,diff,vis:vis.slice(),st:st.slice()});
+function call(n,tag){st.push({n,tag});const nm=n?n.v:'nullptr';
+em(6,`inorder(${nm}) begins. In this call <b>root = ${nm}</b>.`);
+em(7,n?`Is root == nullptr? No — ${n.v} is a real node, so keep going.`:`Is root == nullptr? <b>Yes.</b> There is no node here (base case).`);
+if(!n){em(8,'<b>return</b>: nothing to do here. Go back to the caller.');st.pop();return}
+em(11,`Recurse left: call inorder(root->left). Left child of ${n.v} is ${n.l?n.l.v:'nullptr'}.`);
+call(n.l,'left of '+n.v);diff=null;
+em(13,prev?`Back in inorder(${n.v}). Left side is finished. Is prev != nullptr? Yes, prev = ${prev.v}.`:`Back in inorder(${n.v}). Left side is finished. prev is nullptr → this is the smallest node, nothing to compare.`);
+if(prev){const o=min;diff=n.v-prev.v;min=o==null?diff:Math.min(o,diff);em(14,`Current = ${n.v}, previous = ${prev.v}. Difference = ${n.v} − ${prev.v} = <b>${diff}</b>. minimum = min(${o==null?'INT_MAX':o}, ${diff}) = <b>${min}</b>.`)}
+R.push({v:n.v,p:prev?prev.v:'nullptr',d:diff,m:min,ei:E.length});
+prev=n;vis.push(n);em(17,`<b>prev = root</b> → prev is now ${n.v}. Node ${n.v} is marked visited.`);
+em(19,`Recurse right: call inorder(root->right). Right child of ${n.v} is ${n.r?n.r.v:'nullptr'}.`);
+call(n.r,'right of '+n.v);
+em(20,`Both sides of ${n.v} are done. This call ends and returns to its caller.`);st.pop()}
+em(22,'Start: LeetCode calls getMinimumDifference(root). prev = nullptr, minimum = INT_MAX.');em(23,'It calls inorder(root) with the real top of the tree.');
+st.push({n:null,tag:'__'});st.pop();call(t,'root');em(24,`Traversal finished. <b>return minimum</b> = ${min}. That is the answer!`);return{E,R}}
+const{E,R}=gen(T0);let i=0,tm=null;const sv=$('svg1');build(sv,T0);
+const CODE=['class Solution {','public:','    TreeNode* prev = nullptr;','    int minimum = INT_MAX;','','    void inorder(TreeNode* root) {','        if (root == nullptr) {','            return;','        }','','        inorder(root->left);','','        if (prev != nullptr) {','            minimum = min(minimum, root->val - prev->val);','        }','','        prev = root;','','        inorder(root->right);','    }','','    int getMinimumDifference(TreeNode* root) {','        inorder(root);','        return minimum;','    }','};'];
+const EX={1:'The class that holds our solution (LeetCode gives you this wrapper).',3:'<b>prev</b> remembers the node visited just before. It lives <i>outside</i> the function so all recursive calls share it. nullptr means “nothing visited yet”.',4:'<b>minimum</b> is the smallest gap found so far. INT_MAX (the biggest int) means “no gap yet”, so any real gap will beat it.',6:'The recursive function. Every call receives <b>root</b> = the node that this call is working on (not always the top of the tree!).',7:'Base case: if there is no node here, there is nothing to process.',8:'Stop this call and go back to whoever called it. Without this the recursion would never end.',11:'Go left first. Smaller values live on the left, so we must handle them before this node.',13:'Is there a previous node? The very first (smallest) node has none, so we skip the subtraction.',14:'Gap between this node and the previous one. Inorder is ascending, so root->val ≥ prev->val and the result is never negative. Keep the smaller of old minimum and new gap.',17:'Now this node becomes the “previous” node for the next visit. This must come <i>after</i> the subtraction.',19:'Go right: all bigger values come after this node.',20:'This call is finished. It disappears from the stack and control returns to the caller.',22:'The entry point LeetCode calls.',23:'Start the recursion from the real root.',24:'After the whole tree is walked, minimum holds the answer.'};
+const hl=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\b(class|public|void|int|if|return|nullptr)\b|\b(TreeNode|Solution|INT_MAX)\b|\b(inorder|min|getMinimumDifference)\b(?=\()|(\b\d+\b)/g,(m,a,b,c,d)=>a?`<span class="k">${m}</span>`:b?`<span class="t">${m}</span>`:c?`<span class="f">${m}</span>`:`<span class="n">${m}</span>`);
+$('code').innerHTML=CODE.map((l,j)=>`<div class="ln" data-n="${j+1}"><i>${j+1}</i>${hl(l)||' '}</div>`).join('');
+document.querySelectorAll('.ln').forEach(d=>d.onclick=()=>{$('exp').innerHTML=`<b>Line ${d.dataset.n}:</b> `+(EX[d.dataset.n]||'Structure line (brace or blank) — no action happens here.')});
+function render(){const e=E[i],o=i?E[i-1]:e;update(sv,e);
+$('ord').innerHTML=e.vis.map(n=>`<span>${n.v}</span>`).join('')||'<span style="background:none;color:var(--mu)">(nothing yet)</span>';
+const row=(a,b,c)=>`<div class="tr ${c?'chg':''}"><span>${a}</span><b>${b}</b></div>`,pv=n=>n?n.v:'nullptr';
+$('trk').innerHTML=row('TreeNode* prev =',pv(e.prev),e.prev!==o.prev)+row('int minDiff =',e.min==null?'INT_MAX':e.min,e.min!==o.min)+row('TreeNode* current (root) =',pv(e.cur),e.cur!==o.cur)+row('difference (root->val − prev->val) =',e.diff==null?'—':e.diff,e.diff!==o.diff);
+$('stk').innerHTML=e.st.length?e.st.map((f,j,a)=>`<div class="fr ${f.n?'':'nul'} ${j==a.length-1?'top':''}">inorder(${f.n?f.n.v:'nullptr'}) <small>← ${f.tag}${j==a.length-1?' · ACTIVE':''}</small></div>`).reverse().join(''):'<small style="color:var(--mu)">empty — no recursion running</small>';
+document.querySelectorAll('.ln').forEach(d=>d.classList.toggle('on',d.dataset.n==e.line));$('exp').innerHTML=`<b>Line ${e.line}:</b> `+(EX[e.line]||'');
+$('msg').innerHTML=`<b>Step ${i} / ${E.length-1}:</b> ${e.txt}`;$('bp').disabled=!i;$('bn').disabled=i==E.length-1;
+$('full').innerHTML=`<h3>Full dry run (one row per visited node)</h3><table><tr><th>#</th><th>current</th><th>prev</th><th>difference</th><th>minDiff after</th></tr>${R.map((r,j)=>`<tr class="${r.ei<=i?'dn':''}"><td>${j+1}</td><td>${r.v}</td><td>${r.p}</td><td>${r.d==null?'—':r.v+' − '+r.p+' = '+r.d}</td><td>${r.m==null?'INT_MAX':r.m}</td></tr>`).join('')}</table><p style="margin:6px 0 0;color:var(--mu)">Green rows have already happened at your current step.</p>`}
+function stop(){clearInterval(tm);tm=null;$('bpl').textContent='▶ Play'}
+$('bn').onclick=()=>{if(i<E.length-1){i++;render()}if(i==E.length-1)stop()};$('bp').onclick=()=>{stop();if(i){i--;render()}};$('br').onclick=()=>{stop();i=0;render()};
+$('bf').onclick=()=>{$('full').hidden=!$('full').hidden;$('bf').textContent=$('full').hidden?'Show Full Dry Run':'Hide Full Dry Run'};
+$('bpl').onclick=()=>{if(tm)return stop();$('bpl').textContent='⏸ Pause';tm=setInterval(()=>$('bn').click(),1100)};render();
+// ---------- concepts
+const C=[['A · prev outside','<p>Every call gets its <b>own</b> <code>root</code>, but <code>prev</code> must be <b>one shared</b> variable. If declared inside the function, each call starts with a fresh <code>nullptr</code> and forgets the node visited just before.</p><pre>void inorder(TreeNode* root){\n    TreeNode* prev = nullptr;  // ❌ reset on every call\n}</pre><p>As a class member, every recursive call reads and writes the <i>same</i> prev.</p>'],
+['B · prev = root last','<p>Visit node 30 with prev = 20:</p><div class="two"><pre><span class="good">✅ correct order</span>\ndiff = 30 − 20 = 10\nprev = 30</pre><pre><span class="bad">❌ wrong order</span>\nprev = 30\ndiff = 30 − 30 = 0</pre></div><p>If prev is updated first, it equals root, every gap becomes 0, and the answer is wrong. Compare <b>first</b>, then move prev forward.</p>'],
+['C · only neighbours','<p>Sorted list: <code>20 30 40 50</code>. Take any three numbers a &lt; b &lt; c. Then <code>c − a = (c − b) + (b − a)</code>, which is bigger than either part. So a far-apart pair can never beat the neighbours between them.</p><p>That means we need only <b>n − 1</b> neighbour checks, not every pair (n(n−1)/2). For 7 nodes: 6 checks instead of 21.</p>'],
+['D · no abs()','<p>Inorder visits values in ascending order, so <code>root->val</code> is always bigger than <code>prev->val</code>. The subtraction is never negative, so <code>abs()</code> is not needed. With distinct values it is strictly positive (≥ 1).</p><pre>30 − 20 = 10 ✅   (never 20 − 30 = −10)</pre>'],
+['E · what is root?','<p><code>root</code> is just the <b>name of the parameter</b>. Each call gets a different node:</p><pre>inorder(root)        → root = 50\n  inorder(root->left)   → root = 30\n    inorder(root->left)    → root = 20\n      inorder(root->left)     → root = nullptr  (stop)</pre><p>Look at the call stack in the Dry Run lesson: the top frame’s value is the current <code>root</code>.</p>'],
+['F · INT_MAX start','<p>We want the <b>smallest</b> gap, so we start with the <b>biggest</b> possible number. Then the first real gap always wins.</p><pre>min(INT_MAX, 10) = 10 ✅\nmin(0, 10)       = 0  ❌ (stuck at 0 forever)</pre>']];
+C.forEach((c,j)=>{const b=document.createElement('button');b.textContent=c[0];b.onclick=()=>cs(j);$('ctabs').append(b)});
+function cs(j){$('cbody').innerHTML=C[j][1];document.querySelectorAll('#ctabs button').forEach((b,x)=>b.classList.toggle('on',x==j))}cs(0);
+// ---------- practice
+const PT=[N(8,N(3,N(1),N(6)),N(10,null,N(14))),N(5,null,N(9,null,N(12,null,N(20)))),N(15,N(7,N(4),N(11)),N(22,N(18),N(30)))],svP=$('svgP');let P;
+['Tree A','Tree B (stick)','Tree C'].forEach((n,j)=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>ps(j);$('ptabs').append(b)});
+function ps(k){const t=PT[k];build(svP,t);P={k,nd:ino(t),i:0,min:null,rev:false,ok:0,tot:0,fb:''};document.querySelectorAll('#ptabs button').forEach((b,x)=>b.classList.toggle('on',x==k));pr()}
+function pr(){const{nd,i}=P,d=i>=nd.length,c=d?null:nd[i],p=i?nd[i-1]:null;update(svP,{cur:c,prev:d?nd[nd.length-1]:p,vis:nd.slice(0,i)});
+$('ptr').innerHTML=`<div class="tr"><span>prev =</span><b>${p?p.v:'nullptr'}</b></div><div class="tr"><span>minDiff =</span><b>${P.min==null?'INT_MAX':P.min}</b></div><div class="tr"><span>inorder so far</span><b>${nd.slice(0,i).map(n=>n.v).join(' ')||'—'}</b></div>`;
+$('pq').innerHTML=d?`<h3>Finished 🎉</h3><p>Answer: <b class="good">${P.min}</b>. Score: ${P.ok} / ${P.tot} correct predictions.</p><p>Try another tree above!</p>`
+:i==0?`<h3>Visit ${c.v}</h3><p>This is the smallest value, so prev is <code>nullptr</code>. No difference yet.</p><button class="pri" onclick="pAct()">Continue (prev = ${c.v})</button>`
+:`<h3>Visit ${c.v}</h3><p>prev = ${p.v}. What is <code>root->val − prev->val</code>?</p>${P.rev?`<p>${P.fb}</p><button class="pri" onclick="pAct()">Next node ▶</button>`:`<input id="pi" type="number"> <button class="pri" onclick="pAct()">Check</button>`}`}
+function pAct(){if(P.i==0){P.i++;return pr()}
+if(!P.rev){const v=$('pi').value;if(v==='')return;const a=P.nd[P.i].v,b=P.nd[P.i-1].v,d=a-b,o=P.min,ok=+v===d;P.min=o==null?d:Math.min(o,d);P.tot++;ok&&P.ok++;
+P.fb=`<span class="${ok?'good':'bad'}">${ok?'✅ Correct!':'❌ Not quite (you said '+v+').'}</span> ${a} − ${b} = ${d}. minDiff = min(${o==null?'INT_MAX':o}, ${d}) = ${P.min}. Then prev = ${a}.`;P.rev=true}
+else{P.rev=false;P.i++}pr()}
+ps(0);
+// ---------- complexity
+build($('c1'),T0);update($('c1'),{cur:null,prev:null,vis:ino(T0)});build($('c2'),PT[1]);update($('c2'),{cur:null,prev:null,vis:ino(PT[1])});
+show(0);
+</script></body></html>
