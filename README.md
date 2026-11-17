@@ -19,8 +19,8 @@ A repository documenting my journey of learning **Data Structures and Algorithms
 - ✅ Queues
 - ✅ Sliding windows
 - ⬜ Recursion
-- ⬜ Trees
-- ⬜ Binary Search Trees
+- ✅ Trees
+- ✅ Binary Search Trees
 - ⬜ Heaps
 - ✅ Graphs
 - ✅ Hashing
